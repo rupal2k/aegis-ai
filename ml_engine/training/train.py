@@ -33,7 +33,7 @@ MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
 mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment("aegis-underwriting")
 
-N_OPTUNA_TRIALS = 30
+N_OPTUNA_TRIALS = 60
 RANDOM_STATE    = 42
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -91,7 +91,15 @@ def tune_and_train(X_train, y_train, X_test, y_test, feature_names):
 
     print("\n[2/3] Training final model with best params...")
     best_params = study.best_params.copy()
-    best_params.update({"random_state": RANDOM_STATE, "verbosity": 0, "tree_method": "hist"})
+    # Use a large n_estimators — early stopping will find the optimal number
+    best_params["n_estimators"] = 2000
+    best_params.update({"random_state": RANDOM_STATE, "verbosity": 0, "tree_method": "hist",
+                        "early_stopping_rounds": 50})
+
+    # 10% of training data held out for early stopping validation
+    val_size = int(len(X_train) * 0.10)
+    X_tr, X_val = X_train[:-val_size], X_train[-val_size:]
+    y_tr, y_val = y_train[:-val_size], y_train[-val_size:]
 
     with mlflow.start_run(run_name="final_xgb_with_optuna") as run:
         mlflow.log_params(best_params)
@@ -100,7 +108,9 @@ def tune_and_train(X_train, y_train, X_test, y_test, feature_names):
         mlflow.log_param("n_features", len(feature_names))
 
         model = xgb.XGBRegressor(**best_params)
-        model.fit(X_train, y_train)
+        model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=False)
+        print(f"  Best iteration: {model.best_iteration}")
+        mlflow.log_param("best_iteration", model.best_iteration)
 
         train_preds = model.predict(X_train)
         test_preds  = model.predict(X_test)

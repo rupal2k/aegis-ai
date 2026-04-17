@@ -15,6 +15,8 @@ FEATURE_COLUMNS = [
     "visit_count", "hospitalized_count",
     # Derived
     "activity_score", "health_composite",
+    # Interaction
+    "smoker_diabetic", "bmi_age_risk", "clinical_burden",
 ]
 
 TARGET_COLUMN = "loss_ratio"
@@ -64,6 +66,11 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
         np.clip(df["bmi"] - 25, 0, 20) * 1.5 +
         (df["age"] / 60) * 10
     ).round(2)
+
+    # Interaction features
+    df["smoker_diabetic"] = df["smoker"] * df["diabetic"]
+    df["bmi_age_risk"]    = (df["bmi"] / 25.0) * (df["age"] / 40.0)
+    df["clinical_burden"] = df["visit_count"] * (1 + df["hospitalized_count"])
 
     # Log-transform the target to handle the long tail
     if TARGET_COLUMN in df.columns:
