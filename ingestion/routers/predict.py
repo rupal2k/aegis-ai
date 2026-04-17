@@ -82,6 +82,7 @@ def predict_company(company_id: str, db: Session = Depends(get_db)):
         )
 
     df = pd.DataFrame(rows)
+    df = df.apply(lambda col: pd.to_numeric(col, errors="coerce").fillna(col) if col.dtype == object else col)
     model  = get_model()
     result = model.predict_company(df)
 
