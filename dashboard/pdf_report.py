@@ -9,12 +9,34 @@ from reportlab.lib.units import cm
 from io import BytesIO
 from datetime import datetime
 
+# Inline rates to keep pdf_report free of Streamlit imports
+_RATES = {
+    "INR": (1.0,      "\u20b9"),
+    "USD": (0.01198,  "$"),
+    "EUR": (0.01105,  "\u20ac"),
+    "GBP": (0.00943,  "\u00a3"),
+    "AED": (0.04400,  "AED "),
+    "SGD": (0.01613,  "S$"),
+    "AUD": (0.01852,  "A$"),
+    "JPY": (1.8519,   "\u00a5"),
+    "CAD": (0.01634,  "C$"),
+    "CHF": (0.01076,  "CHF "),
+}
 
-def generate_underwriting_report(company_data: dict, premium_data: dict) -> bytes:
+
+def _fmt(inr_value: float, rate: float, sym: str) -> str:
+    val = inr_value * rate
+    return f"{sym}{val:,.0f}"
+
+
+def generate_underwriting_report(company_data: dict, premium_data: dict,
+                                  currency: str = "INR") -> bytes:
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4,
                             leftMargin=2*cm, rightMargin=2*cm,
                             topMargin=2*cm, bottomMargin=2*cm)
+
+    rate, sym = _RATES.get(currency, _RATES["INR"])
 
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
@@ -29,7 +51,7 @@ def generate_underwriting_report(company_data: dict, premium_data: dict) -> byte
 
     story.append(Paragraph("Aegis AI — Underwriting Report", title_style))
     story.append(Paragraph(
-        f"Generated: {datetime.now().strftime('%d %B %Y, %H:%M IST')}",
+        f"Generated: {datetime.now().strftime('%d %B %Y, %H:%M')}  |  Currency: {currency}",
         styles["Normal"]
     ))
     story.append(Spacer(1, 12))
@@ -73,8 +95,8 @@ def generate_underwriting_report(company_data: dict, premium_data: dict) -> byte
 
     story.append(Paragraph("Premium Recommendation", h2))
     prem = [
-        ["Base Premium",         f"Rs. {premium_data.get('base_premium', 0):,.0f}"],
-        ["Adjusted Premium",     f"Rs. {premium_data.get('adjusted_premium', 0):,.0f}"],
+        ["Base Premium",         _fmt(premium_data.get("base_premium", 0), rate, sym)],
+        ["Adjusted Premium",     _fmt(premium_data.get("adjusted_premium", 0), rate, sym)],
         ["Adjustment",           f"{premium_data.get('adjustment_pct', 0):+.2f}%"],
         ["Pricing Zone",         premium_data.get("zone", "—").title()],
     ]

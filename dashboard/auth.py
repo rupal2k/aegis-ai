@@ -27,8 +27,11 @@ DEMO_USERS = {
 
 def login_form():
     """Renders login form. Returns user dict if authenticated."""
-    st.markdown("### Aegis AI — Sign in")
-    st.caption("B2B Dynamic Group Insurance Underwriting Platform")
+    st.markdown(
+        "<p style='text-align:center;color:#6e6e73;font-size:15px;margin-bottom:24px;'>"
+        "Sign in to continue</p>",
+        unsafe_allow_html=True,
+    )
 
     with st.form("login_form"):
         email = st.text_input("Email", placeholder="underwriter@safenet.com")
