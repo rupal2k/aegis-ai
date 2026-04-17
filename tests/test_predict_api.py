@@ -1,6 +1,18 @@
 """Tests for the prediction API endpoints."""
+import pytest
 from fastapi.testclient import TestClient
 from ingestion.main import app
+
+def _db_available():
+    try:
+        import psycopg2
+        psycopg2.connect(host="localhost", dbname="aegis_db",
+                         user="aegis_user", password="aegis_pass", port=5432)
+        return True
+    except Exception:
+        return False
+
+requires_db = pytest.mark.skipif(not _db_available(), reason="PostgreSQL not available")
 
 client = TestClient(app)
 
@@ -48,6 +60,7 @@ def test_predict_employee_validates_bmi():
     r = client.post("/predict/employee", json=bad)
     assert r.status_code == 422
 
+@requires_db
 def test_predict_company_happy_path():
     r = client.get("/predict/company/COMP_001")
     assert r.status_code == 200
@@ -58,6 +71,7 @@ def test_predict_company_happy_path():
                  + body["high_risk_pct"] + body["critical_risk_pct"])
     assert 99.0 < total_pct < 101.0
 
+@requires_db
 def test_predict_company_unknown():
     r = client.get("/predict/company/COMP_999")
     assert r.status_code == 404
