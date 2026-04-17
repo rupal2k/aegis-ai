@@ -69,3 +69,80 @@ class IngestResponse(BaseModel):
     anonymized_id:   Optional[str] = None
     errors:          List[str] = []
     timestamp:       datetime
+
+
+class EmployeePredictionRequest(BaseModel):
+    """Features for a single employee prediction."""
+    age:          int   = Field(..., ge=18, le=70)
+    gender:       Literal["M","F","O"]
+    bmi:          float = Field(..., ge=10, le=60)
+    smoker:       bool  = False
+    diabetic:     bool  = False
+    hypertension: bool  = False
+    chronic_count:Optional[int]   = None
+    avg_daily_steps:   float = Field(..., ge=0, le=30000)
+    step_volatility:   float = Field(0, ge=0)
+    avg_resting_hr:    float = Field(..., ge=40, le=120)
+    hr_trend:          float = 0
+    avg_active_mins:   float = Field(30, ge=0, le=240)
+    avg_sleep_hours:   float = Field(7.0, ge=3, le=12)
+    avg_spo2:          float = Field(97.0, ge=85, le=100)
+    visit_count:       int   = Field(0, ge=0)
+    hospitalized_count:int   = Field(0, ge=0)
+
+
+class FeatureDriver(BaseModel):
+    feature:    str
+    value:      float
+    shap_value: float
+    direction:  str
+    explanation:Optional[str] = None
+
+
+class EmployeePredictionResponse(BaseModel):
+    predicted_loss_ratio: float
+    health_risk_score:    float
+    risk_band:            str
+    top_drivers:          List[FeatureDriver]
+
+
+class CompanyPredictionResponse(BaseModel):
+    company_id:        str
+    company_name:      str
+    employee_count:    int
+    mean_loss_ratio:   float
+    mean_hrs:          float
+    risk_band:         str
+    low_risk_pct:      float
+    moderate_risk_pct: float
+    high_risk_pct:     float
+    critical_risk_pct: float
+    top_risk_drivers:  List[dict]
+
+
+class PremiumRequest(BaseModel):
+    base_premium: float = Field(..., gt=0)
+    hrs:          float = Field(..., ge=0, le=100)
+
+
+class PremiumResponse(BaseModel):
+    base_premium:      float
+    adjusted_premium:  float
+    adjustment_pct:    float
+    zone:              str
+    recommendation:    str
+
+
+class WellnessROIRequest(BaseModel):
+    base_premium:               float = Field(..., gt=0)
+    current_hrs:                float = Field(..., ge=0, le=100)
+    projected_hrs_after_program:float = Field(..., ge=0, le=100)
+
+
+class WellnessROIResponse(BaseModel):
+    current_premium:   float
+    projected_premium: float
+    annual_savings:    float
+    hrs_improvement:   float
+    current_zone:      str
+    projected_zone:    str
