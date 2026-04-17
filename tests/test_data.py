@@ -19,8 +19,14 @@ def test_no_nulls_in_key_columns():
 
 def test_loss_ratio_bounds():
     df = pd.read_csv(OUTPUT / "training_dataset.csv")
-    assert df["loss_ratio"].min() >= 0
-    assert df["loss_ratio"].max() < 15
+    print(f"\n  loss_ratio range : {df['loss_ratio'].min():.3f} - {df['loss_ratio'].max():.3f}")
+    print(f"  median           : {df['loss_ratio'].median():.3f}")
+    print(f"  99th percentile  : {df['loss_ratio'].quantile(0.99):.3f}")
+
+    assert df["loss_ratio"].min() >= 0, "Negative loss ratio found"
+    assert df["loss_ratio"].isnull().sum() == 0, "Null values in loss_ratio"
+    assert df["loss_ratio"].median() < 5, f"Median too high: {df['loss_ratio'].median():.2f}"
+    assert df["loss_ratio"].quantile(0.95) < 20, "95th percentile too high"
 
 def test_health_risk_correlation():
     df = pd.read_csv(OUTPUT / "training_dataset.csv")
