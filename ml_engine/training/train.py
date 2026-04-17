@@ -48,8 +48,10 @@ def load_and_prepare():
     X, y, feature_names = get_feature_matrix(df)
     print(f"  {X.shape[1]} features prepared: {feature_names}")
 
+    # Stratified split on loss_ratio quartiles so test set is representative
+    y_strata = pd.qcut(y, q=4, labels=False, duplicates="drop")
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_STATE
+        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y_strata
     )
     return X_train, X_test, y_train, y_test, feature_names
 
