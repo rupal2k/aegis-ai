@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ingestion.routers import health, ingest, predict
+from ingestion.routers import health, ingest, predict, companies
 
 app = FastAPI(
     title="Aegis AI — Underwriting Platform API",
@@ -21,6 +21,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(ingest.router)
 app.include_router(predict.router)
+app.include_router(companies.router)
 
 
 @app.get("/")
@@ -36,6 +37,10 @@ def root():
                 "/predict/company/{company_id}",
                 "/predict/premium",
                 "/predict/wellness-roi",
+            ],
+            "companies": [
+                "/companies",
+                "/companies/{company_id}/employees",
             ],
         },
     }
