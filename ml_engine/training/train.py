@@ -33,7 +33,7 @@ MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
 mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment("aegis-underwriting")
 
-N_OPTUNA_TRIALS = 60
+N_OPTUNA_TRIALS = 5 if os.environ.get("AEGIS_CI_FAST") == "1" else 60
 RANDOM_STATE    = 42
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)

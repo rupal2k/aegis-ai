@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.git/
+.gitignore
+.env
+tests/
+*.md
+data/output/
+mlflow.db
+mlruns/
+.vscode/
+.idea/
+node_modules/
+*.log

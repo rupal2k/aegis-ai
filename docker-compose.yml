@@ -2,7 +2,8 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
+    container_name: aegis-db
     environment:
       POSTGRES_USER: aegis_user
       POSTGRES_PASSWORD: aegis_pass
@@ -11,13 +12,50 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis_user -d aegis_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.11.1
+    container_name: aegis-mlflow
     command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db
     ports:
       - "5000:5000"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: aegis-api
+    environment:
+      DATABASE_URL: postgresql://aegis_user:aegis_pass@db:5432/aegis_db
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      SECRET_KEY: aegis-super-secret-jwt-key
+      HASH_SALT: aegis_dev_salt_2024
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: aegis-dashboard
+    environment:
+      AEGIS_API_URL: http://api:8000
+      DATABASE_URL: postgresql://aegis_user:aegis_pass@db:5432/aegis_db
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
     restart: unless-stopped
 
 volumes:
