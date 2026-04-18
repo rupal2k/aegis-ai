@@ -17,10 +17,10 @@ COLOR_MAP = {
     "High":     "#ff3b30",
     "Critical": "#8e0000",
 }
-PLOT_BG  = "#ffffff"
-GRID_CLR = "#e5e5ea"
-FONT_CLR = "#1d1d1f"
-ACCENT   = "#0071e3"
+PLOT_BG  = "#1c1c1e"
+GRID_CLR = "#3a3a3c"
+FONT_CLR = "#f5f5f7"
+ACCENT   = "#0a84ff"
 
 
 def _chart_defaults():

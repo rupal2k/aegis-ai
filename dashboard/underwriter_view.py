@@ -17,10 +17,10 @@ COLOR_MAP = {
     "High":     "#ff3b30",
     "Critical": "#8e0000",
 }
-PLOT_BG   = "#ffffff"
-GRID_CLR  = "#e5e5ea"
-FONT_CLR  = "#1d1d1f"
-ACCENT    = "#0071e3"
+PLOT_BG   = "#1c1c1e"
+GRID_CLR  = "#3a3a3c"
+FONT_CLR  = "#f5f5f7"
+ACCENT    = "#0a84ff"
 
 
 def _chart_defaults():
@@ -152,12 +152,12 @@ def render():
             gauge={
                 "axis":  {"range": [0, 100], "tickcolor": FONT_CLR},
                 "bar":   {"color": ACCENT},
-                "bgcolor": "white",
+                "bgcolor": PLOT_BG,
                 "steps": [
-                    {"range": [0,  30],  "color": "#d4f4e2"},
-                    {"range": [30, 60],  "color": "#fff0cc"},
-                    {"range": [60, 80],  "color": "#ffd5d3"},
-                    {"range": [80, 100], "color": "#f5c0be"},
+                    {"range": [0,  30],  "color": "#1a3a2a"},
+                    {"range": [30, 60],  "color": "#3a2e0a"},
+                    {"range": [60, 80],  "color": "#3a1a18"},
+                    {"range": [80, 100], "color": "#2e0d0c"},
                 ],
             },
             title={"text": "Health Risk Score", "font": {"color": FONT_CLR, "size": 14}},

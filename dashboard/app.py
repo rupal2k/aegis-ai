@@ -15,39 +15,64 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Clean minimal styling — does not touch metric value/delta elements
 st.markdown("""
 <style>
 /* Page background */
-.stApp { background-color: #ffffff; }
+.stApp { background-color: #0d0d0f; }
 
 /* Sidebar */
 [data-testid="stSidebar"] {
-    background-color: #f5f5f7;
-    border-right: 1px solid #e0e0e5;
+    background-color: #1c1c1e;
+    border-right: 1px solid #3a3a3c;
 }
 
-/* Metric cards — border only, let Streamlit render values */
+/* Metric cards */
 [data-testid="stMetric"] {
-    background-color: #f5f5f7;
-    border: 1px solid #e0e0e5;
-    border-radius: 10px;
+    background-color: #1c1c1e;
+    border: 1px solid #3a3a3c;
+    border-radius: 12px;
     padding: 16px 20px;
 }
+[data-testid="stMetricValue"] {
+    color: #f5f5f7 !important;
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+}
+[data-testid="stMetricLabel"] {
+    color: #aeaeb2 !important;
+    font-size: 0.8rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+[data-testid="stMetricDelta"] { font-size: 0.85rem !important; }
 
 /* Tabs */
 [data-testid="stTabs"] button {
     font-size: 14px;
     font-weight: 500;
+    color: #aeaeb2;
+}
+[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #f5f5f7;
 }
 
 /* Divider */
-hr { border-color: #e0e0e5; }
+hr { border-color: #3a3a3c; }
 
 /* Headings */
-h1 { font-weight: 700; letter-spacing: -0.5px; color: #1d1d1f; }
-h2 { font-weight: 600; color: #1d1d1f; }
-h3 { font-weight: 600; color: #1d1d1f; }
+h1 { font-weight: 700; letter-spacing: -0.5px; color: #f5f5f7; }
+h2 { font-weight: 600; color: #f5f5f7; }
+h3 { font-weight: 600; color: #f5f5f7; }
+
+/* Dataframe */
+[data-testid="stDataFrame"] { border-radius: 10px; overflow: hidden; }
+
+/* Containers with border */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: #1c1c1e;
+    border-color: #3a3a3c !important;
+    border-radius: 10px;
+}
 </style>
 """, unsafe_allow_html=True)
 
