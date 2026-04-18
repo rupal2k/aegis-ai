@@ -2,7 +2,8 @@
 import httpx
 import streamlit as st
 
-API_BASE = "http://localhost:8000"
+import os
+API_BASE = os.environ.get("AEGIS_API_URL", "http://localhost:8000")
 
 
 def _get(path: str, **params):
