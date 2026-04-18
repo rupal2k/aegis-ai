@@ -9,6 +9,7 @@ from dashboard.api_client import (
 )
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.currency import fmt, fmt_crore, active_code, CURRENCIES
+import dashboard.upload_view as upload_view
 
 # Apple-style neutral palette
 COLOR_MAP = {
@@ -69,7 +70,9 @@ def render():
 
     st.divider()
 
-    tab1, tab2, tab3 = st.tabs(["Portfolio overview", "Company deep dive", "Risk distribution"])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Portfolio overview", "Company deep dive", "Risk distribution", "Upload dataset",
+    ])
 
     with tab1:
         st.subheader("All companies — ranked by risk")
@@ -243,3 +246,6 @@ def render():
                     "Avg HRS", min_value=0, max_value=100, format="%.1f"),
             },
         )
+
+    with tab4:
+        upload_view.render_tab()
