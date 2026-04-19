@@ -1,0 +1,72 @@
+{
+  "collapse-filter": true,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "file:\"Aegis AI Hub\" OR file:INDEX",
+      "color": {
+        "a": 1,
+        "rgb": 16732754
+      }
+    },
+    {
+      "query": "file:memory OR file:behaviour OR file:\"Claude Memory\"",
+      "color": {
+        "a": 1,
+        "rgb": 16757504
+      }
+    },
+    {
+      "query": "file:\"Phase Progress\" OR file:\"Bug Log\"",
+      "color": {
+        "a": 1,
+        "rgb": 5025616
+      }
+    },
+    {
+      "query": "file:\"Architecture Decisions\" OR file:\"Decisions & Rationale\"",
+      "color": {
+        "a": 1,
+        "rgb": 2201331
+      }
+    },
+    {
+      "query": "file:\"Data Generation\" OR file:\"ML Engine\" OR file:\"API Layer\" OR file:\"Dashboard Deep\" OR file:\"System End\"",
+      "color": {
+        "a": 1,
+        "rgb": 10233776
+      }
+    },
+    {
+      "query": "file:\"Free Deployment\"",
+      "color": {
+        "a": 1,
+        "rgb": 48340
+      }
+    },
+    {
+      "query": "file:\"Daily notes\"",
+      "color": {
+        "a": 1,
+        "rgb": 10395294
+      }
+    }
+  ],
+  "collapse-display": false,
+  "showArrow": false,
+  "textFadeMultiplier": -1.1,
+  "nodeSizeMultiplier": 1.12083333333333,
+  "lineSizeMultiplier": 1.4015625,
+  "collapse-forces": false,
+  "centerStrength": 0,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.5359795996225907,
+  "close": false
+}

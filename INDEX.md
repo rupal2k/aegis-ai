@@ -1,0 +1,86 @@
+# Aegis AI — Project Index
+
+**Last Updated**: 2026-04-18
+
+## 📍 Main Navigation
+
+### LLM Guidelines (Read First)
+- **[[../memory]]** — Master LLM guide: Karpathy principles + all project rules (START HERE FOR ANY AI SESSION)
+- **[[behaviour]]** — Aegis AI-specific quick-reference (subset of memory.md)
+
+### Project Management
+- **[[Aegis AI Hub]]** — Overview, status, metrics
+- **[[Phase Progress]]** — Detailed checklist for all 6 phases + post-capstone additions
+- **[[Bug Log]]** — 7 bugs, root causes, fixes, prevention
+- **[[Claude Memory]]** — Claude's persistent memory: user profile, feedback rules, project state
+- **[[Daily Notes/Daily notes]]** — Phase 5 dev journal
+
+### Deep Dives (from actual code)
+- **[[Data Generation & Pipeline]]** — How 5K employees + 60K telemetry rows were built
+- **[[ML Engine Architecture]]** — XGBoost, Optuna, SHAP, HRSScorer — full internals
+- **[[API Layer Architecture]]** — FastAPI endpoints, Pydantic validation, routing
+- **[[Dashboard Deep Dive]]** — Streamlit views, currency module, PDF generator
+- **[[System End-to-End Flow]]** — Full data journey from raw CSV to PDF download
+
+### Decision Documentation
+- **[[Decisions & Rationale]]** — 10 logical decisions with tradeoff analysis
+- **[[Architecture Decisions]]** — 15 ADRs (final design choices)
+
+### Deployment
+- **[[Aegis AI - Free Deployment Plan]]** — Neon + Render + Hugging Face Spaces (₹0/month)
+
+## 🚀 Status
+
+| Item | Status |
+|------|--------|
+| All 6 Phases | ✅ Complete |
+| Docker Stack | ✅ 4 services, one `docker-compose up -d` |
+| CI/CD | ✅ GitHub Actions (test + docker-build) |
+| Dashboard | ✅ Live (dark mode, multi-currency) |
+| Tests | ✅ 63/63 passing |
+| Bugs | ✅ All 7 resolved |
+
+## 📂 File Structure
+
+```
+C:\Rupalprojects\Rupal\                   ← vault root
+├── memory.md                             (master LLM guide — read first)
+└── Aegis AI\                             ← project notebook
+    ├── INDEX.md                          (this file — navigation)
+    ├── behaviour.md                      (Aegis AI-specific LLM rules)
+    ├── Aegis AI Hub.md                   (project overview + status)
+    ├── Phase Progress.md                 (phase checklists + dev logs)
+    ├── Bug Log.md                        (7 bugs, root causes, fixes)
+    ├── Claude Memory.md                  (Claude auto-memory — user profile, feedback, project state)
+    ├── Decisions & Rationale.md          (10 logical decisions)
+    ├── Architecture Decisions.md         (15 ADRs)
+    ├── Aegis AI - Free Deployment Plan.md (Neon + Render + HF Spaces deployment)
+    ├── System End-to-End Flow.md         (full data journey)
+    ├── Data Generation & Pipeline.md     (Phase 1 deep dive)
+    ├── ML Engine Architecture.md         (Phase 2 deep dive)
+    ├── API Layer Architecture.md         (Phase 3-4 deep dive)
+    ├── Dashboard Deep Dive.md            (Phase 5 deep dive)
+    └── Daily Notes\
+        └── Daily notes.md                (Phase 5 dev journal)
+```
+
+## 💡 Quick Tips
+
+1. **AI session starting?** Read **[[../memory]]** before touching any code or docs
+2. **New to the project?** Start with **[[Aegis AI Hub]]** for overview
+3. **Checking progress?** See **[[Phase Progress]]** — all 6 phases complete
+4. **Hit a bug?** Check **[[Bug Log]]** first — 7 pitfalls already documented
+5. **Making a design decision?** See **[[Decisions & Rationale]]** and **[[Architecture Decisions]]**
+6. **Updating the vault?** Follow the rules in **[[../memory]]** Part 4
+
+## 🔗 External Links
+
+- **Repository**: `c:\Rupalprojects\aegis-ai`
+- **API Server**: `http://localhost:8000` (when running)
+- **Dashboard**: `http://localhost:8501` (Docker or `streamlit run dashboard/app.py`)
+- **MLflow**: `http://localhost:5000` (Docker)
+- **GitHub**: `https://github.com/rupal2k/aegis-ai`
+
+---
+
+*This is a lightweight navigation index. Full content is in individual .md files.*
