@@ -3,7 +3,9 @@
 What Claude Code remembers about this project across sessions.  
 **Auto-memory files**: `C:\Users\Rupal\.claude\projects\c--Rupalprojects-aegis-ai\memory\`  
 **Rules, code patterns, constants**: [[../memory]]  
-**Last synced**: 2026-04-18
+**Vault root**: `C:\Rupalprojects\Obsidian Vault\Aegis AI`  
+**Vault on GitHub**: `https://github.com/rupal2k/aegis-ai` → branch `vault`  
+**Last synced**: 2026-04-20
 
 ---
 
@@ -56,7 +58,8 @@ Recording targets:
 
 ## Graph View Color Scheme
 
-Set in `.obsidian/graph.json` → `colorGroups`. **Do not overwrite when editing graph.json.**
+Set in `C:\Rupalprojects\Obsidian Vault\Aegis AI\.obsidian\graph.json` → `colorGroups`. **Do not overwrite when editing graph.json.**  
+⚠️ Obsidian may revert this file while the app is open — close the Graph View pane before editing, then reopen it to apply.
 
 | Tier | Color | Hex | Nodes |
 |------|-------|-----|-------|
@@ -66,9 +69,30 @@ Set in `.obsidian/graph.json` → `colorGroups`. **Do not overwrite when editing
 | 4 – Architecture docs | Blue | `#2196F3` | Architecture Decisions, Decisions & Rationale |
 | 5 – Deep dives | Purple | `#9C27B0` | all 5 deep-dive notes |
 | 6 – Deployment plan | Teal | `#00BCD4` | Free Deployment Plan |
-| 7 – Daily notes | Gray | `#9E9E9E` | Daily Notes folder |
+| 7 – Daily notes | Gray | `#9E9E9E` | Daily notes |
 
 Query format: `file:"Name" OR file:"Name"` with rgb as decimal integer `(r<<16)|(g<<8)|b`.
+
+---
+
+## Vault on GitHub
+
+The vault is tracked on a separate `vault` branch of the main repo.
+
+| Item | Value |
+|------|-------|
+| Repo | `https://github.com/rupal2k/aegis-ai` |
+| Branch | `vault` |
+| Excluded | `workspace.json` (too noisy) |
+| Included | All `.md` files + `.obsidian/graph.json` (preserves colors) |
+
+**To push vault updates:**
+```bash
+cd "C:/Rupalprojects/Obsidian Vault/Aegis AI"
+git add .
+git commit -m "vault: <description>"
+git push origin vault
+```
 
 ---
 
