@@ -5,7 +5,7 @@ What Claude Code remembers about this project across sessions.
 **Rules, code patterns, constants**: [[../memory]]  
 **Vault root**: `C:\Rupalprojects\Obsidian Vault\Aegis AI`  
 **Vault on GitHub**: `https://github.com/rupal2k/aegis-ai` → branch `vault`  
-**Last synced**: 2026-04-21
+**Last synced**: 2026-04-22
 
 ---
 
@@ -25,8 +25,8 @@ Rupal — building Aegis AI as a capstone project (AI-powered B2B group insuranc
 
 | Item | Value |
 |------|-------|
-| Status | All 6 phases ✅ + Upload Dataset tab + Security Hardening (post-capstone) |
-| Tests | 63+ passing (+ new RBAC tests) |
+| Status | All 6 phases ✅ + Upload Dataset tab + Security Hardening + Security Testing & Remediation (post-capstone) |
+| Tests | 88 passing (63 functional + 25 security) |
 | Dashboard tabs | 7 (4 underwriter + 3 HR manager) |
 | Bugs resolved | 7 (all fixed — see [[Bug Log]]) |
 | Docker services | 5 (db, mlflow, api, dashboard, nginx) |
@@ -34,6 +34,10 @@ Rupal — building Aegis AI as a capstone project (AI-powered B2B group insuranc
 | RBAC | `underwriter` = all companies; `hr_admin` = own company only |
 | TLS | nginx reverse proxy on ports 80/443 (self-signed dev cert) |
 | Docs | OpenAPI disabled in production (`ENV != development`) |
+| Rate limiting | `slowapi` 5 req/min on `/auth/token` |
+| Security headers | `X-Frame-Options`, `CSP`, `HSTS`, `X-Content-Type-Options`, `Referrer-Policy` |
+| Container user | Non-root `appuser` (UID 1000) in API container |
+| Known open issue | MEDIUM: `ingest.py` missing `require_company_access` — hr_admin can POST to other company's ingest endpoints |
 
 ---
 
