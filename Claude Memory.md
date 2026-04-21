@@ -5,7 +5,7 @@ What Claude Code remembers about this project across sessions.
 **Rules, code patterns, constants**: [[../memory]]  
 **Vault root**: `C:\Rupalprojects\Obsidian Vault\Aegis AI`  
 **Vault on GitHub**: `https://github.com/rupal2k/aegis-ai` → branch `vault`  
-**Last synced**: 2026-04-20
+**Last synced**: 2026-04-21
 
 ---
 
@@ -25,11 +25,15 @@ Rupal — building Aegis AI as a capstone project (AI-powered B2B group insuranc
 
 | Item | Value |
 |------|-------|
-| Status | All 6 phases ✅ + Upload Dataset tab (post-capstone) |
-| Tests | 63/63 passing (~74s, 6 files) |
+| Status | All 6 phases ✅ + Upload Dataset tab + Security Hardening (post-capstone) |
+| Tests | 63+ passing (+ new RBAC tests) |
 | Dashboard tabs | 7 (4 underwriter + 3 HR manager) |
 | Bugs resolved | 7 (all fixed — see [[Bug Log]]) |
-| Docker services | 4 (db, mlflow, api, dashboard) |
+| Docker services | 5 (db, mlflow, api, dashboard, nginx) |
+| Auth | JWT bearer tokens — `/auth/token` endpoint, bcrypt in `config/users.json` |
+| RBAC | `underwriter` = all companies; `hr_admin` = own company only |
+| TLS | nginx reverse proxy on ports 80/443 (self-signed dev cert) |
+| Docs | OpenAPI disabled in production (`ENV != development`) |
 
 ---
 

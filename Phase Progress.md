@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
-**Last Updated**: 2026-04-18  
-**Overall Status**: Phase 6 ✅ Complete — All phases done
+**Last Updated**: 2026-04-21  
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅
 
 ---
 
@@ -364,6 +364,78 @@ smoker, diabetic, hypertension, job_category (desk/field/manual)
 
 ---
 
+### Security Hardening — HIPAA & SOC 2 (2026-04-21)
+
+**Status**: ✅ Complete  
+**Commit**: `2aa72ed`
+
+#### What Was Fixed
+
+A full HIPAA + SOC 2 audit identified 5 critical and 6 high-severity issues. All 11 were addressed in one commit.
+
+#### Critical Fixes (C-1 → C-5)
+
+| Fix | What Changed |
+|-----|-------------|
+| **C-1 JWT Auth** | `ingestion/auth/` package created — `jwt.py`, `users.py`, `dependencies.py`. All API endpoints now require `Authorization: Bearer <token>`. `/auth/token` login endpoint added. |
+| **C-2 Credentials** | `docker-compose.yml` now uses `${VAR}` references only. Hardcoded fallbacks removed from `database.py` and `scripts/bootstrap.py`. `.env` updated with rotation warnings. |
+| **C-3 TLS / nginx** | `nginx/` service added — self-signed cert generated at build time (prod: mount real certs). HTTP → HTTPS redirect. Ports 80 + 443 only exposed externally. |
+| **C-4 Dashboard auth** | `dashboard/auth.py` rewritten — passwords verified via `POST /auth/token` (bcrypt on API side). `config/users.json` stores bcrypt hashes. Demo credentials block removed from UI. |
+| **C-5 Audit logging** | `aegis.audit` logger added to all PHI-touching endpoints — logs user, company, action, record count on every access. |
+
+#### High Fixes (H-1 → H-5)
+
+| Fix | What Changed |
+|-----|-------------|
+| **H-1 CORS** | `allow_origins=["*"]` replaced with `ALLOWED_ORIGINS` env var (defaults to `localhost:8501`). |
+| **H-2 RBAC** | `require_company_access` dependency — `underwriter` sees all companies, `hr_admin` sees only their own `company_id`. Returns 403 otherwise. |
+| **H-3 API docs** | `docs_url=None, redoc_url=None, openapi_url=None` in production (`ENV != development`). |
+| **H-4 CI security** | `security` job added to CI — runs `bandit` SAST + `pip-audit` CVE scan before tests run. |
+| **H-5 CI secrets** | `echo "... >> $GITHUB_ENV"` replaced with `${{ secrets.X }}` references. Credentials no longer appear in CI logs. |
+
+#### New Files
+
+```
+ingestion/auth/__init__.py
+ingestion/auth/jwt.py          — create_access_token, decode_token
+ingestion/auth/users.py        — bcrypt-based user store (reads config/users.json)
+ingestion/auth/dependencies.py — get_current_user, require_underwriter, require_company_access
+ingestion/routers/auth_router.py — POST /auth/token
+config/users.json              — bcrypt-hashed demo user records
+nginx/nginx.conf               — TLS reverse proxy config
+nginx/Dockerfile               — self-signed cert generation + nginx image
+```
+
+#### Modified Files
+
+```
+ingestion/main.py              — auth router, CORS fix, docs gating
+ingestion/database.py          — removed hardcoded fallback credential
+ingestion/routers/ingest.py    — auth dep + audit logging + error message redaction
+ingestion/routers/predict.py   — auth dep + audit logging
+ingestion/routers/companies.py — auth dep + RBAC + audit logging
+dashboard/auth.py              — bcrypt flow, session timeout (30min), JWT decode
+dashboard/api_client.py        — passes Authorization header on every request
+docker-compose.yml             — env var refs, mlflow volume, nginx service
+.env                           — rotation warnings added
+.github/workflows/ci.yml       — security scan job, secrets fix, nginx build
+scripts/bootstrap.py           — removed hardcoded fallback credential
+tests/test_dashboard.py        — updated for auth flow, new RBAC tests
+tests/test_predict_api.py      — uses DATABASE_URL env var
+```
+
+#### What's Still Medium / Low Priority (not yet implemented)
+
+- M-1: Rate limiting (`slowapi`)
+- M-2: MLflow authentication
+- M-3: HASH_SALT strength enforcement at startup
+- M-4: Model artifact checksum verification
+- L-1: Docker network segmentation
+- L-4: Non-root Dockerfile user
+- L-5: Pinned image digests
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -375,8 +447,9 @@ smoker, diabetic, hypertension, job_category (desk/field/manual)
 | 5 | ✅ Complete | ~8h | 20/20 ✅ | 7 |
 | **6** | **✅ Complete** | **~5h** | **63/63 ✅** | **3** |
 | Post-capstone | ✅ Upload tab | ~1h | — | 1 |
+| Post-capstone | ✅ Security hardening | ~3h | — | 1 |
 
-**Total Effort to Date**: ~25 hours  
-**Total Commits**: 18  
-**Total Tests**: 63/63 passing
+**Total Effort to Date**: ~28 hours  
+**Total Commits**: 20  
+**Total Tests**: 63 passing (+ new RBAC tests in test_dashboard.py)
 
