@@ -1,0 +1,403 @@
+{
+  "report_metadata": {
+    "title": "Aegis AI Security Test Report",
+    "date_generated": "2026-04-22",
+    "test_framework": "pytest",
+    "total_tests": 25,
+    "passed": 17,
+    "failed": 7,
+    "skipped": 1,
+    "pass_rate_percent": 68,
+    "overall_risk_level": "MEDIUM-HIGH"
+  },
+  "critical_findings": [
+    {
+      "id": "CRIT-001",
+      "title": "Authentication Endpoint Non-Functional",
+      "severity": "CRITICAL",
+      "description": "The /auth/token endpoint returns 404 Not Found instead of processing authentication requests",
+      "impact": "All authentication and authorization is broken. No users can obtain JWT tokens.",
+      "status": "ACTIVE",
+      "recommendation": "Debug auth router registration. Verify endpoint is included in FastAPI app.include_router()"
+    },
+    {
+      "id": "CRIT-002", 
+      "title": "Server Version Information Leakage",
+      "severity": "HIGH",
+      "description": "Uvicorn server header exposes version information in HTTP responses",
+      "impact": "Attackers can identify specific versions and target known vulnerabilities",
+      "status": "ACTIVE",
+      "recommendation": "Add middleware to remove 'Server' header from all responses"
+    },
+    {
+      "id": "CRIT-003",
+      "title": "Database Configuration Error",
+      "severity": "MEDIUM",
+      "description": "DATABASE_URL environment variable not set when running tests outside Docker",
+      "impact": "Local testing and CI/CD pipelines may fail",
+      "status": "ACTIVE",
+      "recommendation": "Ensure .env file is properly loaded before running tests"
+    }
+  ],
+  "test_results": {
+    "authentication_security": {
+      "category": "Authentication Security Tests",
+      "total": 6,
+      "passed": 1,
+      "failed": 5,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "test_invalid_credentials_rejected",
+          "status": "FAILED",
+          "expected": 401,
+          "actual": 404,
+          "reason": "Authentication endpoint returns 404 Not Found"
+        },
+        {
+          "name": "test_missing_credentials_rejected",
+          "status": "FAILED",
+          "expected": "400/422/401",
+          "actual": 404,
+          "reason": "Authentication endpoint not found"
+        },
+        {
+          "name": "test_sql_injection_in_username",
+          "status": "FAILED",
+          "expected": 401,
+          "actual": 404,
+          "reason": "Cannot test SQL injection with broken auth endpoint"
+        },
+        {
+          "name": "test_expired_token_rejected",
+          "status": "FAILED",
+          "expected": "401/422",
+          "actual": 405,
+          "reason": "Wrong HTTP method (trying GET instead of POST on predict endpoint)"
+        },
+        {
+          "name": "test_malformed_token_rejected",
+          "status": "PASSED",
+          "expected": 200,
+          "actual": 200,
+          "reason": "Health endpoint correctly doesn't require auth"
+        },
+        {
+          "name": "test_missing_token_on_protected_endpoint",
+          "status": "FAILED",
+          "expected": 401,
+          "actual": 422,
+          "reason": "Protected endpoint returns validation error instead of auth error"
+        }
+      ]
+    },
+    "authorization_security": {
+      "category": "Authorization and Access Control",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "test_unauthorized_route_access",
+          "status": "PASSED",
+          "description": "Unauthenticated access to /companies handled correctly"
+        },
+        {
+          "name": "test_invalid_role_access",
+          "status": "PASSED",
+          "description": "Invalid role in token handled properly"
+        }
+      ]
+    },
+    "security_headers": {
+      "category": "Security Headers",
+      "total": 3,
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "test_cors_headers_present",
+          "status": "PASSED",
+          "description": "CORS headers are properly configured"
+        },
+        {
+          "name": "test_content_type_header_set",
+          "status": "PASSED",
+          "description": "Content-Type header is set correctly"
+        },
+        {
+          "name": "test_no_server_header_leakage",
+          "status": "FAILED",
+          "issue": "Server header exposes 'uvicorn'",
+          "recommendation": "Remove server header or mask it"
+        }
+      ]
+    },
+    "input_validation": {
+      "category": "Input Validation and Injection Tests",
+      "total": 7,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 1,
+      "tests": [
+        {
+          "name": "test_sql_injection_in_company_id",
+          "status": "SKIPPED",
+          "reason": "Authentication endpoint not working"
+        },
+        {
+          "name": "test_xss_in_json_payload",
+          "status": "PASSED",
+          "description": "XSS payloads properly rejected"
+        },
+        {
+          "name": "test_oversized_payload_rejected",
+          "status": "PASSED",
+          "description": "Large payloads properly handled"
+        },
+        {
+          "name": "test_invalid_json_rejected",
+          "status": "PASSED",
+          "description": "Invalid JSON returns 400/422"
+        },
+        {
+          "name": "test_negative_age_rejected",
+          "status": "PASSED",
+          "description": "Negative values properly validated"
+        },
+        {
+          "name": "test_extreme_bmi_rejected",
+          "status": "PASSED",
+          "description": "Extreme values properly rejected"
+        }
+      ]
+    },
+    "database_security": {
+      "category": "Database Security",
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "test_database_connection_string_secure",
+          "status": "FAILED",
+          "reason": "DATABASE_URL not available outside Docker environment"
+        },
+        {
+          "name": "test_db_health_endpoint_safe",
+          "status": "PASSED",
+          "description": "Database health endpoint doesn't leak sensitive info"
+        }
+      ]
+    },
+    "rate_limiting": {
+      "category": "Rate Limiting and DOS Protection",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "test_health_endpoint_available",
+          "status": "PASSED",
+          "description": "Health endpoint available under repeated requests"
+        },
+        {
+          "name": "test_database_health_available",
+          "status": "PASSED",
+          "description": "Database health endpoint remains available"
+        }
+      ]
+    },
+    "common_vulnerabilities": {
+      "category": "Common Web Vulnerabilities",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "test_path_traversal_protection",
+          "status": "PASSED",
+          "description": "Path traversal attempts properly blocked"
+        },
+        {
+          "name": "test_method_not_allowed",
+          "status": "PASSED",
+          "description": "Unsupported HTTP methods properly rejected"
+        },
+        {
+          "name": "test_options_request_safe",
+          "status": "PASSED",
+          "description": "OPTIONS requests don't expose sensitive info"
+        }
+      ]
+    }
+  },
+  "security_posture_summary": {
+    "authentication": {
+      "status": "BROKEN",
+      "score": 0,
+      "notes": "Authentication endpoint not functional"
+    },
+    "authorization": {
+      "status": "GOOD",
+      "score": 8,
+      "notes": "Role-based access control appears to be implemented correctly"
+    },
+    "input_validation": {
+      "status": "GOOD",
+      "score": 8,
+      "notes": "Input validation is comprehensive and effective"
+    },
+    "data_protection": {
+      "status": "FAIR",
+      "score": 6,
+      "notes": "No SSL/TLS for database in development; parameterized queries used"
+    },
+    "api_security": {
+      "status": "FAIR",
+      "score": 5,
+      "notes": "Missing rate limiting; server version exposed"
+    },
+    "infrastructure": {
+      "status": "FAIR",
+      "score": 6,
+      "notes": "Docker uses root user; database port exposed to all interfaces"
+    }
+  },
+  "dependency_audit": {
+    "total_packages": 36,
+    "critical_vulnerabilities": 0,
+    "high_vulnerabilities": 0,
+    "medium_vulnerabilities": 1,
+    "low_vulnerabilities": 0,
+    "packages_requiring_updates": [
+      {
+        "name": "python-jose",
+        "current_version": "3.5.0",
+        "latest_version": "3.6.0",
+        "severity": "LOW",
+        "reason": "Minor version behind"
+      }
+    ],
+    "recommended_security_packages": [
+      {
+        "name": "slowapi",
+        "purpose": "Rate limiting",
+        "status": "NOT INSTALLED"
+      },
+      {
+        "name": "pip-audit",
+        "purpose": "Dependency vulnerability scanning",
+        "status": "NOT INSTALLED"
+      }
+    ]
+  },
+  "dockerfile_analysis": {
+    "base_image": "python:3.11-slim",
+    "image_rating": "GOOD",
+    "issues": [
+      {
+        "severity": "MEDIUM",
+        "issue": "Running as root user",
+        "recommendation": "Add USER directive to run as non-root"
+      },
+      {
+        "severity": "LOW",
+        "issue": "No security scanning in build process",
+        "recommendation": "Add Trivy or similar scanning to CI/CD"
+      }
+    ],
+    "strengths": [
+      "Using slim image variant (smaller attack surface)",
+      "Dependencies are pinned to specific versions",
+      "Multi-stage build patterns not used (could be optimized)",
+      "Clean up package manager cache"
+    ]
+  },
+  "docker_compose_analysis": {
+    "issues": [
+      {
+        "severity": "HIGH",
+        "service": "db",
+        "issue": "Database port exposed to 0.0.0.0 (all interfaces)",
+        "recommendation": "Change to 127.0.0.1:5432:5432"
+      },
+      {
+        "severity": "MEDIUM",
+        "service": "all",
+        "issue": "Secrets visible in environment variable configuration",
+        "recommendation": "Use .env file with git ignore"
+      }
+    ],
+    "strengths": [
+      "Environment variables use ${VAR} substitution",
+      "Services have proper depends_on health checks",
+      "Restart policies configured appropriately"
+    ]
+  },
+  "recommendations": {
+    "immediate": [
+      {
+        "priority": 1,
+        "task": "Fix authentication endpoint - debug /auth/token 404 error",
+        "estimated_time": "30-60 minutes",
+        "risk_if_not_fixed": "CRITICAL",
+        "action_items": [
+          "Check if auth_router is properly imported in main.py",
+          "Verify router.prefix is correct in auth_router.py",
+          "Test locally: python -c \"from ingestion.routers.auth_router import router; print(router.routes)\"",
+          "Check Docker logs: docker logs aegis-api"
+        ]
+      },
+      {
+        "priority": 2,
+        "task": "Add security headers middleware",
+        "estimated_time": "15 minutes",
+        "risk_if_not_fixed": "MEDIUM",
+        "action_items": [
+          "Remove 'Server' header from responses",
+          "Add X-Frame-Options, X-Content-Type-Options headers",
+          "Add Strict-Transport-Security for HTTPS"
+        ]
+      },
+      {
+        "priority": 3,
+        "task": "Implement rate limiting",
+        "estimated_time": "45 minutes",
+        "risk_if_not_fixed": "MEDIUM",
+        "action_items": [
+          "Install slowapi: pip install slowapi",
+          "Add rate limiting to /auth/token endpoint (5 requests/minute)",
+          "Add rate limiting to predict endpoints"
+        ]
+      }
+    ],
+    "short_term": [
+      "Add refresh token mechanism",
+      "Implement token revocation/blacklist",
+      "Add comprehensive audit logging",
+      "Enable database SSL/TLS in production",
+      "Add non-root user to Docker container",
+      "Restrict database port to localhost"
+    ],
+    "long_term": [
+      "Implement Web Application Firewall (WAF)",
+      "Add security scanning to CI/CD pipeline",
+      "Conduct professional penetration testing",
+      "Implement secrets management (Vault/AWS Secrets Manager)",
+      "Add security training for development team"
+    ]
+  },
+  "compliance_status": {
+    "owasp_top_10": "PARTIAL",
+    "gdpr": "NEEDS_REVIEW",
+    "soc_2": "NOT_ASSESSED",
+    "hipaa": "NOT_APPLICABLE",
+    "pci_dss": "NOT_APPLICABLE"
+  }
+}
