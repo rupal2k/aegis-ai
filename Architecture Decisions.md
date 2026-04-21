@@ -1,6 +1,6 @@
 # Architecture Decisions — Aegis AI
 
-**Last Updated**: 2026-04-18  
+**Last Updated**: 2026-04-22  
 **Document Type**: Architecture Decision Record (ADR)
 
 ---
@@ -331,21 +331,89 @@ Annual Savings = Current Premium - Projected Premium
 
 ---
 
-## ADR-015: Authentication (Demo Phase)
+## ADR-015: Authentication — JWT Bearer Tokens
 
-**Decision**: Session-based auth with demo users (no database).
+**Decision**: Replace session-based demo auth with JWT authentication backed by bcrypt user store.
 
 **Rationale**:
-- Fast iteration during development
-- No infrastructure complexity
+- HIPAA/SOC 2 compliance requires authentication on all PHI-touching endpoints
+- JWT is stateless — no server-side session storage needed
+- bcrypt password hashing (cost 12) prevents credential leakage from user store
+- `config/users.json` stores pre-hashed passwords — version-controlled, simple to manage for demo scale
 
-**Future Upgrade Path**:
-- OAuth 2.0 (Google, Microsoft, Okta)
-- SAML 2.0 (enterprise)
-- Database-backed user table + JWT tokens
+**Implementation**:
+- `ingestion/auth/jwt.py` — `create_access_token()` / `decode_token()` (HS256, 8h expiry)
+- `ingestion/auth/users.py` — bcrypt verification against `config/users.json`
+- `ingestion/auth/dependencies.py` — `get_current_user`, `require_company_access` FastAPI dependencies
+- `ingestion/routers/auth_router.py` — `POST /auth/token` login endpoint
+- `dashboard/auth.py` — calls `/auth/token`, stores JWT in `st.session_state`, 30-min idle timeout
 
-**Implementation**: `dashboard/auth.py`  
-**Demo Users**: 3 hardcoded users in code (underwriter + 2 HR admins)
+**Demo Users** (passwords bcrypt-hashed at cost 12, all demo123):
+```
+underwriter@safenet.com  → role: underwriter (sees all companies)
+hr@technova.com          → role: hr_admin (COMP_001 only)
+hr@bharatsteel.com       → role: hr_admin (COMP_002 only)
+```
+
+**Known Gap**: RBAC enforced on `/predict/*` and `/companies/*` but missing on `/ingest/*` endpoints — hr_admin can ingest data for other companies.
+
+**Future Upgrade Path**: OAuth 2.0 / SAML 2.0 (Okta, Azure AD), database-backed user table.
+
+---
+
+## ADR-016: Rate Limiting via slowapi
+
+**Decision**: Apply per-IP rate limiting on the `/auth/token` endpoint using `slowapi`.
+
+**Rationale**:
+- Prevents brute-force credential attacks without requiring infrastructure-level WAF
+- `slowapi` wraps FastAPI transparently — minimal code change
+- 5 requests/minute per IP is standard for login endpoints
+
+**Implementation**: `ingestion/main.py` (Limiter setup), `ingestion/routers/auth_router.py` (`@limiter.limit("5/minute")`)
+
+**Tradeoffs**:
+- ✅ Simple, zero infra, works in Docker
+- ❌ In-memory counter resets on restart (not distributed — fine for single-node demo)
+- ❌ Bypassable via IP rotation (acceptable for demo, upgrade to Redis-backed for prod)
+
+---
+
+## ADR-017: Security Headers Middleware + Server Header Suppression
+
+**Decision**: Add ASGI middleware to inject security response headers on every response; suppress Uvicorn's `Server` header.
+
+**Headers Added**:
+```
+X-Frame-Options: DENY                       (clickjacking protection)
+X-Content-Type-Options: nosniff             (MIME sniffing protection)
+X-XSS-Protection: 1; mode=block             (legacy XSS filter)
+Strict-Transport-Security: max-age=31536000 (HSTS — HTTPS enforcement)
+Content-Security-Policy: default-src 'self' (CSP)
+Referrer-Policy: strict-origin-when-cross-origin
+Server: AegisAI                             (replaces Uvicorn version string)
+```
+
+**Server Header**: Uvicorn injects its own header at the ASGI layer before middleware runs. Fixed by adding `--no-server-header` to the uvicorn CLI in `scripts/entrypoint.sh`.
+
+**Implementation**: `ingestion/main.py` (`add_security_headers` middleware), `scripts/entrypoint.sh`
+
+---
+
+## ADR-018: Non-Root Container User
+
+**Decision**: Run the API container as a non-root `appuser` (UID 1000).
+
+**Rationale**:
+- Container processes running as root can escalate to host root if container escape occurs
+- Industry standard: all production containers should run as non-root
+- Required by SOC 2 CC6.6 (least privilege)
+
+**Implementation**: `Dockerfile.api` — `RUN useradd -m -u 1000 appuser` + `RUN chown -R appuser:appuser /app` + `USER appuser`
+
+**Tradeoffs**:
+- ✅ Significantly reduces blast radius of container compromise
+- ❌ File permissions must be set explicitly (chown before USER switch)
 
 ---
 
@@ -360,12 +428,15 @@ Annual Savings = Current Premium - Projected Premium
 | 005 | Synthetic data | Privacy, reproducibility | ✅ Implemented |
 | 006 | Streamlit caching | Performance | ✅ Implemented |
 | 007 | ReportLab PDF | Deterministic, currency-aware | ✅ Implemented |
-| 008 | Role-based RBAC | Simple access control | ✅ Implemented (demo) |
+| 008 | Role-based RBAC | Simple access control | ✅ Implemented |
 | 009 | Static FX rates | Simplicity | ✅ Implemented |
 | 010 | Percentile risk binning | Adaptive, fair | ✅ Implemented |
 | 011 | Linear premium adjustment | Transparency | ✅ Implemented |
 | 012 | Zone pricing | Market-realistic | ✅ Implemented |
 | 013 | Automated recommendations | Consistency | ✅ Implemented |
 | 014 | Wellness ROI simulator | HR decision support | ✅ Implemented |
-| 015 | Session-based auth (demo) | Fast iteration | ✅ Implemented (temp) |
+| 015 | JWT bearer auth + bcrypt | HIPAA/SOC2 compliance | ✅ Implemented |
+| 016 | Rate limiting (slowapi) | Brute-force protection | ✅ Implemented |
+| 017 | Security headers middleware | OWASP hardening | ✅ Implemented |
+| 018 | Non-root container user | Least privilege | ✅ Implemented |
 

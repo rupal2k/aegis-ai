@@ -1,6 +1,6 @@
 # Aegis AI — Project Index
 
-**Last Updated**: 2026-04-18
+**Last Updated**: 2026-04-22
 
 ## 📍 Main Navigation
 
@@ -11,9 +11,12 @@
 ### Project Management
 - **[[Aegis AI Hub]]** — Overview, status, metrics
 - **[[Phase Progress]]** — Detailed checklist for all 6 phases + post-capstone additions
-- **[[Bug Log]]** — 7 bugs, root causes, fixes, prevention
+- **[[Bug Log]]** — 9 bugs, root causes, fixes, prevention
 - **[[Claude Memory]]** — Claude's persistent memory: user profile, feedback rules, project state
 - **[[Daily Notes/Daily notes]]** — Phase 5 dev journal
+
+### Security
+- **[[Security Tests/SECURITY_REPORT]]** — Full 25-test security audit report (2026-04-22, 25/25 passing)
 
 ### Deep Dives (from actual code)
 - **[[Data Generation & Pipeline]]** — How 5K employees + 60K telemetry rows were built
@@ -34,11 +37,13 @@
 | Item | Status |
 |------|--------|
 | All 6 Phases | ✅ Complete |
-| Docker Stack | ✅ 4 services, one `docker-compose up -d` |
-| CI/CD | ✅ GitHub Actions (test + docker-build) |
+| Docker Stack | ✅ 5 services (+ nginx TLS), one `docker-compose up -d` |
+| CI/CD | ✅ GitHub Actions (security scan → test → docker-build) |
 | Dashboard | ✅ Live (dark mode, multi-currency) |
-| Tests | ✅ 63/63 passing |
-| Bugs | ✅ All 7 resolved |
+| Tests | ✅ 88/88 passing (63 functional + 25 security) |
+| Bugs | ✅ All 9 resolved |
+| Auth | ✅ JWT + bcrypt, 30-min timeout |
+| Security | ✅ HSTS, CSP, rate limiting, non-root container |
 
 ## 📂 File Structure
 
@@ -53,15 +58,20 @@ C:\Rupalprojects\Rupal\                   ← vault root
     ├── Bug Log.md                        (7 bugs, root causes, fixes)
     ├── Claude Memory.md                  (Claude auto-memory — user profile, feedback, project state)
     ├── Decisions & Rationale.md          (10 logical decisions)
-    ├── Architecture Decisions.md         (15 ADRs)
+    ├── Architecture Decisions.md         (18 ADRs — includes JWT, rate limiting, security headers)
     ├── Aegis AI - Free Deployment Plan.md (Neon + Render + HF Spaces deployment)
     ├── System End-to-End Flow.md         (full data journey)
     ├── Data Generation & Pipeline.md     (Phase 1 deep dive)
     ├── ML Engine Architecture.md         (Phase 2 deep dive)
     ├── API Layer Architecture.md         (Phase 3-4 deep dive)
     ├── Dashboard Deep Dive.md            (Phase 5 deep dive)
-    └── Daily Notes\
-        └── Daily notes.md                (Phase 5 dev journal)
+    ├── Daily Notes\
+    │   └── Daily notes.md                (Phase 5 dev journal)
+    └── Security Tests\
+        ├── SECURITY_REPORT.md            (25-test audit report, 2026-04-22)
+        ├── security_report.json          (machine-readable results)
+        ├── SECURITY_TEST_SUMMARY.txt     (quick summary)
+        └── security_tests.py             (25 automated security tests)
 ```
 
 ## 💡 Quick Tips

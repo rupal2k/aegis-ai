@@ -1,7 +1,7 @@
 # Bug Log — Aegis AI
 
-**Last Updated**: 2026-04-18  
-**Total Bugs Logged**: 7  
+**Last Updated**: 2026-04-22  
+**Total Bugs Logged**: 9  
 **Status**: All resolved ✅
 
 ---
@@ -342,14 +342,83 @@ ACCENT   = "#0a84ff"   # iOS blue
 
 ---
 
+## BUG-008: `/auth/token` Returns 404 — Stale Docker Image
+
+**Severity**: 🔴 High (auth system completely broken)  
+**Date Found**: 2026-04-22  
+**Date Fixed**: 2026-04-22  
+**Status**: ✅ Resolved
+
+### Symptom
+`POST /auth/token` returned 404. Security test suite passed only 17/25 tests. All auth-dependent tests cascaded to fail.
+
+### Root Cause
+The running `aegis-api` container was built from a cached Docker image that predated the `ingestion/auth/` and `ingestion/routers/auth_router.py` modules. Even though these files existed in the repo, Docker had not been rebuilt since they were added — so the container's `ingestion/` copy was missing them entirely.
+
+Confirmed via:
+```bash
+docker exec aegis-api python3 -c "from ingestion.routers.auth_router import router"
+# ModuleNotFoundError: No module named 'ingestion.routers.auth_router'
+```
+
+Secondary issue: `config/users.json` (the bcrypt user store) was also missing from the image — `Dockerfile.api` had no `COPY config/ ./config/` line.
+
+### Solution
+1. Added `COPY config/ ./config/` to `Dockerfile.api`
+2. Rebuilt the image: `docker compose build api`
+3. Restarted: `docker compose up -d api`
+
+### Prevention
+- After adding new top-level source directories (`auth/`, `config/`, etc.), always verify they are `COPY`'d in the Dockerfile
+- Add a startup check: `docker exec <api> python -c "from ingestion.routers.auth_router import router; print('OK')"`
+
+---
+
+## BUG-009: `DATABASE_URL=localhost` Fails Inside Container
+
+**Severity**: 🔴 High (API cannot start — bootstrap times out)  
+**Date Found**: 2026-04-22  
+**Date Fixed**: 2026-04-22  
+**Status**: ✅ Resolved
+
+### Symptom
+After container rebuild, API container crashed at startup:
+```
+RuntimeError: Database not reachable after 60s
+```
+`docker ps` showed `aegis-db` healthy, but `aegis-api` failed to connect.
+
+### Root Cause
+`.env` had `DATABASE_URL=postgresql://aegis_user:aegis_pass@localhost:5432/aegis_db`.  
+Inside the API container, `localhost` resolves to the container itself — not the PostgreSQL container. The correct hostname is `db` (the Docker Compose service name), which Docker's internal DNS resolves to the database container's IP.
+
+This is the same class of bug as BUG-006 (dashboard → API), but for the API → DB connection.
+
+### Solution
+Changed `.env`:
+```
+# Before:
+DATABASE_URL=postgresql://aegis_user:aegis_pass@localhost:5432/aegis_db
+
+# After:
+DATABASE_URL=postgresql://aegis_user:aegis_pass@db:5432/aegis_db
+```
+
+### Prevention
+- In multi-container Docker Compose stacks, **always use service names** as hostnames for inter-container connections
+- `localhost` only works if services share the host network (e.g., local dev without Docker, or `network_mode: host`)
+- Pattern: `postgresql://<user>:<pass>@<service-name>:<internal-port>/<db>`
+
+---
+
 ## Summary Statistics
 
 | Severity | Count | Avg. Fix Time | Impact |
 |----------|-------|---------------|--------|
-| 🔴 High | 3 | ~25 min | Blocks dev / service |
+| 🔴 High | 5 | ~25 min | Blocks dev / service |
 | 🟠 Medium | 3 | ~20 min | UX broken |
 | 🟡 Low | 1 | ~5 min | Cosmetic |
-| **Total** | **7** | **~120 min** | **All resolved** |
+| **Total** | **9** | **~130 min** | **All resolved** |
 
 ### Timeline
 
@@ -361,8 +430,10 @@ ACCENT   = "#0a84ff"   # iOS blue
 2026-04-17 10:25 — BUG-005: Unicode in Bash → Replace → with -> (5 min)
 2026-04-18 14:00 — BUG-006: Docker localhost vs container DNS → AEGIS_API_URL env var (10 min)
 2026-04-18 14:15 — BUG-007: Dark mode metric text invisible → explicit stMetricValue CSS + full dark theme (20 min)
+2026-04-22 01:00 — BUG-008: /auth/token 404, stale Docker image → add COPY config/, rebuild (20 min)
+2026-04-22 01:20 — BUG-009: DATABASE_URL localhost fails in container → change to db:5432 (5 min)
 
-Total: ~110 min across 2 days, all resolved ✅
+Total: ~135 min across 3 days, all resolved ✅
 ```
 
 ---

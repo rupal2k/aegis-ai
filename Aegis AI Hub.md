@@ -1,8 +1,8 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
-**Last Updated**: 2026-04-18
+**Last Updated**: 2026-04-22
 
 ---
 
@@ -86,13 +86,15 @@ All 7 bugs resolved ✅ — full root causes, code snippets, and prevention rule
 
 ## 📊 Key Metrics
 
-- **Test Coverage**: 63/63 automated tests passing across 6 test files (74s)
-- **API Endpoints**: 11 live (list companies, get employees, predict, premium calc, wellness ROI, etc.)
+- **Test Coverage**: 88/88 automated tests passing (63 functional + 25 security)
+- **API Endpoints**: 12 live (+ `/auth/token` login)
 - **Dashboard Tabs**: 7 total (4 underwriter + 3 HR manager)
 - **Currencies Supported**: 10 (all dynamic, no hardcoding)
 - **Risk Bands**: 4 (Low, Moderate, High, Critical)
-- **Docker Services**: 4 (db, mlflow, api, dashboard) — one `docker-compose up -d`
-- **CI Pipeline**: GitHub Actions — test job + docker-build job on every push to main
+- **Docker Services**: 5 (db, mlflow, api, dashboard, nginx) — one `docker-compose up -d`
+- **CI Pipeline**: GitHub Actions — security scan (bandit + pip-audit) → test → docker-build
+- **Auth**: JWT bearer tokens, bcrypt passwords, 30-min session timeout
+- **Security**: HSTS, CSP, X-Frame-Options, rate limiting, non-root container, TLS via nginx
 
 ---
 
@@ -105,10 +107,14 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 ## ✅ Post-Capstone Additions
 
 - [x] **Upload Dataset tab** — underwriters can analyse their own CSV workforce data (session-only, no DB storage)
+- [x] **HIPAA / SOC 2 security hardening** — JWT auth, RBAC, TLS, audit logging, CORS, CI security scan
+- [x] **Security test suite** — 25 automated security tests (all passing after remediation)
+- [x] **Security remediation** — stale Docker image, non-root user, rate limiting, security headers, server header suppression
 
 ## 🔧 Next Steps (Post-Capstone)
 
-- [ ] OAuth 2.0 / SAML authentication (replace demo users)
+- [ ] **Fix ingest RBAC gap** — add `require_company_access` to `/ingest/wearable`, `/ingest/clinical`, `/ingest/company` (hr_admin can currently inject data for other companies)
+- [ ] OAuth 2.0 / SAML authentication (replace file-based user store)
 - [ ] Deploy to cloud — see [[Aegis AI - Free Deployment Plan]] (Neon + Render + Hugging Face Spaces)
 - [ ] Live FX API integration (replace static rates)
 - [ ] Real-time pipeline (Kafka streaming HRS updates)
