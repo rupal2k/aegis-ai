@@ -1,4 +1,5 @@
 """Three POST endpoints for data ingestion."""
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -11,8 +12,10 @@ from ingestion.models.schemas import (
 from ingestion.normalizer import (
     normalize_wearable, normalize_clinical, normalize_employee,
 )
+from ingestion.auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
+_audit = logging.getLogger("aegis.audit")
 
 
 def _company_exists(db: Session, company_id: str) -> bool:
@@ -24,8 +27,11 @@ def _company_exists(db: Session, company_id: str) -> bool:
 
 
 @router.post("/wearable", response_model=IngestResponse, status_code=201)
-def ingest_wearable(payload: WearablePayload, db: Session = Depends(get_db)):
-    """Accepts one wearable telemetry record. Insurers' integrations POST to this."""
+def ingest_wearable(
+    payload: WearablePayload,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
     if not _company_exists(db, payload.company_id):
         raise HTTPException(status_code=404, detail=f"Unknown company: {payload.company_id}")
 
@@ -49,6 +55,10 @@ def ingest_wearable(payload: WearablePayload, db: Session = Depends(get_db)):
     """), record)
     db.commit()
 
+    _audit.info(
+        "INGEST_WEARABLE user=%s company=%s employee=%s",
+        user["sub"], payload.company_id, record["employee_id"],
+    )
     return IngestResponse(
         status="success",
         records_received=1,
@@ -59,8 +69,11 @@ def ingest_wearable(payload: WearablePayload, db: Session = Depends(get_db)):
 
 
 @router.post("/clinical", response_model=IngestResponse, status_code=201)
-def ingest_clinical(payload: ClinicalEventPayload, db: Session = Depends(get_db)):
-    """Accepts one clinical event (doctor visit, hospitalization, diagnosis)."""
+def ingest_clinical(
+    payload: ClinicalEventPayload,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
     if not _company_exists(db, payload.company_id):
         raise HTTPException(status_code=404, detail=f"Unknown company: {payload.company_id}")
 
@@ -85,6 +98,10 @@ def ingest_clinical(payload: ClinicalEventPayload, db: Session = Depends(get_db)
     """), record)
     db.commit()
 
+    _audit.info(
+        "INGEST_CLINICAL user=%s company=%s employee=%s event_type=%s",
+        user["sub"], payload.company_id, record["employee_id"], payload.event_type,
+    )
     return IngestResponse(
         status="success",
         records_received=1,
@@ -95,8 +112,11 @@ def ingest_clinical(payload: ClinicalEventPayload, db: Session = Depends(get_db)
 
 
 @router.post("/company", response_model=IngestResponse, status_code=201)
-def ingest_company_roster(payload: CompanyBatchUpload, db: Session = Depends(get_db)):
-    """Bulk upload employee roster from HR systems. Upserts employees."""
+def ingest_company_roster(
+    payload: CompanyBatchUpload,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
     if not _company_exists(db, payload.company_id):
         raise HTTPException(status_code=404, detail=f"Unknown company: {payload.company_id}")
 
@@ -119,10 +139,14 @@ def ingest_company_roster(payload: CompanyBatchUpload, db: Session = Depends(get
             """), record)
             stored += 1
         except Exception as e:
-            errors.append(f"{emp.external_employee_id}: {str(e)[:100]}")
+            errors.append(f"row_{stored + len(errors) + 1}: {str(e)[:80]}")
 
     db.commit()
 
+    _audit.info(
+        "INGEST_COMPANY user=%s company=%s stored=%d errors=%d",
+        user["sub"], payload.company_id, stored, len(errors),
+    )
     return IngestResponse(
         status="success" if stored == len(payload.employees) else "partial",
         records_received=len(payload.employees),

@@ -1,21 +1,28 @@
 """HTTP client wrapper for the Aegis AI backend API."""
 import httpx
 import streamlit as st
-
 import os
+
 API_BASE = os.environ.get("AEGIS_API_URL", "http://localhost:8000")
+
+
+def _headers() -> dict:
+    token = st.session_state.get("token")
+    if not token:
+        return {}
+    return {"Authorization": f"Bearer {token}"}
 
 
 def _get(path: str, **params):
     with httpx.Client(timeout=15.0) as client:
-        r = client.get(f"{API_BASE}{path}", params=params)
+        r = client.get(f"{API_BASE}{path}", params=params, headers=_headers())
         r.raise_for_status()
         return r.json()
 
 
 def _post(path: str, json_body: dict):
     with httpx.Client(timeout=15.0) as client:
-        r = client.post(f"{API_BASE}{path}", json=json_body)
+        r = client.post(f"{API_BASE}{path}", json=json_body, headers=_headers())
         r.raise_for_status()
         return r.json()
 

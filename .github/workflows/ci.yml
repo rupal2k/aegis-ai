@@ -7,16 +7,49 @@ on:
     branches: [main]
 
 jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install security tools
+        run: pip install bandit pip-audit
+
+      - name: SAST — Bandit static analysis
+        run: bandit -r ingestion ml_engine dashboard -ll -f json -o bandit-report.json || true
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+      - name: Dependency CVE scan — pip-audit
+        run: pip-audit -r requirements.docker.txt --format json -o pip-audit-report.json
+
+      - name: Upload pip-audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+
   test:
     runs-on: ubuntu-latest
+    needs: security
 
     services:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: aegis_user
-          POSTGRES_PASSWORD: aegis_pass
-          POSTGRES_DB: aegis_db
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         ports:
           - 5432:5432
         options: >-
@@ -40,10 +73,14 @@ jobs:
           pip install -r requirements.docker.txt
 
       - name: Set up environment
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          HASH_SALT: ${{ secrets.HASH_SALT }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
-          echo "DATABASE_URL=postgresql://aegis_user:aegis_pass@localhost:5432/aegis_db" >> $GITHUB_ENV
-          echo "HASH_SALT=ci_test_salt" >> $GITHUB_ENV
-          echo "SECRET_KEY=ci_test_secret" >> $GITHUB_ENV
+          echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
+          echo "HASH_SALT=$HASH_SALT" >> $GITHUB_ENV
+          echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
 
       - name: Generate synthetic data
         run: python data/generate.py
@@ -85,6 +122,15 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.dashboard
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build nginx image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          file: ./nginx/Dockerfile
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max

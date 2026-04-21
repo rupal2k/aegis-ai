@@ -4,10 +4,13 @@ from fastapi.testclient import TestClient
 from ingestion.main import app
 
 def _db_available():
+    import os
+    db_url = os.environ.get("DATABASE_URL", "")
+    if not db_url:
+        return False
     try:
         import psycopg2
-        psycopg2.connect(host="localhost", dbname="aegis_db",
-                         user="aegis_user", password="aegis_pass", port=5432)
+        psycopg2.connect(db_url)
         return True
     except Exception:
         return False

@@ -1,4 +1,5 @@
 """Prediction endpoints — wraps the ML engine with HTTP."""
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -17,12 +18,13 @@ from ml_engine.explainer import AegisExplainer
 from ml_engine.premium_calculator import (
     calculate_premium_adjustment, calculate_wellness_roi,
 )
+from ingestion.auth.dependencies import get_current_user, require_company_access
 
 router = APIRouter(prefix="/predict", tags=["predict"])
+_audit = logging.getLogger("aegis.audit")
 
 
 def _enrich_driver(model, driver: dict) -> FeatureDriver:
-    """Attach plain-language explanation to a SHAP driver."""
     return FeatureDriver(
         feature     = driver["feature"],
         value       = driver["value"],
@@ -33,18 +35,19 @@ def _enrich_driver(model, driver: dict) -> FeatureDriver:
 
 
 @router.post("/employee", response_model=EmployeePredictionResponse)
-def predict_employee(payload: EmployeePredictionRequest):
-    """Predict HRS for a single employee given their features."""
+def predict_employee(
+    payload: EmployeePredictionRequest,
+    user: dict = Depends(get_current_user),
+):
     model = get_model()
-
     emp = payload.model_dump()
     if emp.get("chronic_count") is None:
         emp["chronic_count"] = int(emp["diabetic"]) + int(emp["hypertension"])
 
     result = model.predict_one(emp)
-
     enriched = [_enrich_driver(model, d) for d in result["top_drivers"]]
 
+    _audit.info("PREDICT_EMPLOYEE user=%s risk_band=%s", user["sub"], result["risk_band"])
     return EmployeePredictionResponse(
         predicted_loss_ratio = result["predicted_loss_ratio"],
         health_risk_score    = result["health_risk_score"],
@@ -54,11 +57,11 @@ def predict_employee(payload: EmployeePredictionRequest):
 
 
 @router.get("/company/{company_id}", response_model=CompanyPredictionResponse)
-def predict_company(company_id: str, db: Session = Depends(get_db)):
-    """
-    Aggregate HRS across all employees in a company.
-    Pulls aggregated features from training_snapshots table.
-    """
+def predict_company(
+    company_id: str,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_company_access),
+):
     company = db.execute(
         text("SELECT company_id, company_name FROM companies WHERE company_id = :cid"),
         {"cid": company_id}
@@ -92,6 +95,7 @@ def predict_company(company_id: str, db: Session = Depends(get_db)):
     high     = float(((hrs_array >= 60) & (hrs_array < 80)).mean() * 100)
     critical = float((hrs_array >= 80).mean() * 100)
 
+    _audit.info("PREDICT_COMPANY user=%s company=%s employees=%d", user["sub"], company_id, result["employee_count"])
     return CompanyPredictionResponse(
         company_id        = company.company_id,
         company_name      = company.company_name,
@@ -108,15 +112,21 @@ def predict_company(company_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/premium", response_model=PremiumResponse)
-def predict_premium(payload: PremiumRequest):
-    """Convert a Health Risk Score into a dynamic premium adjustment."""
+def predict_premium(
+    payload: PremiumRequest,
+    user: dict = Depends(get_current_user),
+):
+    _audit.info("PREDICT_PREMIUM user=%s hrs=%s", user["sub"], payload.hrs)
     result = calculate_premium_adjustment(payload.base_premium, payload.hrs)
     return PremiumResponse(**result)
 
 
 @router.post("/wellness-roi", response_model=WellnessROIResponse)
-def predict_wellness_roi(payload: WellnessROIRequest):
-    """Calculate projected ROI of a wellness program for Corporate HR."""
+def predict_wellness_roi(
+    payload: WellnessROIRequest,
+    user: dict = Depends(get_current_user),
+):
+    _audit.info("PREDICT_WELLNESS_ROI user=%s", user["sub"])
     result = calculate_wellness_roi(
         payload.base_premium,
         payload.current_hrs,

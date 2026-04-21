@@ -19,10 +19,9 @@ import time
 DATA_OUTPUT = Path("data/output")
 ARTIFACTS   = Path("ml_engine/artifacts")
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://aegis_user:aegis_pass@db:5432/aegis_db"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is required")
 
 
 def wait_for_db(max_wait: int = 60):
