@@ -1,11 +1,13 @@
 """Aegis AI — Ingestion + Prediction Service entry point."""
 import logging
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
-from ingestion.routers import health, ingest, predict, companies
-from ingestion.routers.auth_router import router as auth_router
+from ingestion.routers import health, ingest, predict, companies, auth_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,6 +16,9 @@ logging.basicConfig(
 
 _ENV = os.environ.get("ENV", "production")
 _ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="Aegis AI — Underwriting Platform API",
@@ -24,15 +29,40 @@ app = FastAPI(
     openapi_url="/openapi.json" if _ENV == "development" else None,
 )
 
+# Attach rate limiter to app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, lambda request, exc: {"detail": str(exc)})
+
+# Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Add security headers to all responses."""
+    response = await call_next(request)
+    # Remove server information disclosure
+    response.headers["Server"] = "AegisAI"
+    # Add security headers
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+# CORS Configuration - Stricter validation
+_ALLOWED_ORIGINS_LIST = _ALLOWED_ORIGINS if _ALLOWED_ORIGINS else ["http://localhost:8501"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_ALLOWED_ORIGINS or ["http://localhost:8501"],
+    allow_origins=_ALLOWED_ORIGINS_LIST,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
+    max_age=3600,  # Cache CORS preflight for 1 hour
 )
 
-app.include_router(auth_router)
+# Register routers with rate limiting applied
+app.include_router(auth_router.router)
 app.include_router(health.router)
 app.include_router(ingest.router)
 app.include_router(predict.router)
@@ -43,5 +73,18 @@ app.include_router(companies.router)
 def root():
     return {
         "service": "Aegis AI Underwriting Platform",
-        "health":  "/health",
+        "version": "1.1.0",
+        "health": "/health",
+        "docs": "/docs",
+        "endpoints": {
+            "auth": ["/auth/token"],
+            "ingest": ["/ingest/wearable", "/ingest/clinical", "/ingest/company"],
+            "predict": [
+                "/predict/employee",
+                "/predict/company/{company_id}",
+                "/predict/premium",
+                "/predict/wellness-roi"
+            ],
+            "companies": ["/companies", "/companies/{company_id}/employees"]
+        }
     }

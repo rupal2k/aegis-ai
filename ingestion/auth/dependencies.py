@@ -2,11 +2,20 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from ingestion.auth.jwt import decode_token
+from ingestion.auth.token_blacklist import is_token_revoked
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+    """Get current user from token, checking if token is revoked."""
+    # Check if token is revoked
+    if is_token_revoked(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return decode_token(token)
 
 
