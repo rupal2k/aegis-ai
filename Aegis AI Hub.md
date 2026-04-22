@@ -86,15 +86,17 @@ All 7 bugs resolved ✅ — full root causes, code snippets, and prevention rule
 
 ## 📊 Key Metrics
 
-- **Test Coverage**: 88/88 automated tests passing (63 functional + 25 security)
-- **API Endpoints**: 12 live (+ `/auth/token` login)
-- **Dashboard Tabs**: 7 total (4 underwriter + 3 HR manager)
-- **Currencies Supported**: 10 (all dynamic, no hardcoding)
-- **Risk Bands**: 4 (Low, Moderate, High, Critical)
-- **Docker Services**: 5 (db, mlflow, api, dashboard, nginx) — one `docker-compose up -d`
-- **CI Pipeline**: GitHub Actions — security scan (bandit + pip-audit) → test → docker-build
-- **Auth**: JWT bearer tokens, bcrypt passwords, 30-min session timeout
-- **Security**: HSTS, CSP, X-Frame-Options, rate limiting, non-root container, TLS via nginx
+| Metric | Value |
+|--------|-------|
+| **Test Coverage** | 88/88 passing (63 functional + 25 security) |
+| **API Endpoints** | 13 live (incl. `/auth/token` login) |
+| **Dashboard Tabs** | 7 (4 underwriter + 3 HR manager) |
+| **Currencies** | 10 (INR, USD, EUR, GBP, AED, SGD, AUD, JPY, CAD, CHF) |
+| **Risk Bands** | 4 — Low · Moderate · High · Critical |
+| **Docker Services** | 5 — one `docker-compose up -d` |
+| **CI Pipeline** | GitHub Actions: security scan → test → docker-build |
+| **Auth** | JWT + bcrypt, 30-min session timeout |
+| **Security** | HSTS, CSP, rate limiting, non-root container, TLS |
 
 ---
 

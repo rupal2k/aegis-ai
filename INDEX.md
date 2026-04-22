@@ -13,7 +13,11 @@
 - **[[Phase Progress]]** — Detailed checklist for all 6 phases + post-capstone additions
 - **[[Bug Log]]** — 9 bugs, root causes, fixes, prevention
 - **[[Claude Memory]]** — Claude's persistent memory: user profile, feedback rules, project state
+- **[[Commit Log]]** — Auto-appended git commit history (hook-driven)
 - **[[Daily Notes/Daily notes]]** — Phase 5 dev journal
+
+### Presentation
+- **[[Aegis AI - Presentation]]** — Full project slide deck (Advanced Slides, 16 slides, reveal.js)
 
 ### Security
 - **[[Security Tests/SECURITY_REPORT]]** — Full 25-test security audit report (2026-04-22, 25/25 passing)
@@ -57,6 +61,8 @@ C:\Rupalprojects\Rupal\                   ← vault root
     ├── Phase Progress.md                 (phase checklists + dev logs)
     ├── Bug Log.md                        (7 bugs, root causes, fixes)
     ├── Claude Memory.md                  (Claude auto-memory — user profile, feedback, project state)
+    ├── Commit Log.md                     (auto-appended git commit history via hook)
+    ├── Aegis AI - Presentation.md        (full project slide deck — Advanced Slides, 16 slides)
     ├── Decisions & Rationale.md          (10 logical decisions)
     ├── Architecture Decisions.md         (18 ADRs — includes JWT, rate limiting, security headers)
     ├── Aegis AI - Free Deployment Plan.md (Neon + Render + HF Spaces deployment)
