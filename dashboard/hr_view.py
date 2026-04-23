@@ -10,6 +10,7 @@ from dashboard.api_client import (
     calculate_wellness_roi,
 )
 from dashboard.currency import fmt, active_code, CURRENCIES
+from dashboard.illustrations import PRIVACY_SHIELD
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -64,7 +65,15 @@ def render():
     tab1, tab2, tab3 = st.tabs(["Workforce overview", "Top risk drivers", "Wellness ROI simulator"])
 
     with tab1:
-        st.subheader("Risk band distribution")
+        _th, _ti = st.columns([3, 1])
+        with _th:
+            st.subheader("Risk band distribution")
+        with _ti:
+            st.markdown(
+                f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
+                f'<div style="width:130px;">{PRIVACY_SHIELD}</div></div>',
+                unsafe_allow_html=True,
+            )
         dist_df = pd.DataFrame({
             "band": ["Low", "Moderate", "High", "Critical"],
             "pct":  [pred["low_risk_pct"], pred["moderate_risk_pct"],

@@ -10,6 +10,7 @@ from dashboard.api_client import (
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.currency import fmt, fmt_crore, active_code, CURRENCIES
 import dashboard.upload_view as upload_view
+from dashboard.illustrations import PRIVACY_ROUTER
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -125,7 +126,15 @@ def render():
     ])
 
     with tab1:
-        st.subheader("All companies — ranked by risk")
+        _h1, _h2 = st.columns([3, 1])
+        with _h1:
+            st.subheader("All companies — ranked by risk")
+        with _h2:
+            st.markdown(
+                f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
+                f'<div style="width:160px;">{PRIVACY_ROUTER}</div></div>',
+                unsafe_allow_html=True,
+            )
 
         fig = px.bar(
             df.sort_values("mean_hrs"),

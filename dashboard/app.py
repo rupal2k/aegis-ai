@@ -7,6 +7,7 @@ import streamlit as st
 from dashboard.auth import login_form, logout_button
 from dashboard import underwriter_view, hr_view
 from dashboard.currency import sidebar_selector
+from dashboard.illustrations import PRIVACY_VAULT
 
 st.set_page_config(
     page_title="Aegis AI — Underwriting Platform",
@@ -133,25 +134,39 @@ def main():
     user = st.session_state.get("user")
 
     if not user:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
+        _lc, _rc = st.columns([1, 1], gap="large")
+        with _lc:
             st.markdown("""
-<div style="text-align:center;margin-bottom:32px;padding-top:48px;">
-    <div style="display:inline-flex;align-items:center;justify-content:center;
-                width:52px;height:52px;background:#111;border-radius:13px;
-                margin:0 auto 14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-        <svg width="28" height="28" viewBox="0 0 18 18" fill="none">
+<div style="padding-top:60px;">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+    <div style="width:44px;height:44px;background:#111;border-radius:11px;
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <svg width="24" height="24" viewBox="0 0 18 18" fill="none">
             <circle cx="9" cy="9" r="5.5" stroke="#C4FF00" stroke-width="1.8"/>
             <line x1="5" y1="13" x2="13" y2="5" stroke="#C4FF00" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
     </div>
-    <div style="font-size:26px;font-weight:700;font-family:'Space Grotesk',system-ui,sans-serif;
-                color:#111;letter-spacing:-0.02em;margin-bottom:6px;">Aegis AI</div>
-    <div style="font-size:14px;color:#999;letter-spacing:0.01em;">
-        Dynamic Group Insurance Underwriting Platform</div>
+    <div>
+        <div style="font-size:22px;font-weight:700;font-family:'Space Grotesk',system-ui,sans-serif;
+                    color:#111;letter-spacing:-0.02em;line-height:1.1;">Aegis AI</div>
+        <div style="font-size:11px;color:#999;letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">
+            Underwriting Platform</div>
+    </div>
+</div>
+<div style="font-size:13px;color:#555;margin-bottom:32px;line-height:1.6;max-width:340px;">
+    AI-powered group insurance underwriting. Predict workforce health risk, adjust premiums
+    dynamically, and surface wellness ROI — in one platform.</div>
 </div>
 """, unsafe_allow_html=True)
             login_form()
+        with _rc:
+            st.markdown(
+                f'<div style="display:flex;align-items:center;justify-content:center;'
+                f'padding-top:40px;opacity:0.92;">'
+                f'<div style="width:100%;max-width:380px;">{PRIVACY_VAULT}</div></div>',
+                unsafe_allow_html=True,
+            )
         return
 
     with st.sidebar:

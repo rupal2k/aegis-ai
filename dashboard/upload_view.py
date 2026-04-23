@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from dashboard.api_client import predict_employee, calculate_premium
 from dashboard.currency import fmt, active_code, CURRENCIES
 from dashboard.pdf_report import generate_underwriting_report
+from dashboard.illustrations import ZERO_NODE
 
 PLOT_BG  = "#FFFFFF"
 GRID_CLR = "rgba(0,0,0,0.06)"
@@ -371,7 +372,15 @@ def render_tab() -> None:
     )
 
     if not uploaded:
-        st.info("Upload a CSV to get started. Use the template above for the correct format.")
+        _eu, _ei = st.columns([1, 1])
+        with _eu:
+            st.info("Upload a CSV to get started. Use the template above for the correct format.")
+        with _ei:
+            st.markdown(
+                f'<div style="display:flex;justify-content:center;opacity:0.88;">'
+                f'<div style="width:220px;">{ZERO_NODE}</div></div>',
+                unsafe_allow_html=True,
+            )
         return
 
     try:
