@@ -10,7 +10,7 @@ from dashboard.api_client import (
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.currency import fmt, fmt_crore, active_code, CURRENCIES
 import dashboard.upload_view as upload_view
-from dashboard.illustrations import PRIVACY_ROUTER
+from dashboard.illustrations import PRIVACY_ROUTER, _svg_img as _illus
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -132,7 +132,7 @@ def render():
         with _h2:
             st.markdown(
                 f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
-                f'<div style="width:160px;">{PRIVACY_ROUTER}</div></div>',
+                f'{_illus(PRIVACY_ROUTER, "160px")}</div>',
                 unsafe_allow_html=True,
             )
 

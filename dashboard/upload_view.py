@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from dashboard.api_client import predict_employee, calculate_premium
 from dashboard.currency import fmt, active_code, CURRENCIES
 from dashboard.pdf_report import generate_underwriting_report
-from dashboard.illustrations import ZERO_NODE
+from dashboard.illustrations import ZERO_NODE, _svg_img as _illus
 
 PLOT_BG  = "#FFFFFF"
 GRID_CLR = "rgba(0,0,0,0.06)"
@@ -378,7 +378,7 @@ def render_tab() -> None:
         with _ei:
             st.markdown(
                 f'<div style="display:flex;justify-content:center;opacity:0.88;">'
-                f'<div style="width:220px;">{ZERO_NODE}</div></div>',
+                f'{_illus(ZERO_NODE, "220px")}</div>',
                 unsafe_allow_html=True,
             )
         return

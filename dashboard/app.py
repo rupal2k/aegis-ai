@@ -7,7 +7,7 @@ import streamlit as st
 from dashboard.auth import login_form, logout_button
 from dashboard import underwriter_view, hr_view
 from dashboard.currency import sidebar_selector
-from dashboard.illustrations import PRIVACY_VAULT
+from dashboard.illustrations import PRIVACY_VAULT, _svg_img as _illus
 
 st.set_page_config(
     page_title="Aegis AI — Underwriting Platform",
@@ -164,7 +164,7 @@ def main():
             st.markdown(
                 f'<div style="display:flex;align-items:center;justify-content:center;'
                 f'padding-top:40px;opacity:0.92;">'
-                f'<div style="width:100%;max-width:380px;">{PRIVACY_VAULT}</div></div>',
+                f'{_illus(PRIVACY_VAULT, "100%", "max-width:380px;")}</div>',
                 unsafe_allow_html=True,
             )
         return

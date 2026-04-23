@@ -10,7 +10,7 @@ from dashboard.api_client import (
     calculate_wellness_roi,
 )
 from dashboard.currency import fmt, active_code, CURRENCIES
-from dashboard.illustrations import PRIVACY_SHIELD
+from dashboard.illustrations import PRIVACY_SHIELD, _svg_img as _illus
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -71,7 +71,7 @@ def render():
         with _ti:
             st.markdown(
                 f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
-                f'<div style="width:130px;">{PRIVACY_SHIELD}</div></div>',
+                f'{_illus(PRIVACY_SHIELD, "130px")}</div>',
                 unsafe_allow_html=True,
             )
         dist_df = pd.DataFrame({
