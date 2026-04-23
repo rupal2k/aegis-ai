@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
-**Last Updated**: 2026-04-22  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅
+**Last Updated**: 2026-04-24  
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅
 
 ---
 
@@ -261,10 +261,8 @@ Email: hr@bharatsteel.com      | Role: hr_admin    | Company: COMP_002 | Passwor
 | BUG-006: Dashboard connection refused | `localhost` doesn't resolve cross-container | Read `AEGIS_API_URL` env var |
 | BUG-007: Metric text invisible | Light theme config + no explicit color CSS | Full dark mode overhaul |
 
-### Dark Mode Implementation
-- `.streamlit/config.toml`: `base="dark"`, `backgroundColor="#0d0d0f"`
-- Explicit `[data-testid="stMetricValue"]` CSS — immune to theme inheritance issues
-- Chart colors updated: `PLOT_BG="#1c1c1e"`, `FONT_CLR="#f5f5f7"`, `ACCENT="#0a84ff"`
+### Theme Note
+Dark mode implemented in Phase 6 was later replaced by the NullMask light theme (see Post-Capstone section below).
 
 ### Key Technical Decisions
 - `requirements.docker.txt` created separately — original `requirements.txt` is UTF-16 encoded (spaces between every character), pip cannot parse it
@@ -303,15 +301,8 @@ dashboard starts (depends_on: api)
 | `test_normalizer.py` | 7 | SHA-256 hashing, clamping, wearable/clinical normalisation |
 | `test_predict_api.py` | 10 | Prediction endpoints, SHAP drivers, premium API |
 
-### Dark Mode Colour Palette
-| Token | Value | Usage |
-|-------|-------|-------|
-| Page background | `#0d0d0f` | `.stApp` |
-| Card / sidebar | `#1c1c1e` | Metric cards, sidebar |
-| Border | `#3a3a3c` | Card borders, dividers, grid lines |
-| Primary text | `#f5f5f7` | Headings, metric values |
-| Muted text | `#aeaeb2` | Labels, captions |
-| Accent | `#0a84ff` | iOS-style blue, charts, progress bars |
+### Current Colour Palette (NullMask — see Post-Capstone below)
+Dark mode palette was replaced. See NullMask UI Redesign section for current tokens.
 
 ---
 
@@ -487,6 +478,122 @@ tests/security_tests.py               — 25 security tests (all passing)
 
 ---
 
+---
+
+### NullMask UI Redesign (2026-04-24)
+
+**Status**: ✅ Complete
+
+#### What Changed
+Reverted the Phase 6 dark mode and applied the **NullMask Design System** — a light warm-gray B2B aesthetic with Space Grotesk typography, chartreuse accent `#C4FF00`, and an ∅ SVG logo mark. The redesign makes the dashboard look production-ready without changing any backend behaviour.
+
+#### Design Tokens
+| Token | Value | Usage |
+|-------|-------|-------|
+| Page background | `#E3E3DC` | `.stApp` |
+| Card background | `#FFFFFF` | Metric cards |
+| Sidebar background | `#EAEAE4` | Sidebar panel |
+| Border | `rgba(0,0,0,0.07)` | Cards, dividers |
+| Primary text | `#111111` | Headings, metric values |
+| Muted text | `#999999` | Labels, captions |
+| Accent (UI) | `#C4FF00` | Tab underline, logo mark |
+| Accent (charts) | `#9BC800` | Bar charts, gauge bar |
+| Grid lines | `rgba(0,0,0,0.06)` | Plotly chart grids |
+
+#### Files Changed
+| File | Change |
+|------|--------|
+| `.streamlit/config.toml` | `base="light"`, `primaryColor="#C4FF00"`, `backgroundColor="#E3E3DC"`, `secondaryBackgroundColor="#EAEAE4"`, `textColor="#111111"` |
+| `dashboard/app.py` | Full CSS block rewrite with NullMask tokens; Google Fonts import (Space Grotesk, Inter, JetBrains Mono); ∅ SVG logo mark on login page + sidebar; dark "Model Active" badge with chartreuse pulse dot |
+| `dashboard/underwriter_view.py` | `PLOT_BG="#FFFFFF"`, `ACCENT="#9BC800"`, `FONT_CLR="#111111"`, `GRID_CLR="rgba(0,0,0,0.06)"`, light translucent gauge step colours |
+| `dashboard/hr_view.py` | Same colour constants; scatter scale `["#22C55E","#F59E0B","#EF4444"]`; waterfall `decreasing=#22C55E`, `increasing=#EF4444`, `totals=ACCENT` |
+| `dashboard/upload_view.py` | Same colour constants; gauge step colours updated to light translucent variants |
+| `dashboard/auth.py` | "Sign in to continue" text colour `#999999` |
+
+#### Key UI Elements Added
+- **Login page**: centred ∅ SVG logo (black 52×52px rounded square, chartreuse crosshair circle), Space Grotesk wordmark, subtitle in `#999`
+- **Sidebar header**: ∅ logo mark (32px), "Aegis AI" bold + "Underwriting Platform" caption
+- **Model status badge**: dark `#111` rounded box, green `#C4FF00` pulse dot, "Model Active" label, "XGBoost v2.1 · SHAP enabled"
+- **Metric cards**: white, 12px radius, 1px border, subtle drop shadow
+- **Tab active underline**: chartreuse `#C4FF00`
+- **Download buttons**: black fill `#111111`, white text
+
+#### Risk Colour Map (unchanged semantics, updated hues)
+| Band | Colour |
+|------|--------|
+| Low | `#22C55E` |
+| Moderate | `#F59E0B` |
+| High | `#EF4444` |
+| Critical | `#991B1B` |
+
+---
+
+### Swagger UI CSP Fix (2026-04-24)
+
+**Status**: ✅ Complete
+
+#### Problem
+`http://localhost:8000/docs` displayed a blank page. FastAPI's Swagger UI fetches its JavaScript and CSS from `cdn.jsdelivr.net`, but the security headers middleware enforced `script-src 'self'` on every route — including `/docs` — blocking all external scripts.
+
+#### Root Cause
+`ingestion/main.py` security middleware applied a single global CSP:
+```python
+"Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+```
+This blocked `cdn.jsdelivr.net` everywhere, including the Swagger and ReDoc routes.
+
+#### Fix
+Middleware now checks the request path and relaxes CSP only for doc routes in development mode:
+```python
+is_doc_path = request.url.path in ("/docs", "/redoc", "/openapi.json")
+if _ENV == "development" and is_doc_path:
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+        "img-src 'self' data:; worker-src blob:;"
+    )
+else:
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    )
+```
+Production docs remain disabled (`docs_url=None` when `ENV != "development"`), so the relaxed policy never applies in production.
+
+#### File Changed
+`ingestion/main.py` — `add_security_headers` middleware only.
+
+---
+
+### Local Dev Startup Commands (2026-04-24)
+
+Running all services outside Docker (hybrid mode — DB + MLflow in Docker, API + Dashboard native):
+
+```bash
+# 1. Start DB and MLflow in Docker
+docker compose up db mlflow -d
+
+# 2. Start API (native, with development docs enabled)
+DATABASE_URL=postgresql://aegis_user:aegis_pass@localhost:5432/aegis_db \
+ENV=development \
+python -m uvicorn ingestion.main:app --port 8000 --log-level warning
+
+# 3. Start Dashboard (separate terminal)
+streamlit run dashboard/app.py --server.port 8501
+```
+
+**Service URLs**:
+| Service | URL |
+|---------|-----|
+| Dashboard | http://localhost:8501 |
+| API | http://localhost:8000 |
+| Swagger UI | http://localhost:8000/docs |
+| MLflow | http://localhost:5000 |
+
+**Note**: `slowapi` must be installed locally (`pip install slowapi`) — it was previously only in `requirements.docker.txt`.
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -500,8 +607,9 @@ tests/security_tests.py               — 25 security tests (all passing)
 | Post-capstone | ✅ Upload tab | ~1h | — | 1 |
 | Post-capstone | ✅ Security hardening | ~3h | — | 1 |
 | Post-capstone | ✅ Security testing & remediation | ~2h | 25/25 ✅ | 4 |
+| Post-capstone | ✅ NullMask UI redesign + Swagger CSP fix | ~1h | — | — |
 
-**Total Effort to Date**: ~30 hours  
+**Total Effort to Date**: ~31 hours  
 **Total Commits**: 24  
 **Total Tests**: 88 passing (63 functional + 25 security)
 

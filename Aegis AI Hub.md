@@ -1,8 +1,8 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + NullMask UI Redesign ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
-**Last Updated**: 2026-04-22
+**Last Updated**: 2026-04-24
 
 ---
 
@@ -80,7 +80,7 @@ Aegis AI is an **AI-powered B2B group insurance underwriting platform** that pre
 
 ## 🔴 Issues & Fixes
 
-All 7 bugs resolved ✅ — full root causes, code snippets, and prevention rules in [[Bug Log]].
+All 9 bugs resolved ✅ — full root causes, code snippets, and prevention rules in [[Bug Log]].
 
 ---
 
@@ -112,6 +112,8 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **HIPAA / SOC 2 security hardening** — JWT auth, RBAC, TLS, audit logging, CORS, CI security scan
 - [x] **Security test suite** — 25 automated security tests (all passing after remediation)
 - [x] **Security remediation** — stale Docker image, non-root user, rate limiting, security headers, server header suppression
+- [x] **NullMask UI redesign** — replaced dark theme with NullMask light design system; Space Grotesk font, `#C4FF00` accent, ∅ logo mark, white metric cards, production-ready B2B aesthetic across all 6 dashboard files
+- [x] **Swagger UI CSP fix** — `ingestion/main.py` middleware now exempts `/docs`, `/redoc`, `/openapi.json` from strict `script-src 'self'` CSP in development mode, allowing Swagger UI to load from `cdn.jsdelivr.net`
 
 ## 🔧 Next Steps (Post-Capstone)
 
