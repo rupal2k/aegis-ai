@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-04-24  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System Implementation ✅
 
 ---
 
@@ -594,6 +594,65 @@ streamlit run dashboard/app.py --server.port 8501
 
 ---
 
+### NullMask Design System Implementation (2026-04-24)
+
+**Status**: ✅ Complete  
+**Source**: Design bundle from claude.ai/design → `nullmask-design-system/project/Aegis AI Dashboard.html`
+
+The design bundle contained the full NullMask system with a complete Aegis AI dashboard prototype (React + HTML). This session audited what was already implemented from the previous redesign and filled all remaining gaps.
+
+#### Design Audit Results
+
+| Design Element | Status Before | Action |
+|----------------|---------------|--------|
+| Color tokens (`#E3E3DC`, `#C4FF00`, `#9BC800`, `#111111`) | ✅ Already done | No change |
+| Space Grotesk / Inter / JetBrains Mono fonts | ✅ Already done | No change |
+| ∅ logo mark (SVG circle + slash, dark rounded square) | ✅ Already done | No change |
+| Model Active badge (dark bg, chartreuse pulse dot) | ✅ Already done | No change |
+| White metric cards (border, shadow, `12px` radius) | ✅ Already done | No change |
+| Tab active underline (`#C4FF00`) | ✅ Already done | No change |
+| SHAP factor horizontal bars | ✅ Already done | No change |
+| Risk gauge (Plotly gauge, ACCENT bar colour) | ✅ Already done | No change |
+| Wellness ROI waterfall chart | ✅ Already done | No change |
+| **User avatar with initials** (chartreuse ghost circle, sidebar) | ❌ Missing | ✅ Implemented |
+| **Alerts panel** (4-level severity dots, real portfolio data) | ❌ Missing | ✅ Implemented |
+| **Risk band mini-cards** (4-up grid, %, employee count, bar) | ❌ Missing | ✅ Implemented |
+| **AI Recommendations** (numbered list, savings in accent font) | ❌ Missing | ✅ Implemented |
+| **Glow shadow** CSS variant for accent metric cards | ❌ Missing | ✅ Implemented |
+| **Scrollbar** thin styling (4px, transparent bg) | ❌ Missing | ✅ Implemented |
+| Settings screen with toggle components | N/A (Streamlit constraint) | Not implemented |
+| Fixed TopBar header with avatar | N/A (Streamlit constraint) | Not implemented |
+
+#### What Was Implemented
+
+**`dashboard/app.py`** — Sidebar user avatar + CSS additions:
+- User initials extracted from name/email, rendered as 34px chartreuse ghost circle
+- Role label shown in uppercase caps (`UNDERWRITER` / `HR MANAGER`)
+- Added `nm-glow` CSS class (accent border + `0 0 24px rgba(196,255,0,0.10)` shadow)
+- Added thin scrollbar global styling
+
+**`dashboard/underwriter_view.py`** — Two additions:
+1. **`_render_alerts(df)`** function — generates 4 alert rows from live portfolio data:
+   - `high` (red): Critical risk companies → company names listed
+   - `med` (orange): Count of High-risk companies
+   - `info` (blue): Companies with >10% premium adjustment, avg HRS above benchmark
+   - `ok` (green): Count of Low-risk companies
+   - Rendered as white card with color dots, text, styled border
+2. **Risk band mini-cards** in tab2 (Company deep dive) — 4-column grid showing Low/Moderate/High/Critical with percentage, employee count, and mini progress bar using actual prediction data
+
+**`dashboard/hr_view.py`** — AI Recommendations section (tab2):
+- Replaced `st.container(border=True)` loop with full HTML numbered list
+- Each row: numbered badge (chartreuse ghost square), action title, impact text, estimated annual savings
+- Savings calculated as `(hrs_mid_improvement / 100) × adjusted_premium × 0.8`
+- Savings value shown in `#9BC800` JetBrains Mono (matching design's accent money figure)
+
+#### Design vs Streamlit Constraints
+Two elements from the design prototype cannot be ported to Streamlit:
+- **Settings screen with per-feature toggles** — Streamlit has `st.toggle()` but not in the design's grid layout with arbitrary content rows
+- **Fixed TopBar** — Streamlit's layout model doesn't support a fixed top bar outside the sidebar; page titles use `st.title()` instead
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -607,9 +666,10 @@ streamlit run dashboard/app.py --server.port 8501
 | Post-capstone | ✅ Upload tab | ~1h | — | 1 |
 | Post-capstone | ✅ Security hardening | ~3h | — | 1 |
 | Post-capstone | ✅ Security testing & remediation | ~2h | 25/25 ✅ | 4 |
-| Post-capstone | ✅ NullMask UI redesign + Swagger CSP fix | ~1h | — | — |
+| Post-capstone | ✅ NullMask UI redesign + Swagger CSP fix | ~1h | — | 1 |
+| Post-capstone | ✅ NullMask design system implementation | ~1h | — | — |
 
-**Total Effort to Date**: ~31 hours  
-**Total Commits**: 24  
+**Total Effort to Date**: ~32 hours  
+**Total Commits**: 25  
 **Total Tests**: 88 passing (63 functional + 25 security)
 

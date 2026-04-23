@@ -15,3 +15,5 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | ef57ed3 | sm update
 - 2026-04-24 | 20331cb | sm updaTER
 - 2026-04-24 | caa6e93 | feat: NullMask UI redesign + Swagger CSP fix
+- 2026-04-24 | pending | feat: NullMask design system — alerts, mini-cards, avatar, AI recommendations
+- 2026-04-24 | ff04d4d | feat: NullMask design system — alerts, mini-cards, avatar, AI recommendations
