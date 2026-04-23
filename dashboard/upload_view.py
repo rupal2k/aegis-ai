@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from dashboard.api_client import predict_employee, calculate_premium
 from dashboard.currency import fmt, active_code, CURRENCIES
 from dashboard.pdf_report import generate_underwriting_report
-from dashboard.illustrations import ZERO_NODE, _svg_img as _illus
+from dashboard.illustrations import EMPLOYEE_HEALTH, _svg_img as _illus
 
 PLOT_BG  = "#FFFFFF"
 GRID_CLR = "rgba(0,0,0,0.06)"
@@ -206,7 +206,7 @@ def _chart_defaults() -> dict:
     return dict(
         plot_bgcolor=PLOT_BG,
         paper_bgcolor=PLOT_BG,
-        font=dict(color=FONT_CLR, family="system-ui, -apple-system, sans-serif"),
+        font=dict(color=FONT_CLR, family="Inter, system-ui, sans-serif"),
         margin=dict(l=0, r=20, t=24, b=40),
     )
 
@@ -378,7 +378,7 @@ def render_tab() -> None:
         with _ei:
             st.markdown(
                 f'<div style="display:flex;justify-content:center;opacity:0.88;">'
-                f'{_illus(ZERO_NODE, "220px")}</div>',
+                f'{_illus(EMPLOYEE_HEALTH, "220px")}</div>',
                 unsafe_allow_html=True,
             )
         return

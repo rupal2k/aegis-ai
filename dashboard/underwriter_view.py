@@ -10,7 +10,7 @@ from dashboard.api_client import (
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.currency import fmt, fmt_crore, active_code, CURRENCIES
 import dashboard.upload_view as upload_view
-from dashboard.illustrations import PRIVACY_ROUTER, _svg_img as _illus
+from dashboard.illustrations import GROUP_INSURANCE, _svg_img as _illus
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -79,7 +79,7 @@ def _chart_defaults():
     return dict(
         plot_bgcolor=PLOT_BG,
         paper_bgcolor=PLOT_BG,
-        font=dict(color=FONT_CLR, family="system-ui, -apple-system, sans-serif"),
+        font=dict(color=FONT_CLR, family="Inter, system-ui, sans-serif"),
         margin=dict(l=0, r=20, t=24, b=40),
     )
 
@@ -132,7 +132,7 @@ def render():
         with _h2:
             st.markdown(
                 f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
-                f'{_illus(PRIVACY_ROUTER, "160px")}</div>',
+                f'{_illus(GROUP_INSURANCE, "160px")}</div>',
                 unsafe_allow_html=True,
             )
 
@@ -242,8 +242,8 @@ def render():
         ]
         cards_html = "".join(
             f'<div style="flex:1;background:#F5F5EF;border-radius:8px;padding:12px 14px;">'
-            f'<div style="font-size:12px;font-weight:600;font-family:\'Space Grotesk\',system-ui,sans-serif;color:#111;margin-bottom:6px;">{label}</div>'
-            f'<div style="font-size:20px;font-weight:700;color:{color};font-family:\'Space Grotesk\',system-ui,sans-serif;letter-spacing:-0.02em;">{pct:.0f}%</div>'
+            f'<div style="font-size:12px;font-weight:600;font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;color:#111;margin-bottom:6px;">{label}</div>'
+            f'<div style="font-size:20px;font-weight:700;color:{color};font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;letter-spacing:-0.02em;">{pct:.0f}%</div>'
             f'<div style="font-size:10px;color:#999;margin-top:2px;">{count} employees</div>'
             f'<div style="height:3px;background:rgba(0,0,0,0.07);border-radius:2px;margin-top:8px;">'
             f'<div style="height:100%;width:{pct}%;background:{color};border-radius:2px;opacity:0.7;"></div>'

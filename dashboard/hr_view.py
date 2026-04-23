@@ -10,7 +10,7 @@ from dashboard.api_client import (
     calculate_wellness_roi,
 )
 from dashboard.currency import fmt, active_code, CURRENCIES
-from dashboard.illustrations import PRIVACY_SHIELD, _svg_img as _illus
+from dashboard.illustrations import HIPAA_PRIVACY, _svg_img as _illus
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -28,7 +28,7 @@ def _chart_defaults():
     return dict(
         plot_bgcolor=PLOT_BG,
         paper_bgcolor=PLOT_BG,
-        font=dict(color=FONT_CLR, family="system-ui, -apple-system, sans-serif"),
+        font=dict(color=FONT_CLR, family="Inter, system-ui, sans-serif"),
         margin=dict(l=0, r=20, t=24, b=40),
     )
 
@@ -71,7 +71,7 @@ def render():
         with _ti:
             st.markdown(
                 f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
-                f'{_illus(PRIVACY_SHIELD, "130px")}</div>',
+                f'{_illus(HIPAA_PRIVACY, "130px")}</div>',
                 unsafe_allow_html=True,
             )
         dist_df = pd.DataFrame({
@@ -91,7 +91,7 @@ def render():
             annotations=[dict(
                 text=f"<b>{pred['mean_hrs']:.1f}</b><br><span style='font-size:10px'>HRS</span>",
                 x=0.5, y=0.5, font_size=18, showarrow=False,
-                font=dict(color="#111111", family="Space Grotesk, system-ui"),
+                font=dict(color="#111111", family="LetteraMonoLL, Space Mono, monospace"),
             )],
         )
         fig.update_traces(textinfo="percent+label", textfont_size=12, textposition="outside")
@@ -158,15 +158,15 @@ def render():
                     f'<span style="width:22px;height:22px;background:rgba(196,255,0,0.14);'
                     f'border:1px solid rgba(150,200,0,0.40);border-radius:5px;flex-shrink:0;'
                     f'display:flex;align-items:center;justify-content:center;'
-                    f'font-size:11px;color:#5A7A00;font-family:\'Space Grotesk\',sans-serif;font-weight:700;">{rank}</span>'
+                    f'font-size:11px;color:#5A7A00;font-family:\'NType82\',\'Space Grotesk\',sans-serif;font-weight:700;">{rank}</span>'
                     f'<div style="flex:1;">'
                     f'<div style="font-size:13px;color:#111;font-weight:500;'
-                    f'font-family:\'Space Grotesk\',sans-serif;margin-bottom:2px;">{action}</div>'
+                    f'font-family:\'NType82\',\'Space Grotesk\',sans-serif;margin-bottom:2px;">{action}</div>'
                     f'<div style="font-size:12px;color:#999;">{impact}</div>'
                     f'</div>'
                     f'<div style="text-align:right;flex-shrink:0;">'
                     f'<div style="font-size:13px;font-weight:700;color:#9BC800;'
-                    f'font-family:\'JetBrains Mono\',monospace;">{fmt(est)}</div>'
+                    f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{fmt(est)}</div>'
                     f'<div style="font-size:10px;color:#999;">est. annual savings</div>'
                     f'</div></div>'
                 )
@@ -223,7 +223,7 @@ def render():
             connector={"line": {"color": GRID_CLR, "width": 1, "dash": "dot"}},
             textposition="outside",
             text=[f"{sym}{cur_y:,.0f}", f"-{sym}{sav_y:,.0f}", f"{sym}{proj_y:,.0f}"],
-            textfont={"family": "JetBrains Mono, monospace", "size": 12, "color": "#111111"},
+            textfont={"family": "LetteraMonoLL, Space Mono, monospace", "size": 12, "color": "#111111"},
         ))
         wf.update_layout(
             **_chart_defaults(),
