@@ -38,15 +38,26 @@ app.add_exception_handler(RateLimitExceeded, lambda request, exc: {"detail": str
 async def add_security_headers(request: Request, call_next):
     """Add security headers to all responses."""
     response = await call_next(request)
-    # Remove server information disclosure
     response.headers["Server"] = "AegisAI"
-    # Add security headers
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # Swagger UI loads scripts/styles from CDN — relax CSP for doc routes in dev
+    is_doc_path = request.url.path in ("/docs", "/redoc", "/openapi.json")
+    if _ENV == "development" and is_doc_path:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+            "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "worker-src blob:;"
+        )
+    else:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+        )
     return response
 
 # CORS Configuration - Stricter validation

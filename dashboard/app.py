@@ -17,61 +17,103 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* Page background */
-.stApp { background-color: #0d0d0f; }
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* Sidebar */
+/* ── Base ─────────────────────────── */
+.stApp { background-color: #E3E3DC !important; }
+
+/* ── Sidebar ──────────────────────── */
 [data-testid="stSidebar"] {
-    background-color: #1c1c1e;
-    border-right: 1px solid #3a3a3c;
+    background-color: #EAEAE4;
+    border-right: 1px solid rgba(0,0,0,0.07);
+}
+[data-testid="stSidebar"] > div:first-child {
+    background-color: #EAEAE4;
 }
 
-/* Metric cards */
+/* ── Typography ───────────────────── */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', system-ui, sans-serif !important;
+    color: #111111 !important;
+    letter-spacing: -0.02em;
+}
+h1 { font-size: 1.65rem !important; font-weight: 700 !important; }
+h2 { font-size: 1.3rem  !important; font-weight: 600 !important; }
+h3 { font-size: 1.05rem !important; font-weight: 600 !important; }
+
+/* ── Metric cards ─────────────────── */
 [data-testid="stMetric"] {
-    background-color: #1c1c1e;
-    border: 1px solid #3a3a3c;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
     border-radius: 12px;
-    padding: 16px 20px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 [data-testid="stMetricValue"] {
-    color: #f5f5f7 !important;
-    font-size: 1.8rem !important;
+    color: #111111 !important;
+    font-family: 'Space Grotesk', system-ui, sans-serif !important;
+    font-size: 1.75rem !important;
     font-weight: 700 !important;
+    letter-spacing: -0.02em;
 }
 [data-testid="stMetricLabel"] {
-    color: #aeaeb2 !important;
-    font-size: 0.8rem !important;
+    color: #999999 !important;
+    font-size: 0.72rem !important;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.1em;
+    font-weight: 500;
 }
-[data-testid="stMetricDelta"] { font-size: 0.85rem !important; }
+[data-testid="stMetricDelta"] { font-size: 0.83rem !important; }
 
-/* Tabs */
+/* ── Tabs ─────────────────────────── */
 [data-testid="stTabs"] button {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
-    color: #aeaeb2;
+    color: #999999;
 }
 [data-testid="stTabs"] button[aria-selected="true"] {
-    color: #f5f5f7;
+    color: #111111 !important;
+    font-weight: 600;
+}
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+    background-color: #C4FF00 !important;
 }
 
-/* Divider */
-hr { border-color: #3a3a3c; }
+/* ── Divider ──────────────────────── */
+hr { border-color: rgba(0,0,0,0.08) !important; }
 
-/* Headings */
-h1 { font-weight: 700; letter-spacing: -0.5px; color: #f5f5f7; }
-h2 { font-weight: 600; color: #f5f5f7; }
-h3 { font-weight: 600; color: #f5f5f7; }
-
-/* Dataframe */
-[data-testid="stDataFrame"] { border-radius: 10px; overflow: hidden; }
-
-/* Containers with border */
+/* ── Bordered containers / cards ──── */
 [data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #1c1c1e;
-    border-color: #3a3a3c !important;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07) !important;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* ── Dataframe ────────────────────── */
+[data-testid="stDataFrame"] {
     border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.07);
+}
+
+/* ── Download buttons — dark ──────── */
+[data-testid="stDownloadButton"] > button {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 8px;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 500;
+}
+[data-testid="stDownloadButton"] > button:hover {
+    background-color: #222222 !important;
+}
+
+/* ── Captions ─────────────────────── */
+.stCaption, [data-testid="stCaptionContainer"] p {
+    color: #999999 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -83,19 +125,44 @@ def main():
     if not user:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.markdown(
-                "<h1 style='text-align:center;color:#0071e3;margin-bottom:4px;'>Aegis AI</h1>",
-                unsafe_allow_html=True,
-            )
-            st.markdown(
-                "<p style='text-align:center;color:#6e6e73;font-size:16px;margin-bottom:32px;'>"
-                "Dynamic Group Insurance Underwriting Platform</p>",
-                unsafe_allow_html=True,
-            )
+            st.markdown("""
+<div style="text-align:center;margin-bottom:32px;padding-top:48px;">
+    <div style="display:inline-flex;align-items:center;justify-content:center;
+                width:52px;height:52px;background:#111;border-radius:13px;
+                margin:0 auto 14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <svg width="28" height="28" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="5.5" stroke="#C4FF00" stroke-width="1.8"/>
+            <line x1="5" y1="13" x2="13" y2="5" stroke="#C4FF00" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+    </div>
+    <div style="font-size:26px;font-weight:700;font-family:'Space Grotesk',system-ui,sans-serif;
+                color:#111;letter-spacing:-0.02em;margin-bottom:6px;">Aegis AI</div>
+    <div style="font-size:14px;color:#999;letter-spacing:0.01em;">
+        Dynamic Group Insurance Underwriting Platform</div>
+</div>
+""", unsafe_allow_html=True)
             login_form()
         return
 
     with st.sidebar:
+        st.markdown("""
+<div style="display:flex;align-items:center;gap:10px;padding:4px 0 16px;
+            border-bottom:1px solid rgba(0,0,0,0.07);margin-bottom:12px;">
+    <div style="width:32px;height:32px;background:#111;border-radius:8px;
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="5.5" stroke="#C4FF00" stroke-width="1.8"/>
+            <line x1="5" y1="13" x2="13" y2="5" stroke="#C4FF00" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+    </div>
+    <div>
+        <div style="font-size:14px;font-weight:700;font-family:'Space Grotesk',system-ui,sans-serif;
+                    color:#111;line-height:1.15;">Aegis AI</div>
+        <div style="font-size:10px;color:#999;letter-spacing:0.06em;text-transform:uppercase;margin-top:1px;">
+            Underwriting Platform</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
         st.markdown(f"**{user['name']}**")
         st.caption(user["org"])
         st.caption(f"Role: {user['role']}")
@@ -104,8 +171,19 @@ def main():
         st.divider()
         logout_button()
         st.divider()
-        st.caption("Aegis AI v1.0")
-        st.caption("Powered by XGBoost + SHAP")
+        st.markdown("""
+<div style="background:#111;border:1px solid #1e1e1e;border-radius:8px;
+            padding:10px 12px;margin-top:4px;">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#C4FF00;
+                     display:inline-block;flex-shrink:0;"></span>
+        <span style="font-size:10px;color:#C4FF00;font-weight:500;
+                     letter-spacing:0.08em;text-transform:uppercase;
+                     font-family:'Space Grotesk',system-ui,sans-serif;">Model Active</span>
+    </div>
+    <div style="font-size:11px;color:#888;line-height:1.4;">XGBoost v2.1 · SHAP enabled</div>
+</div>
+""", unsafe_allow_html=True)
 
     if user["role"] == "underwriter":
         underwriter_view.render()

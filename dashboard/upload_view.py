@@ -11,16 +11,16 @@ from dashboard.api_client import predict_employee, calculate_premium
 from dashboard.currency import fmt, active_code, CURRENCIES
 from dashboard.pdf_report import generate_underwriting_report
 
-PLOT_BG  = "#1c1c1e"
-GRID_CLR = "#3a3a3c"
-FONT_CLR = "#f5f5f7"
-ACCENT   = "#0a84ff"
+PLOT_BG  = "#FFFFFF"
+GRID_CLR = "rgba(0,0,0,0.06)"
+FONT_CLR = "#111111"
+ACCENT   = "#9BC800"
 
 COLOR_MAP = {
-    "Low":      "#34c759",
-    "Moderate": "#ff9f0a",
-    "High":     "#ff3b30",
-    "Critical": "#8e0000",
+    "Low":      "#22C55E",
+    "Moderate": "#F59E0B",
+    "High":     "#EF4444",
+    "Critical": "#991B1B",
 }
 
 REQUIRED_COLS = {
@@ -253,14 +253,14 @@ def _render_results(res: dict) -> None:
             value=res["mean_hrs"],
             number={"font": {"color": FONT_CLR, "size": 36}},
             gauge={
-                "axis":    {"range": [0, 100], "tickcolor": FONT_CLR},
+                "axis":    {"range": [0, 100], "tickcolor": "#999999"},
                 "bar":     {"color": ACCENT},
                 "bgcolor": PLOT_BG,
                 "steps": [
-                    {"range": [0,  30],  "color": "#1a3a2a"},
-                    {"range": [30, 60],  "color": "#3a2e0a"},
-                    {"range": [60, 80],  "color": "#3a1a18"},
-                    {"range": [80, 100], "color": "#2e0d0c"},
+                    {"range": [0,  30],  "color": "rgba(34,197,94,0.10)"},
+                    {"range": [30, 60],  "color": "rgba(245,158,11,0.10)"},
+                    {"range": [60, 80],  "color": "rgba(239,68,68,0.10)"},
+                    {"range": [80, 100], "color": "rgba(153,27,27,0.15)"},
                 ],
             },
             title={"text": "Mean HRS", "font": {"color": FONT_CLR, "size": 13}},

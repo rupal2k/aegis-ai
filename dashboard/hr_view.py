@@ -12,15 +12,15 @@ from dashboard.api_client import (
 from dashboard.currency import fmt, active_code, CURRENCIES
 
 COLOR_MAP = {
-    "Low":      "#34c759",
-    "Moderate": "#ff9f0a",
-    "High":     "#ff3b30",
-    "Critical": "#8e0000",
+    "Low":      "#22C55E",
+    "Moderate": "#F59E0B",
+    "High":     "#EF4444",
+    "Critical": "#991B1B",
 }
-PLOT_BG  = "#1c1c1e"
-GRID_CLR = "#3a3a3c"
-FONT_CLR = "#f5f5f7"
-ACCENT   = "#0a84ff"
+PLOT_BG  = "#FFFFFF"
+GRID_CLR = "rgba(0,0,0,0.06)"
+FONT_CLR = "#111111"
+ACCENT   = "#9BC800"
 
 
 def _chart_defaults():
@@ -94,7 +94,7 @@ def render():
             emp_df, x="age", y="loss_ratio", color="chronic_count",
             labels={"age": "Age", "loss_ratio": "Loss ratio",
                     "chronic_count": "Chronic conditions"},
-            color_continuous_scale=["#34c759", "#ff9f0a", "#ff3b30"],
+            color_continuous_scale=["#22C55E", "#F59E0B", "#EF4444"],
         )
         scatter.update_layout(**_chart_defaults(), height=340)
         scatter.update_traces(marker=dict(size=6, opacity=0.7))
@@ -175,8 +175,8 @@ def render():
                -roi["annual_savings"] * rate,
                roi["projected_premium"] * rate],
             measure=["absolute", "relative", "total"],
-            decreasing={"marker": {"color": "#34c759"}},
-            increasing={"marker": {"color": "#ff3b30"}},
+            decreasing={"marker": {"color": "#22C55E"}},
+            increasing={"marker": {"color": "#EF4444"}},
             totals={"marker":    {"color": ACCENT}},
             connector={"line": {"color": GRID_CLR}},
         ))
