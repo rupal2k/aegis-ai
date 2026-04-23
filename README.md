@@ -126,7 +126,7 @@ python data/generate.py
 python data/load_to_db.py
 python -m ml_engine.training.train
 
-uvicorn ingestion.main:app --reload         # API on :8000
+uvicorn ingestion.main:app --reload --no-server-header  # API on :8000
 streamlit run dashboard/app.py              # UI on :8501
 ```
 

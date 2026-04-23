@@ -3,11 +3,13 @@ import logging
 import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 
 from ingestion.routers import health, ingest, predict, companies, auth_router
+from ingestion.rate_limit import (
+    limiter,
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,9 +18,6 @@ logging.basicConfig(
 
 _ENV = os.environ.get("ENV", "production")
 _ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
-
-# Initialize rate limiter
-limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="Aegis AI — Underwriting Platform API",
@@ -31,7 +30,7 @@ app = FastAPI(
 
 # Attach rate limiter to app
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, lambda request, exc: {"detail": str(exc)})
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Security Headers Middleware
 @app.middleware("http")

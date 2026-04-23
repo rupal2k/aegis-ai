@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Depends
 from ingestion.auth.users import authenticate_user
 from ingestion.auth.jwt import create_access_token
+from ingestion.rate_limit import limiter
 import logging
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -11,7 +12,8 @@ _audit = logging.getLogger("aegis.audit")
 
 
 @router.post("/token")
-def login(form: OAuth2PasswordRequestForm = Depends(), request: Request = None):
+@limiter.limit("5/minute")
+def login(request: Request, form: OAuth2PasswordRequestForm = Depends()):
     """
     Authenticate user and return JWT token.
     

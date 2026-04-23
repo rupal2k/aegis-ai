@@ -1,10 +1,18 @@
 """Comprehensive security tests for Aegis AI platform."""
 import httpx
 import json
+import os
 import pytest
 
-BASE = "http://localhost:8000"
+BASE = os.environ.get("AEGIS_BASE_URL", "http://localhost:8000")
 client = httpx.Client(timeout=10)
+
+
+def _login(email: str, password: str) -> httpx.Response:
+    return client.post(
+        f"{BASE}/auth/token",
+        data={"username": email, "password": password},
+    )
 
 # ============================================================================
 # 1. AUTHENTICATION SECURITY TESTS
@@ -96,6 +104,34 @@ class TestAuthorizationSecurity:
                        headers={"Authorization": f"Bearer {token}"})
         # Should be rejected: 401 (invalid signature/key mismatch) or 403 (valid token, wrong role)
         assert r.status_code in [200, 401, 403, 422], f"Invalid status: {r.status_code}"
+
+    def test_hr_admin_cannot_ingest_other_company_roster(self):
+        """Test that HR admins cannot upload roster data for another company."""
+        login = _login("hr@technova.com", "demo123")
+        assert login.status_code == 200, f"Expected successful login, got {login.status_code}: {login.text}"
+
+        token = login.json()["access_token"]
+        payload = {
+            "company_id": "COMP_002",
+            "employees": [
+                {
+                    "external_employee_id": "SEC_TEST_EMP_001",
+                    "age": 30,
+                    "gender": "M",
+                    "bmi": 25,
+                    "smoker": False,
+                    "diabetic": False,
+                    "hypertension": False,
+                    "job_category": "desk",
+                }
+            ],
+        }
+        r = client.post(
+            f"{BASE}/ingest/company",
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert r.status_code == 403, f"Cross-company ingest should be forbidden, got {r.status_code}: {r.text}"
 
 
 # ============================================================================
@@ -271,6 +307,17 @@ class TestContainerSecurity:
 
 class TestRateLimiting:
     """Test rate limiting and DOS protection."""
+
+    def test_auth_endpoint_rate_limited(self):
+        """Test that repeated login attempts are eventually throttled."""
+        statuses = []
+        for _ in range(6):
+            r = client.post(
+                f"{BASE}/auth/token",
+                data={"username": "fake@example.com", "password": "wrongpass"},
+            )
+            statuses.append(r.status_code)
+        assert 429 in statuses, f"Expected at least one 429 response, got {statuses}"
     
     def test_health_endpoint_available(self):
         """Test that health endpoint is always available."""

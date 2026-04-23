@@ -12,7 +12,7 @@ from ingestion.models.schemas import (
 from ingestion.normalizer import (
     normalize_wearable, normalize_clinical, normalize_employee,
 )
-from ingestion.auth.dependencies import get_current_user
+from ingestion.auth.dependencies import get_current_user, require_company_access
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 _audit = logging.getLogger("aegis.audit")
@@ -32,6 +32,7 @@ def ingest_wearable(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
+    require_company_access(payload.company_id, user)
     if not _company_exists(db, payload.company_id):
         raise HTTPException(status_code=404, detail=f"Unknown company: {payload.company_id}")
 
@@ -74,6 +75,7 @@ def ingest_clinical(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
+    require_company_access(payload.company_id, user)
     if not _company_exists(db, payload.company_id):
         raise HTTPException(status_code=404, detail=f"Unknown company: {payload.company_id}")
 
@@ -117,6 +119,7 @@ def ingest_company_roster(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
+    require_company_access(payload.company_id, user)
     if not _company_exists(db, payload.company_id):
         raise HTTPException(status_code=404, detail=f"Unknown company: {payload.company_id}")
 
