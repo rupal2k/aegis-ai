@@ -1,6 +1,6 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + NullMask UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + NullMask UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Isometric Illustrations ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
 **Last Updated**: 2026-04-24
 
@@ -116,6 +116,7 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **Swagger UI CSP fix** — `ingestion/main.py` middleware now exempts `/docs`, `/redoc`, `/openapi.json` from strict `script-src 'self'` CSP in development mode, allowing Swagger UI to load from `cdn.jsdelivr.net`
 - [x] **NullMask design system implementation** — fetched official design bundle (claude.ai/design), audited all 14 design elements, implemented 6 missing ones: user avatar with initials, data-driven alerts panel, risk band mini-cards, numbered AI recommendations with estimated savings, glow shadow CSS variant, thin scrollbar
 - [x] **HR dashboard chart fixes** — waterfall per-bar colours (gray/green/accent-olive) + dotted connector + outside labels; donut zero-band filtering + mean HRS centre annotation (`bd13c22`)
+- [x] **NullMask isometric illustrations** — 4 SVG design elements placed across dashboard pages: Privacy Vault on login, Privacy Router on underwriter portfolio tab, Privacy Shield on HR workforce tab, Zero Node on upload empty state; stored as base64 data URIs in `dashboard/illustrations.py` (`9b0ce1f`, `5dfbe76`)
 
 ## 🔧 Next Steps (Post-Capstone)
 
