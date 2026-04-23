@@ -70,16 +70,22 @@ def render():
             "pct":  [pred["low_risk_pct"], pred["moderate_risk_pct"],
                      pred["high_risk_pct"], pred["critical_risk_pct"]],
         })
+        dist_df = dist_df[dist_df["pct"] > 0]
         fig = px.pie(
-            dist_df, names="band", values="pct", hole=0.55,
+            dist_df, names="band", values="pct", hole=0.58,
             color="band", color_discrete_map=COLOR_MAP,
         )
         fig.update_layout(
             **_chart_defaults(),
             height=320,
             legend=dict(orientation="h", yanchor="bottom", y=-0.2),
+            annotations=[dict(
+                text=f"<b>{pred['mean_hrs']:.1f}</b><br><span style='font-size:10px'>HRS</span>",
+                x=0.5, y=0.5, font_size=18, showarrow=False,
+                font=dict(color="#111111", family="Space Grotesk, system-ui"),
+            )],
         )
-        fig.update_traces(textinfo="percent+label", textfont_size=13)
+        fig.update_traces(textinfo="percent+label", textfont_size=12, textposition="outside")
         st.plotly_chart(fig, use_container_width=True)
 
         st.subheader("Key workforce metrics")
@@ -195,22 +201,25 @@ def render():
         code = active_code()
         rate = CURRENCIES[code]["rate"]
         sym  = CURRENCIES[code]["symbol"]
+        cur_y  = roi["current_premium"]  * rate
+        sav_y  = roi["annual_savings"]   * rate
+        proj_y = roi["projected_premium"] * rate
         wf = go.Figure(go.Waterfall(
             x=["Current premium", "Wellness savings", "Projected premium"],
-            y=[roi["current_premium"] * rate,
-               -roi["annual_savings"] * rate,
-               roi["projected_premium"] * rate],
+            y=[cur_y, -sav_y, proj_y],
             measure=["absolute", "relative", "total"],
-            decreasing={"marker": {"color": "#22C55E"}},
-            increasing={"marker": {"color": "#EF4444"}},
-            totals={"marker":    {"color": ACCENT}},
-            connector={"line": {"color": GRID_CLR}},
+            marker_color=["#374151", "#22C55E", "#9BC800"],
+            connector={"line": {"color": GRID_CLR, "width": 1, "dash": "dot"}},
+            textposition="outside",
+            text=[f"{sym}{cur_y:,.0f}", f"-{sym}{sav_y:,.0f}", f"{sym}{proj_y:,.0f}"],
+            textfont={"family": "JetBrains Mono, monospace", "size": 12, "color": "#111111"},
         ))
         wf.update_layout(
             **_chart_defaults(),
-            height=320,
+            height=340,
             title=dict(text=f"Premium savings breakdown ({code})", font=dict(size=14)),
-            yaxis=dict(gridcolor=GRID_CLR, tickprefix=sym),
+            yaxis=dict(gridcolor=GRID_CLR, tickprefix=sym, showgrid=True),
+            showlegend=False,
         )
         st.plotly_chart(wf, use_container_width=True)
 
