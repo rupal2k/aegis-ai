@@ -23,6 +23,57 @@ FONT_CLR = "#111111"
 ACCENT   = "#9BC800"
 
 
+def _render_alerts(df):
+    """Render a NullMask-styled alerts panel driven by real portfolio data."""
+    LEVEL_COLORS = {
+        "high": "#D63030",
+        "med":  "#D07000",
+        "info": "#0070C8",
+        "ok":   "#5A8A00",
+    }
+    alerts = []
+    critical = df[df["risk_band"] == "Critical"]
+    high     = df[df["risk_band"] == "High"]
+    big_adj  = df[df["adjustment_pct"] > 10]
+    low      = df[df["risk_band"] == "Low"]
+    avg_hrs  = df["mean_hrs"].mean()
+
+    if len(critical) > 0:
+        names  = ", ".join(critical["company_name"].head(2).tolist())
+        suffix = f" +{len(critical) - 2} more" if len(critical) > 2 else ""
+        alerts.append(("high", f"Critical risk: {names}{suffix} — immediate underwriting review required"))
+    if len(high) > 1:
+        alerts.append(("med", f"{len(high)} companies in High risk band — elevated claims exposure across portfolio"))
+    if len(big_adj) > 0:
+        alerts.append(("info", f"{len(big_adj)} companies flagged for >10% premium adjustment at next renewal"))
+    if avg_hrs > 50:
+        alerts.append(("info", f"Portfolio avg HRS {avg_hrs:.1f} — exceeds 50-point industry benchmark"))
+    if len(low) > 0:
+        alerts.append(("ok", f"{len(low)} companies in Low risk band — favourable renewal terms available"))
+
+    rows_html = ""
+    for level, text in alerts[:4]:
+        col = LEVEL_COLORS[level]
+        rows_html += (
+            f'<div style="display:flex;align-items:flex-start;gap:10px;'
+            f'padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06);">'
+            f'<span style="width:7px;height:7px;border-radius:50%;background:{col};'
+            f'flex-shrink:0;margin-top:5px;display:inline-block;"></span>'
+            f'<div style="flex:1;font-size:13px;color:#444;line-height:1.4;">{text}</div>'
+            f'</div>'
+        )
+
+    st.markdown(
+        f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);'
+        f'border-radius:12px;padding:18px 22px;margin-bottom:8px;">'
+        f'<div style="font-size:11px;color:#999;text-transform:uppercase;'
+        f'letter-spacing:0.1em;margin-bottom:4px;font-weight:500;">Alerts</div>'
+        f'{rows_html}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def _chart_defaults():
     return dict(
         plot_bgcolor=PLOT_BG,
@@ -92,6 +143,8 @@ def render():
             legend_title_text="Risk band",
         )
         st.plotly_chart(fig, use_container_width=True)
+
+        _render_alerts(df)
 
         st.subheader("Ranked portfolio")
         code = active_code()
@@ -170,6 +223,33 @@ def render():
             paper_bgcolor=PLOT_BG,
         )
         st.plotly_chart(gauge, use_container_width=True)
+
+        # ── Risk band mini-cards (NullMask design) ──────────────────────────
+        band_data = [
+            ("Low",      pred["low_risk_pct"],      "#22C55E", int(pred["employee_count"] * pred["low_risk_pct"]      / 100)),
+            ("Moderate", pred["moderate_risk_pct"],  "#F59E0B", int(pred["employee_count"] * pred["moderate_risk_pct"] / 100)),
+            ("High",     pred["high_risk_pct"],      "#EF4444", int(pred["employee_count"] * pred["high_risk_pct"]     / 100)),
+            ("Critical", pred["critical_risk_pct"],  "#991B1B", int(pred["employee_count"] * pred["critical_risk_pct"] / 100)),
+        ]
+        cards_html = "".join(
+            f'<div style="flex:1;background:#F5F5EF;border-radius:8px;padding:12px 14px;">'
+            f'<div style="font-size:12px;font-weight:600;font-family:\'Space Grotesk\',system-ui,sans-serif;color:#111;margin-bottom:6px;">{label}</div>'
+            f'<div style="font-size:20px;font-weight:700;color:{color};font-family:\'Space Grotesk\',system-ui,sans-serif;letter-spacing:-0.02em;">{pct:.0f}%</div>'
+            f'<div style="font-size:10px;color:#999;margin-top:2px;">{count} employees</div>'
+            f'<div style="height:3px;background:rgba(0,0,0,0.07);border-radius:2px;margin-top:8px;">'
+            f'<div style="height:100%;width:{pct}%;background:{color};border-radius:2px;opacity:0.7;"></div>'
+            f'</div></div>'
+            for label, pct, color, count in band_data
+        )
+        st.markdown(
+            f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:12px;'
+            f'padding:18px 22px;margin-bottom:16px;">'
+            f'<div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.1em;'
+            f'margin-bottom:12px;font-weight:500;">Risk Band Breakdown</div>'
+            f'<div style="display:flex;gap:12px;">{cards_html}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
         st.subheader("Risk breakdown")
         dist_df = pd.DataFrame({

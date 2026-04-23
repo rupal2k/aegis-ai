@@ -115,6 +115,16 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
 .stCaption, [data-testid="stCaptionContainer"] p {
     color: #999999 !important;
 }
+
+/* ── Glow metric card (accent) ────── */
+[data-testid="stMetric"].nm-glow {
+    border-color: rgba(150,200,0,0.40) !important;
+    box-shadow: 0 0 24px rgba(196,255,0,0.10) !important;
+}
+
+/* ── Scrollbar ────────────────────── */
+::-webkit-scrollbar { width: 4px; background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -163,9 +173,24 @@ def main():
     </div>
 </div>
 """, unsafe_allow_html=True)
-        st.markdown(f"**{user['name']}**")
-        st.caption(user["org"])
-        st.caption(f"Role: {user['role']}")
+        _name = user.get("name") or user.get("email", "?")
+        _parts = _name.split("@")[0].replace(".", " ").split() if "@" in _name else _name.split()
+        _initials = "".join(p[0].upper() for p in _parts if p)[:2] or "??"
+        _role_label = {"underwriter": "Underwriter", "hr_admin": "HR Manager"}.get(user["role"], user["role"])
+        st.markdown(f"""
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+  <div style="width:34px;height:34px;border-radius:50%;
+              background:rgba(196,255,0,0.14);border:1px solid rgba(150,200,0,0.40);
+              display:flex;align-items:center;justify-content:center;
+              font-size:12px;font-weight:600;color:#C4FF00;
+              font-family:'Space Grotesk',system-ui,sans-serif;flex-shrink:0;">{_initials}</div>
+  <div style="min-width:0;">
+    <div style="font-size:13px;font-weight:600;font-family:'Space Grotesk',system-ui,sans-serif;
+                color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{_name}</div>
+    <div style="font-size:10px;color:#999;letter-spacing:0.08em;text-transform:uppercase;margin-top:1px;">{_role_label}</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
         st.divider()
         sidebar_selector()
         st.divider()

@@ -117,27 +117,53 @@ def render():
             fig.update_traces(marker_line_width=0)
             st.plotly_chart(fig, use_container_width=True)
 
-        st.subheader("Recommended interventions")
         recs = {
-            "avg_daily_steps":  ("Step-count challenge",           "Expected HRS drop: 5-12 pts"),
-            "smoker":           ("Smoking cessation program",       "Expected HRS drop: 8-15 pts"),
-            "avg_sleep_hours":  ("Sleep hygiene workshops",         "Expected HRS drop: 3-6 pts"),
-            "hypertension":     ("BP screening camps",              "Expected HRS drop: 6-10 pts"),
-            "diabetic":         ("Diabetes management program",     "Expected HRS drop: 10-18 pts"),
-            "bmi":              ("Nutrition counseling + gym",      "Expected HRS drop: 4-8 pts"),
-            "visit_count":      ("Preventive care incentives",      "Expected HRS drop: 5-9 pts"),
-            "avg_resting_hr":   ("Cardio fitness program",          "Expected HRS drop: 4-7 pts"),
-            "health_composite": ("Comprehensive wellness bundle",   "Expected HRS drop: 10-20 pts"),
-            "activity_score":   ("Workplace activity program",      "Expected HRS drop: 6-10 pts"),
-            "clinical_burden":  ("Case management for high-users",  "Expected HRS drop: 8-14 pts"),
-            "chronic_count":    ("Chronic disease management",      "Expected HRS drop: 10-18 pts"),
+            "avg_daily_steps":  ("Step-count challenge",           "Expected HRS drop: 5–12 pts",  8.5),
+            "smoker":           ("Smoking cessation program",       "Expected HRS drop: 8–15 pts", 11.5),
+            "avg_sleep_hours":  ("Sleep hygiene workshops",         "Expected HRS drop: 3–6 pts",   4.5),
+            "hypertension":     ("BP screening camps",              "Expected HRS drop: 6–10 pts",  8.0),
+            "diabetic":         ("Diabetes management program",     "Expected HRS drop: 10–18 pts",14.0),
+            "bmi":              ("Nutrition counseling + gym",      "Expected HRS drop: 4–8 pts",   6.0),
+            "visit_count":      ("Preventive care incentives",      "Expected HRS drop: 5–9 pts",   7.0),
+            "avg_resting_hr":   ("Cardio fitness program",          "Expected HRS drop: 4–7 pts",   5.5),
+            "health_composite": ("Comprehensive wellness bundle",   "Expected HRS drop: 10–20 pts",15.0),
+            "activity_score":   ("Workplace activity program",      "Expected HRS drop: 6–10 pts",  8.0),
+            "clinical_burden":  ("Case management for high-users",  "Expected HRS drop: 8–14 pts", 11.0),
+            "chronic_count":    ("Chronic disease management",      "Expected HRS drop: 10–18 pts",14.0),
         }
-        for d in drivers[:3]:
-            rec = recs.get(d["feature"])
-            if rec:
-                with st.container(border=True):
-                    st.markdown(f"**{rec[0]}** — {rec[1]}")
-                    st.caption(f"Driver: `{d['feature']}` (importance {d['importance']:.3f})")
+        matched = [(i + 1, d, recs[d["feature"]]) for i, d in enumerate(drivers[:4]) if d["feature"] in recs]
+        if matched:
+            items_html = ""
+            for idx, (rank, d, (action, impact, hrs_mid)) in enumerate(matched):
+                # Estimate annual savings: hrs_improvement / 100 * adjusted_premium * 0.8
+                est = (hrs_mid / 100) * prem["adjusted_premium"] * 0.8
+                border = "border-bottom:1px solid rgba(0,0,0,0.07);" if idx < len(matched) - 1 else ""
+                items_html += (
+                    f'<div style="display:flex;align-items:center;gap:16px;padding:12px 0;{border}">'
+                    f'<span style="width:22px;height:22px;background:rgba(196,255,0,0.14);'
+                    f'border:1px solid rgba(150,200,0,0.40);border-radius:5px;flex-shrink:0;'
+                    f'display:flex;align-items:center;justify-content:center;'
+                    f'font-size:11px;color:#5A7A00;font-family:\'Space Grotesk\',sans-serif;font-weight:700;">{rank}</span>'
+                    f'<div style="flex:1;">'
+                    f'<div style="font-size:13px;color:#111;font-weight:500;'
+                    f'font-family:\'Space Grotesk\',sans-serif;margin-bottom:2px;">{action}</div>'
+                    f'<div style="font-size:12px;color:#999;">{impact}</div>'
+                    f'</div>'
+                    f'<div style="text-align:right;flex-shrink:0;">'
+                    f'<div style="font-size:13px;font-weight:700;color:#9BC800;'
+                    f'font-family:\'JetBrains Mono\',monospace;">{fmt(est)}</div>'
+                    f'<div style="font-size:10px;color:#999;">est. annual savings</div>'
+                    f'</div></div>'
+                )
+            st.markdown(
+                f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);'
+                f'border-radius:12px;padding:22px 24px;margin-top:16px;">'
+                f'<div style="font-size:11px;color:#999;text-transform:uppercase;'
+                f'letter-spacing:0.1em;margin-bottom:8px;font-weight:500;">AI Recommendations</div>'
+                f'{items_html}'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
     with tab3:
         st.subheader("Wellness program ROI simulator")
