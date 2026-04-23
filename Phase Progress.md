@@ -653,6 +653,26 @@ Two elements from the design prototype cannot be ported to Streamlit:
 
 ---
 
+### HR Dashboard Chart Fixes (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `bd13c22`
+
+Fixes to `dashboard/hr_view.py` after visual review of the Wellness ROI tab:
+
+#### Waterfall chart (Wellness ROI simulator)
+- **Root cause**: Plotly waterfall uses `totals` colour for both `absolute` and `total` measures, so "Current premium" and "Projected premium" bars rendered identically in olive-green
+- **Fix**: Replaced `decreasing`/`totals` dicts with `marker_color` array — dark gray (`#374151`) for current, green (`#22C55E`) for savings, accent-olive (`#9BC800`) for projected
+- Added dotted connector line and outside text labels (JetBrains Mono) so values are readable without hovering
+- Removed redundant auto-generated Plotly legend (`showlegend=False`)
+
+#### Donut chart (Workforce overview — Risk band distribution)
+- **Fix**: Filter out zero-percentage bands before passing to `px.pie()` to eliminate empty slivers
+- Added mean HRS score as a centre annotation inside the donut hole (Space Grotesk, 18px)
+- Labels moved to `textposition="outside"` to avoid overlap at small slice sizes
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -667,9 +687,10 @@ Two elements from the design prototype cannot be ported to Streamlit:
 | Post-capstone | ✅ Security hardening | ~3h | — | 1 |
 | Post-capstone | ✅ Security testing & remediation | ~2h | 25/25 ✅ | 4 |
 | Post-capstone | ✅ NullMask UI redesign + Swagger CSP fix | ~1h | — | 1 |
-| Post-capstone | ✅ NullMask design system implementation | ~1h | — | — |
+| Post-capstone | ✅ NullMask design system implementation | ~1h | — | 1 |
+| Post-capstone | ✅ HR dashboard chart fixes (waterfall + donut) | ~0.5h | — | 1 |
 
-**Total Effort to Date**: ~32 hours  
-**Total Commits**: 25  
+**Total Effort to Date**: ~32.5 hours  
+**Total Commits**: 26  
 **Total Tests**: 88 passing (63 functional + 25 security)
 
