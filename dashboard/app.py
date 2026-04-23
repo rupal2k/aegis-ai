@@ -159,6 +159,60 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
 """, unsafe_allow_html=True)
 
 
+def _render_login_reference():
+    st.markdown(
+        """
+<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:12px;
+            padding:16px 18px;margin-top:18px;max-width:420px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.1em;
+                margin-bottom:8px;font-weight:500;">Quick Start</div>
+    <div style="font-size:13px;color:#444;line-height:1.6;">
+        <strong style="color:#111;">HRS</strong> is the platform's Health Risk Score:
+        <strong style="color:#111;">0-29</strong> low,
+        <strong style="color:#111;">30-59</strong> moderate,
+        <strong style="color:#111;">60-79</strong> high,
+        <strong style="color:#111;">80+</strong> critical.<br><br>
+        <strong style="color:#111;">Underwriters</strong> review portfolio risk, company drivers,
+        premium movement, and report outputs.<br>
+        <strong style="color:#111;">HR managers</strong> monitor workforce trends, track key drivers,
+        and model wellness ROI before renewal.
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_sidebar_reference(role: str):
+    role_copy = {
+        "underwriter": (
+            "Portfolio figures reflect live company-level predictions across the current underwriting book."
+        ),
+        "hr_admin": (
+            "Workforce analytics are limited to your company scope and update from the latest scored employee data."
+        ),
+    }.get(
+        role, "Dashboard values update from the active API session and current model outputs."
+    )
+    st.markdown(
+        f"""
+<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:10px;
+            padding:12px 14px;margin-top:4px;">
+    <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.08em;
+                margin-bottom:6px;font-weight:500;">Session Notes</div>
+    <div style="font-size:12px;color:#444;line-height:1.55;margin-bottom:8px;">
+        {role_copy}
+    </div>
+    <div style="font-size:11px;color:#666;line-height:1.5;">
+        <strong style="color:#111;">Currency:</strong> changing the selector updates displayed premium values only.<br>
+        <strong style="color:#111;">Session:</strong> sign out clears the current dashboard session.
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def main():
     user = st.session_state.get("user")
 
@@ -189,6 +243,7 @@ def main():
 </div>
 """, unsafe_allow_html=True)
             login_form()
+            _render_login_reference()
         with _rc:
             st.markdown(
                 f'<div style="display:flex;align-items:center;justify-content:center;'
@@ -196,6 +251,7 @@ def main():
                 f'{_illus(SOC2_COMPLIANCE, "100%", "max-width:380px;")}</div>',
                 unsafe_allow_html=True,
             )
+            st.caption("Your role determines which workspace opens after sign-in.")
         return
 
     with st.sidebar:
@@ -237,6 +293,8 @@ def main():
 """, unsafe_allow_html=True)
         st.divider()
         sidebar_selector()
+        st.divider()
+        _render_sidebar_reference(user["role"])
         st.divider()
         logout_button()
         st.divider()

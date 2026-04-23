@@ -24,6 +24,30 @@ FONT_CLR = "#111111"
 ACCENT   = "#9BC800"
 
 
+def _render_help_banner():
+    """Render a compact explainer for HRS and HR tab usage."""
+    st.markdown(
+        """
+<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:12px;
+            padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.1em;
+                margin-bottom:8px;font-weight:500;">Quick Guide</div>
+    <div style="font-size:13px;color:#444;line-height:1.55;margin-bottom:10px;">
+        <span style="color:#111;font-weight:600;">HRS</span> means
+        <span style="color:#111;font-weight:600;">Health Risk Score</span>.
+        It runs from <span style="color:#111;font-weight:600;">0-100</span>, where lower is healthier.
+        A lower company HRS usually supports better underwriting outcomes and lower renewal pressure.
+    </div>
+    <div style="font-size:12px;color:#666;line-height:1.65;">
+        Use this workspace to monitor workforce risk, understand what is driving HRS, and estimate
+        how health improvements could change renewal pressure.
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def _chart_defaults():
     return dict(
         plot_bgcolor=PLOT_BG,
@@ -39,6 +63,7 @@ def render():
 
     st.title(f"{user['org']} — Workforce Health Dashboard")
     st.caption(f"Signed in as {user['name']}")
+    _render_help_banner()
 
     companies = list_companies()
     company = next((c for c in companies if c["company_id"] == company_id), None)
@@ -68,6 +93,7 @@ def render():
         _th, _ti = st.columns([3, 1])
         with _th:
             st.subheader("Risk band distribution")
+            st.caption("Use this tab to understand your current workforce risk mix, core health metrics, and where claims pressure is showing up.")
         with _ti:
             st.markdown(
                 f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
@@ -118,6 +144,7 @@ def render():
     with tab2:
         st.subheader("What's driving your risk score?")
         st.caption("SHAP importance — higher = bigger contribution to risk")
+        st.caption("Use this tab to identify the biggest contributors to HRS and prioritise the most meaningful wellness actions.")
 
         drivers = pred.get("top_risk_drivers", [])
         if drivers:
@@ -182,7 +209,7 @@ def render():
 
     with tab3:
         st.subheader("Wellness program ROI simulator")
-        st.caption("Model the financial impact of reducing your workforce HRS.")
+        st.caption("Use this tab to model the financial impact of reducing your workforce HRS before renewal.")
 
         col1, col2 = st.columns(2)
         with col1:

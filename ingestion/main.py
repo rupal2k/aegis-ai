@@ -19,13 +19,59 @@ logging.basicConfig(
 _ENV = os.environ.get("ENV", "production")
 _ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 
+_OPENAPI_TAGS = [
+    {
+        "name": "auth",
+        "description": "Authenticate dashboard or API users and receive a JWT bearer token.",
+    },
+    {
+        "name": "health",
+        "description": "Operational liveness and database reachability checks.",
+    },
+    {
+        "name": "ingest",
+        "description": "Secure company roster, wearable, and clinical data ingestion endpoints.",
+    },
+    {
+        "name": "predict",
+        "description": "Employee scoring, company analytics, premium guidance, and wellness ROI calculations.",
+    },
+    {
+        "name": "companies",
+        "description": "Dashboard read APIs for company lists and employee-level views.",
+    },
+]
+
+_API_DESCRIPTION = """
+Aegis AI powers the underwriting dashboard and secure data workflows for group insurance risk scoring.
+
+## Authentication
+1. Call `POST /auth/token` with form fields `username` and `password`.
+2. Send the returned token as `Authorization: Bearer <token>`.
+3. Use the authenticated routes below to ingest data or request predictions.
+
+## Health Risk Score
+`HRS` means `Health Risk Score`, the 0-100 risk signal shown across the dashboard.
+
+- `0-29`: low risk
+- `30-59`: moderate risk
+- `60-79`: high risk
+- `80+`: critical risk
+
+## Model notes
+Predictions are produced by the active XGBoost model. Driver explanations shown in the dashboard and API are generated from SHAP outputs after feature snapshot generation and retraining.
+
+These docs are exposed only when `ENV=development`.
+"""
+
 app = FastAPI(
     title="Aegis AI — Underwriting Platform API",
-    description="Tier 1 + Tier 2: secure ingestion + ML-powered predictions.",
+    description=_API_DESCRIPTION,
     version="1.1.0",
     docs_url="/docs" if _ENV == "development" else None,
     redoc_url="/redoc" if _ENV == "development" else None,
     openapi_url="/openapi.json" if _ENV == "development" else None,
+    openapi_tags=_OPENAPI_TAGS,
 )
 
 # Attach rate limiter to app
@@ -79,7 +125,14 @@ app.include_router(predict.router)
 app.include_router(companies.router)
 
 
-@app.get("/")
+@app.get(
+    "/",
+    summary="List service metadata and route groups",
+    description=(
+        "Return a lightweight index of the service version, health endpoint, docs path, "
+        "and major route groups used by the dashboard."
+    ),
+)
 def root():
     return {
         "service": "Aegis AI Underwriting Platform",

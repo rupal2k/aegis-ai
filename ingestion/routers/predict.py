@@ -34,7 +34,15 @@ def _enrich_driver(model, driver: dict) -> FeatureDriver:
     )
 
 
-@router.post("/employee", response_model=EmployeePredictionResponse)
+@router.post(
+    "/employee",
+    response_model=EmployeePredictionResponse,
+    summary="Score a single employee record",
+    description=(
+        "Return predicted loss ratio, Health Risk Score, risk band, and SHAP-enriched "
+        "feature drivers for one employee payload."
+    ),
+)
 def predict_employee(
     payload: EmployeePredictionRequest,
     user: dict = Depends(get_current_user),
@@ -56,7 +64,15 @@ def predict_employee(
     )
 
 
-@router.get("/company/{company_id}", response_model=CompanyPredictionResponse)
+@router.get(
+    "/company/{company_id}",
+    response_model=CompanyPredictionResponse,
+    summary="Summarize company risk and HRS distribution",
+    description=(
+        "Aggregate employee feature snapshots for one company and return mean HRS, "
+        "risk-band distribution, and top portfolio drivers."
+    ),
+)
 def predict_company(
     company_id: str,
     db: Session = Depends(get_db),
@@ -111,7 +127,15 @@ def predict_company(
     )
 
 
-@router.post("/premium", response_model=PremiumResponse)
+@router.post(
+    "/premium",
+    response_model=PremiumResponse,
+    summary="Calculate premium adjustment from HRS",
+    description=(
+        "Translate a base premium and Health Risk Score into adjusted premium guidance "
+        "and zone classification."
+    ),
+)
 def predict_premium(
     payload: PremiumRequest,
     user: dict = Depends(get_current_user),
@@ -121,7 +145,15 @@ def predict_premium(
     return PremiumResponse(**result)
 
 
-@router.post("/wellness-roi", response_model=WellnessROIResponse)
+@router.post(
+    "/wellness-roi",
+    response_model=WellnessROIResponse,
+    summary="Estimate wellness program ROI",
+    description=(
+        "Compare current and projected company HRS values to estimate premium savings, "
+        "program lift, and expected ROI."
+    ),
+)
 def predict_wellness_roi(
     payload: WellnessROIRequest,
     user: dict = Depends(get_current_user),

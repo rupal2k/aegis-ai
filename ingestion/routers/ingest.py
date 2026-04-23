@@ -26,7 +26,16 @@ def _company_exists(db: Session, company_id: str) -> bool:
     return result is not None
 
 
-@router.post("/wearable", response_model=IngestResponse, status_code=201)
+@router.post(
+    "/wearable",
+    response_model=IngestResponse,
+    status_code=201,
+    summary="Ingest wearable telemetry for one employee",
+    description=(
+        "Store a normalized monthly wearable payload for an employee after validating "
+        "company access and employee existence."
+    ),
+)
 def ingest_wearable(
     payload: WearablePayload,
     db: Session = Depends(get_db),
@@ -69,7 +78,16 @@ def ingest_wearable(
     )
 
 
-@router.post("/clinical", response_model=IngestResponse, status_code=201)
+@router.post(
+    "/clinical",
+    response_model=IngestResponse,
+    status_code=201,
+    summary="Ingest one clinical event",
+    description=(
+        "Store a normalized clinical or claims event for an existing employee within "
+        "the authenticated company scope."
+    ),
+)
 def ingest_clinical(
     payload: ClinicalEventPayload,
     db: Session = Depends(get_db),
@@ -113,7 +131,16 @@ def ingest_clinical(
     )
 
 
-@router.post("/company", response_model=IngestResponse, status_code=201)
+@router.post(
+    "/company",
+    response_model=IngestResponse,
+    status_code=201,
+    summary="Upload or update a company roster batch",
+    description=(
+        "Create or update employee roster records for a company. This endpoint is typically "
+        "used before wearable or clinical payloads are ingested."
+    ),
+)
 def ingest_company_roster(
     payload: CompanyBatchUpload,
     db: Session = Depends(get_db),

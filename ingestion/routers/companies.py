@@ -10,7 +10,14 @@ router = APIRouter(prefix="/companies", tags=["companies"])
 _audit = logging.getLogger("aegis.audit")
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="List companies available to the dashboard",
+    description=(
+        "Return company metadata and base premium inputs used by the dashboard selectors, "
+        "portfolio views, and role-based workflows."
+    ),
+)
 def list_companies(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -25,7 +32,14 @@ def list_companies(
     return [dict(r) for r in rows]
 
 
-@router.get("/{company_id}/employees")
+@router.get(
+    "/{company_id}/employees",
+    summary="List employees for a company view",
+    description=(
+        "Return employee-level feature, health, and claims fields used by the workforce "
+        "dashboard for the requested company."
+    ),
+)
 def company_employees(
     company_id: str,
     db: Session = Depends(get_db),

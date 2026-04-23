@@ -334,6 +334,10 @@ def _render_results(res: dict) -> None:
 def render_tab() -> None:
     st.subheader("Analyse your own workforce data")
     st.caption("Upload a CSV of employee records for instant risk scoring — no data is stored on the server.")
+    st.caption(
+        "Each employee is scored to HRS using the same underwriting model. "
+        "When wearable data is not provided, Aegis applies national-average telemetry defaults for analysis."
+    )
 
     res = st.session_state.get("upload_results")
 

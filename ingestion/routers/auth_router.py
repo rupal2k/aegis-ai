@@ -11,13 +11,20 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 _audit = logging.getLogger("aegis.audit")
 
 
-@router.post("/token")
+@router.post(
+    "/token",
+    summary="Exchange credentials for a bearer token",
+    description=(
+        "Authenticate a dashboard or API user and return a JWT bearer token. "
+        "Send the token in `Authorization: Bearer <token>` for all protected routes."
+    ),
+)
 @limiter.limit("5/minute")
 def login(request: Request, form: OAuth2PasswordRequestForm = Depends()):
     """
-    Authenticate user and return JWT token.
-    
-    Rate limited to 5 requests per minute per IP address.
+    Authenticate a user and return a signed JWT access token.
+
+    Requests are rate limited to five attempts per minute per client IP.
     """
     # Log authentication attempt (without password)
     client_ip = request.client.host if request else "unknown"

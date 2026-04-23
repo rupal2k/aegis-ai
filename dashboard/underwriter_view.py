@@ -24,6 +24,33 @@ FONT_CLR = "#111111"
 ACCENT   = "#9BC800"
 
 
+def _render_help_banner():
+    """Render a compact explainer for HRS and underwriter tab usage."""
+    st.markdown(
+        """
+<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:12px;
+            padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.1em;
+                margin-bottom:8px;font-weight:500;">Quick Guide</div>
+    <div style="font-size:13px;color:#444;line-height:1.55;margin-bottom:10px;">
+        <span style="color:#111;font-weight:600;">HRS</span> means
+        <span style="color:#111;font-weight:600;">Health Risk Score</span>.
+        It runs from <span style="color:#111;font-weight:600;">0-100</span>, where lower is healthier.
+        Aegis groups scores into <span style="color:#111;font-weight:600;">Low (0-29)</span>,
+        <span style="color:#111;font-weight:600;">Moderate (30-59)</span>,
+        <span style="color:#111;font-weight:600;">High (60-79)</span>, and
+        <span style="color:#111;font-weight:600;">Critical (80-100)</span>.
+    </div>
+    <div style="font-size:12px;color:#666;line-height:1.65;">
+        Use this workspace to move from portfolio screening into account review, pricing analysis,
+        and one-off CSV scoring without changing stored company data.
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def _render_alerts(df):
     """Render a NullMask-styled alerts panel driven by real portfolio data."""
     LEVEL_COLORS = {
@@ -88,6 +115,7 @@ def render():
     user = st.session_state["user"]
     st.title("Underwriter Console")
     st.caption(f"Signed in as {user['name']} — {user['org']}")
+    _render_help_banner()
 
     with st.spinner("Loading portfolio..."):
         companies = list_companies()
@@ -129,6 +157,7 @@ def render():
         _h1, _h2 = st.columns([3, 1])
         with _h1:
             st.subheader("All companies — ranked by risk")
+            st.caption("Use this tab to compare the full book of business, spot outliers quickly, and review how risk affects pricing.")
         with _h2:
             st.markdown(
                 f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
@@ -192,6 +221,7 @@ def render():
 
     with tab2:
         st.subheader("Company deep dive")
+        st.caption("Use this tab to inspect one employer in detail, understand what drives its HRS, and export the underwriting report.")
 
         company_choice = st.selectbox(
             "Select a company",
@@ -311,6 +341,7 @@ def render():
 
     with tab3:
         st.subheader("Portfolio risk distribution")
+        st.caption("Use this tab to understand how company HRS values are distributed across the portfolio and which industries are carrying more risk.")
         hist = px.histogram(
             df, x="mean_hrs", nbins=20,
             labels={"mean_hrs": "Company Health Risk Score"},
