@@ -18,3 +18,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | ff04d4d | feat: NullMask design system — alerts, mini-cards, avatar, AI recommendations
 - 2026-04-24 | bd13c22 | fix: improve HR dashboard chart visuals — waterfall colors + donut center label
 - 2026-04-24 | 9b0ce1f | feat: add 4 NullMask isometric illustrations across dashboard pages
+- 2026-04-24 | 5dfbe76 | fix: render SVG illustrations via base64 data URI instead of raw inline SVG

@@ -10,6 +10,7 @@
 
 ### Project Management
 - **[[Aegis AI Hub]]** — Overview, status, metrics
+- **[[User Manual Cheat Sheet]]** — Quick operational guide: startup, login, dashboard use, training, and health checks
 - **[[Phase Progress]]** — Detailed checklist for all 6 phases + post-capstone additions
 - **[[Bug Log]]** — 9 bugs, root causes, fixes, prevention
 - **[[Claude Memory]]** — Claude's persistent memory: user profile, feedback rules, project state
@@ -100,3 +101,4 @@ C:\Rupalprojects\Rupal\                   ← vault root
 ---
 
 *This is a lightweight navigation index. Full content is in individual .md files.*
+
