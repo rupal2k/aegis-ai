@@ -1,497 +1,334 @@
 # Aegis AI - Comprehensive Security Test Report
-**Date Generated:** April 22, 2026  
-**Test Coverage:** 25 security tests  
-**Initial Pass Rate:** 68% (17/25 passed, 7 failed, 1 skipped)  
-**After Remediation:** ✅ **100% (25/25 passed)** — all issues resolved same session
-
----
-
-> **Status as of 2026-04-22**: All 7 test failures resolved. See remediation summary at end of document.
+**Date Generated:** April 24, 2026  
+**Audit Scope:** Live localhost verification, automated security tests, dependency audit, and manual code review  
+**Repository:** `c:\Rupalprojects\aegis-ai`
 
 ---
 
 ## Executive Summary
 
-The Aegis AI platform demonstrated **moderate security posture** with several critical issues identified. The main concern was the **non-functional authentication endpoint** (`/auth/token` returning 404 — stale Docker image), server version disclosure, and missing security headers.
+This audit replaced the stale April 22 report with a current review of the codebase and live environment on **April 24, 2026**.
 
-**Initial Risk Level:** MEDIUM-HIGH ⚠️  
-**Post-Remediation Risk Level:** LOW ✅
+Two important facts were true at the start of this audit:
 
----
+1. The **running localhost API on `http://localhost:8000`** was a native host process, not the Docker API container. During the initial live check it still exposed a duplicate `Server` header containing **`uvicorn`**, which means that specific process had not been started with `--no-server-header`.
+2. The **checked-in code** had real security gaps not reflected in the latest vault summary:
+   - `/auth/token` was **not actually rate limited** despite the code comments and docs claiming it was.
+   - `/ingest/wearable`, `/ingest/clinical`, and `/ingest/company` allowed an `hr_admin` to target another company's `company_id`.
+   - `/health/db` could return raw backend exception text.
+   - `requirements.docker.txt` still pinned **`python-jose==3.3.0`**, which `pip-audit` flagged with known advisories.
 
-## 1. CRITICAL ISSUES 🔴
+These issues were remediated in the repo during this session, and the patched code was verified on a temporary updated server.
 
-### 1.1 Authentication Endpoint Not Functional
-**Severity:** CRITICAL  
-**Status:** BROKEN  
-**Details:**
-- The `/auth/token` endpoint returns 404 Not Found instead of processing credentials
-- This prevents users from obtaining JWT tokens
-- All protected endpoints become inaccessible
-- This also breaks the entire authentication and authorization system
+### Final Outcome
 
-**Impact:** 
-- Users cannot authenticate
-- No access to sensitive data endpoints
-- Security tests cannot verify authentication security measures
+- **Patched security suite:** `27/27 passing`
+- **Dependency audit after fixes:** `0 known vulnerabilities`
+- **Overall code posture after remediation:** `LOW-MEDIUM risk`
 
-**Recommendations:**
-1. Debug why the auth router is not being registered properly
-2. Check if the auth router prefix is correctly configured
-3. Verify the FastAPI app is including the auth router
-4. Test locally before deployment
+### Residual Caveat
+
+The **currently running localhost process on port 8000 was not restarted by this audit**, so its observed header behavior may still reflect the old startup command until it is restarted with the updated guidance.
 
 ---
 
-### 1.2 Server Version Information Leakage
+## Audit Method
+
+### 1. Live localhost verification
+Checked the already-running API at `http://localhost:8000`.
+
+Key observations:
+- `GET /health` returned `200 OK`
+- Response headers included both `server: uvicorn` and `server: AegisAI`
+- Invalid CORS origin was rejected with `400 Disallowed CORS origin`
+- `/docs`, `/redoc`, and `/openapi.json` were available, indicating development mode
+
+### 2. Automated security suite
+Ran:
+
+```bash
+python -m pytest tests/security_tests.py -v --tb=short
+```
+
+Initial live result against the old localhost process:
+- `24 passed, 1 failed`
+- The single failure was **server header leakage** (`uvicorn, aegisai`)
+
+After remediation, the suite was re-run against a temporary updated server on `127.0.0.1:8001` with host-compatible DB settings:
+
+```bash
+AEGIS_BASE_URL=http://127.0.0.1:8001 python -m pytest tests/security_tests.py -v --tb=short
+```
+
+Final patched result:
+- `27 passed, 0 failed`
+
+### 3. Dependency audit
+Ran `pip-audit` against `requirements.docker.txt`.
+
+Before fix:
+- `4 known vulnerabilities in 1 package`
+- All findings were tied to `python-jose==3.3.0`
+
+After updating the Docker requirements pin:
+- `No known vulnerabilities found`
+
+### 4. Manual security review
+Reviewed current security-sensitive files directly:
+- `ingestion/main.py`
+- `ingestion/rate_limit.py`
+- `ingestion/routers/auth_router.py`
+- `ingestion/routers/ingest.py`
+- `ingestion/routers/health.py`
+- `ingestion/auth/dependencies.py`
+- `ingestion/auth/jwt.py`
+- `Dockerfile.api`
+- `docker-compose.yml`
+- `.github/workflows/ci.yml`
+- `dashboard/auth.py`
+
+Note: a Bandit run was attempted via a workspace-local install, but that sandbox-local install did not expose a runnable entrypoint cleanly. The final report therefore relies on the successful dynamic tests, dependency scan, and manual code review above.
+
+---
+
+## Findings
+
+## 1. Resolved During This Audit
+
+### 1.1 Missing auth rate limiting
 **Severity:** HIGH  
-**Status:** VULNERABLE  
-**Details:**
-- Server header exposes "Uvicorn" in responses
-- Detailed version information can aid attackers in targeting known vulnerabilities
-- Example: `Server: uvicorn`
+**Status:** RESOLVED
 
-**Recommendations:**
-```python
-# In ingestion/main.py, add middleware to remove server header:
-@app.middleware("http")
-async def remove_server_header(request: Request, call_next):
-    response = await call_next(request)
-    response.headers.pop("server", None)
-    return response
-```
+**What was wrong**
+- The app initialized `slowapi`, but `/auth/token` had no limiter decorator.
+- Live verification confirmed repeated invalid login attempts returned only `401` responses and were never throttled.
+
+**Evidence**
+- Six consecutive invalid login attempts returned: `[401, 401, 401, 401, 401, 401]`
+
+**Fix applied**
+- Added shared rate-limit module: `ingestion/rate_limit.py`
+- Wired proper SlowAPI exception handling in `ingestion/main.py`
+- Added `@limiter.limit("5/minute")` to `POST /auth/token`
+- Added regression test: `test_auth_endpoint_rate_limited`
+
+**Verification**
+- Patched suite confirmed repeated auth attempts now produce `429` responses
 
 ---
 
-### 1.3 Database URL Not Set at Runtime
+### 1.2 Cross-company ingest authorization bypass
+**Severity:** HIGH  
+**Status:** RESOLVED
+
+**What was wrong**
+- Ingest routes only used `get_current_user`, not company-level authorization.
+- An `hr_admin` tied to `COMP_001` could submit a roster for `COMP_002`.
+
+**Live reproduction before fix**
+- Logged in as `hr@technova.com`
+- Submitted `POST /ingest/company` for `COMP_002`
+- API returned `201 Created`
+
+**Fix applied**
+- Added `require_company_access(payload.company_id, user)` checks to:
+  - `/ingest/wearable`
+  - `/ingest/clinical`
+  - `/ingest/company`
+- Added regression test: `test_hr_admin_cannot_ingest_other_company_roster`
+
+**Verification**
+- Patched suite confirmed cross-company roster ingest now returns `403`
+
+---
+
+### 1.3 DB health endpoint leaked backend error details
 **Severity:** MEDIUM  
-**Status:** CONFIGURATION ERROR  
-**Details:**
-- When running tests outside Docker, DATABASE_URL is not available
-- This could cause issues in CI/CD pipelines or local testing
-- Environment variables are hardcoded in docker-compose but not available to local test runner
+**Status:** RESOLVED
 
-**Recommendations:**
-1. Ensure `.env` file is properly loaded
-2. Add checks for required environment variables at startup
-3. Use python-dotenv to load variables from .env file
+**What was wrong**
+- `/health/db` returned raw exception text when DB connectivity failed.
+- In host-native runs with Docker-style `DATABASE_URL=db:5432`, the endpoint could expose backend details, including external docs links embedded in exception messages.
 
----
+**Fix applied**
+- `ingestion/routers/health.py` now logs the exception server-side and returns a generic failure message:
+  - `detail: "Database connectivity check failed"`
 
-## 2. HIGH-RISK ISSUES 🟠
-
-### 2.1 CORS Configuration Missing Strict Origin Validation
-**Severity:** MEDIUM-HIGH  
-**Details:**
-- CORS allows `http://localhost:8501` by default but doesn't validate origin strictly
-- Could allow requests from similar-looking domains
-- Missing `X-Frame-Options` header to prevent clickjacking
-
-**Current Configuration (ingestion/main.py):**
-```python
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_ALLOWED_ORIGINS or ["http://localhost:8501"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Authorization", "Content-Type"],
-)
-```
-
-**Recommendations:**
-```python
-# Add stricter CORS
-allow_origins = [
-    "http://localhost:8501",  # Development
-    # Add production domains here
-]
-
-# Add security headers middleware
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    return response
-```
+**Verification**
+- Patched security suite passed `test_db_health_endpoint_safe`
 
 ---
 
-### 2.2 Missing Rate Limiting
+### 1.4 Vulnerable Docker dependency pin
 **Severity:** MEDIUM  
-**Details:**
-- No rate limiting on authentication endpoints
-- Could allow brute force attacks on `/auth/token` once it's working
-- No DDoS protection
+**Status:** RESOLVED
 
-**Recommendations:**
+**What was wrong**
+- `requirements.docker.txt` pinned `python-jose[cryptography]==3.3.0`
+- `pip-audit` reported 4 advisories tied to that package version:
+  - `CVE-2024-33663`
+  - `CVE-2024-33664`
+  - mirrored GHSA/PYSEC records for the same issues
+
+**Fix applied**
+- Updated `requirements.docker.txt` to `python-jose[cryptography]==3.5.0`
+- This also aligned Docker with the less-stale local `requirements.txt`
+
+**Verification**
+- Re-ran `pip-audit`
+- Result: `No known vulnerabilities found`
+
+---
+
+## 2. Environment-Specific Observation Still Relevant
+
+### 2.1 Native localhost process still leaked `uvicorn` server header at audit start
+**Severity:** LOW-MEDIUM  
+**Status:** OBSERVED ON EXISTING PROCESS
+
+**What was observed**
+- The live process already running on `http://localhost:8000` returned both:
+  - `server: uvicorn`
+  - `server: AegisAI`
+
+**Why this happened**
+- Docker entrypoint already uses `--no-server-header`
+- During this audit, `docker compose ps` showed only `db` and `mlflow` containers running
+- So the API on `:8000` was not the Docker API container, but a native host process started separately
+
+**Fix applied to repo**
+- Updated `README.md` local dev command to use:
+
 ```bash
-pip install slowapi
+uvicorn ingestion.main:app --reload --no-server-header
 ```
 
-```python
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
-
-@router.post("/token")
-@limiter.limit("5/minute")
-def login(request: Request, ...):
-    # Auth logic
-```
+**Important note**
+- The old localhost process was **not restarted by this audit**, so this finding applies to that pre-existing process until it is restarted.
+- The patched temporary verification server on `127.0.0.1:8001` passed the server-header test cleanly.
 
 ---
 
-## 3. MEDIUM-RISK ISSUES 🟡
+## 3. Additional Observations
 
-### 3.1 Input Validation - Edge Cases
-**Severity:** MEDIUM  
-**Status:** PARTIALLY SECURED  
-**Details:**
-- ✅ XSS injection is properly rejected
-- ✅ Invalid JSON is rejected with 422 status
-- ✅ Oversized payloads are rejected
-- ✅ Extreme BMI values are rejected (validation working)
-- ✅ Negative age values are rejected
+### 3.1 CORS behavior
+**Status:** ACCEPTABLE FOR CURRENT DEV SETUP
 
-**However:** Need to verify these are enforced consistently across all endpoints
+Observed behavior:
+- Allowed localhost origins are configurable through `ALLOWED_ORIGINS`
+- Invalid origin (`http://evil.example`) was rejected with `400 Disallowed CORS origin`
+
+Risk note:
+- Still depends on correct environment configuration per deployment
 
 ---
 
-### 3.2 Database Connection Security
-**Severity:** MEDIUM  
-**Status:** REQUIRES VERIFICATION  
-**Details:**
-- PostgreSQL uses default credentials in docker-compose
-- Connection string should use environment variables (which it does)
-- No connection pooling configuration visible
-- No SSL/TLS for database connections in development
+### 3.2 Token revocation remains in-memory only
+**Status:** OPEN / NON-BLOCKING FOR DEMO
 
-**Current:**
-```yaml
-POSTGRES_USER: ${POSTGRES_USER}
-POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-DATABASE_URL: ${DATABASE_URL}
-```
+- `ingestion/auth/token_blacklist.py` uses an in-memory blacklist
+- There is still no logout endpoint using it
+- Revocation state would not survive process restart or multi-instance deployment
 
-**Recommendations:**
-1. Ensure passwords are strong (20+ characters)
-2. Use connection pooling with max connections limit
-3. Enable SSL for production database connections
-4. Add connection timeouts
+Recommendation:
+- If productionized, move revocation to Redis or database-backed storage and add logout/refresh flows
 
 ---
 
-### 3.3 JWT Token Configuration
-**Severity:** MEDIUM-LOW  
-**Status:** PARTIALLY SECURE  
-**Details:**
-- Access token expiration: 8 hours ✅ (reasonable)
-- Algorithm: HS256 ⚠️ (symmetric key - ensure SECRET_KEY is strong)
-- No refresh token mechanism
-- Token cannot be revoked
+### 3.3 Secret enforcement is still warning-based
+**Status:** OPEN / CONFIGURATION RISK
 
-**Verification Results:**
-- ✅ Expired tokens are rejected (401 error)
-- ✅ Malformed tokens are rejected
-- ⚠️ No blacklist/revocation mechanism
+- `ingestion/auth/jwt.py` warns if `SECRET_KEY` is short or default-like
+- It does **not** fail closed on weak production secrets
 
-**Recommendations:**
-```python
-# Consider using RS256 (asymmetric) for production
-ALGORITHM = "RS256"  # Instead of HS256
-
-# Add token revocation support
-# Add refresh token mechanism
-# Add iat (issued at) claim verification
-```
+Recommendation:
+- Enforce strong secret requirements at startup when `ENV != development`
 
 ---
 
-## 4. LOW-RISK ISSUES 🟢
+### 3.4 Native host startup still needs explicit DB override
+**Status:** OPEN / OPERATIONAL NUANCE
 
-### 4.1 Method Not Allowed Handling
-**Status:** ✅ SECURE  
-- DELETE requests on read-only endpoints return 405 ✅
-- Proper HTTP method enforcement
+- `.env` currently uses Docker-internal DB hostname: `db:5432`
+- This is correct for containers but not for host-native API startup
 
-### 4.2 Path Traversal Protection  
-**Status:** ✅ SECURE  
-- Requests like `/../../../etc/passwd` return 404 ✅
-- FastAPI properly validates paths
+Recommended host-native override:
 
-### 4.3 Environment Variables Not Exposed
-**Status:** ✅ SECURE  
-- No SECRET_KEY leakage in responses ✅
-- No database credentials exposed in error messages ✅
-- No API keys visible in responses ✅
-
-### 4.4 SQL Injection Protection
-**Status:** ✅ MOSTLY SECURE  
-- All database queries use parameterized statements ✅
-- Example from code:
-```python
-db.execute(
-    text("SELECT 1 FROM companies WHERE company_id = :cid"),
-    {"cid": company_id}  # Parameterized - secure!
-)
-```
-
----
-
-## 5. DOCKERFILE SECURITY ANALYSIS
-
-### 5.1 Base Image Security
-**Status:** ✅ GOOD  
-```dockerfile
-FROM python:3.11-slim  # Using slim image (smaller attack surface)
-```
-
-### 5.2 Security Issues Found
-1. ⚠️ Missing USER directive (running as root)
-2. ⚠️ No security scanning in build process
-3. ⚠️ Dependencies not pinned to specific versions (but requirements.docker.txt does pin them) ✅
-
-**Recommendation:**
-```dockerfile
-# Add non-root user
-RUN useradd -m -u 1000 appuser
-USER appuser
-```
-
----
-
-## 6. DOCKER-COMPOSE SECURITY ANALYSIS
-
-### 6.1 Critical Issues
-1. ⚠️ Database password visible in docker-compose.yml
-2. ⚠️ Ports exposed to all interfaces (0.0.0.0)
-3. ✅ Environment variables use ${VAR} substitution (good)
-
-### 6.2 Recommendations
-```yaml
-services:
-  db:
-    ports:
-      - "127.0.0.1:5432:5432"  # Only localhost, not all interfaces
-    environment:
-      # Use .env file for secrets
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-```
-
----
-
-## 7. NGINX SECURITY ANALYSIS
-
-### 7.1 Security Features ✅
-- ✅ HTTP to HTTPS redirect enabled
-- ✅ TLS 1.2+ required
-- ✅ Strong cipher suite configured
-- ✅ Proxy headers properly set (X-Forwarded-For, etc.)
-
-### 7.2 Potential Improvements
-1. Add more security headers in nginx
-2. Add rate limiting at reverse proxy level
-3. Add WAF (Web Application Firewall) rules
-
-**Recommended nginx additions:**
-```nginx
-add_header X-Frame-Options "DENY" always;
-add_header X-Content-Type-Options "nosniff" always;
-add_header X-XSS-Protection "1; mode=block" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-add_header Content-Security-Policy "default-src 'self'" always;
-```
-
----
-
-## 8. DEPENDENCY SECURITY AUDIT
-
-### 8.1 Package Versions Analyzed
-```
-fastapi==0.136.0 ✅ (Current)
-bcrypt==5.0.0 ✅ (Current)
-python-jose[cryptography]==3.5.0 ⚠️ (Old - consider 3.6.0+)
-sqlalchemy==2.0.49 ✅ (Current)
-pydantic==2.13.2 ✅ (Current)
-```
-
-### 8.2 Known Vulnerabilities
-- python-jose: Minor version behind (3.5.0 vs 3.6.0)
-- No critical CVEs identified in current versions
-
-**Recommendation:**
 ```bash
-pip install --upgrade python-jose
+DATABASE_URL=postgresql://aegis_user:aegis_pass@localhost:5432/aegis_db
 ```
 
 ---
 
-## 9. TEST RESULTS SUMMARY
+## Files Changed During This Audit
 
-### ✅ PASSED (17 tests)
-- Malformed token rejection
-- Unauthorized route access handling
-- Invalid role access handling
-- CORS header presence
-- Content-Type header validation
-- XSS payload rejection
-- Oversized payload rejection
-- Invalid JSON rejection
-- Negative age validation
-- Extreme BMI validation
-- Database health endpoint safety
-- Environment variable exposure prevention
-- Health endpoint availability
-- Database health endpoint availability
-- Path traversal protection
-- Method not allowed handling
-- OPTIONS request safety
+### Security fixes
+- `ingestion/rate_limit.py` � new shared SlowAPI limiter module
+- `ingestion/main.py` � proper rate-limit exception handling via SlowAPI helper
+- `ingestion/routers/auth_router.py` � actual `5/minute` rate limiting on `/auth/token`
+- `ingestion/routers/ingest.py` � company-level RBAC enforced on all ingest routes
+- `ingestion/routers/health.py` � DB health endpoint no longer leaks raw backend errors
+- `requirements.docker.txt` � `python-jose` upgraded from `3.3.0` to `3.5.0`
+- `README.md` � local dev API startup updated to include `--no-server-header`
 
-### ❌ FAILED (7 tests)
-1. **Authentication endpoint (404)** - Critical
-2. **Missing credentials handling** - Cannot test due to #1
-3. **SQL injection in auth** - Cannot test due to #1
-4. **Expired token rejection** - Wrong HTTP method (405 vs expected 401)
-5. **Missing token on protected endpoint** - Returns 422 instead of 401
-6. **Server header leakage** - Uvicorn version exposed
-7. **Database URL environment variable** - Not set outside Docker
-
-### ⊘ SKIPPED (1 test)
-- SQL injection in company_id - Requires working authentication
+### Security test coverage
+- `tests/security_tests.py`
+  - base URL made configurable via `AEGIS_BASE_URL`
+  - added `test_hr_admin_cannot_ingest_other_company_roster`
+  - added `test_auth_endpoint_rate_limited`
 
 ---
 
-## 10. RECOMMENDATIONS BY PRIORITY
+## Final Verification Results
 
-### IMMEDIATE (Fix Now)
-1. **Fix authentication endpoint** - Debug `/auth/token` 404 error
-   - Estimated time: 30-60 minutes
-   - Risk if not fixed: CRITICAL
+### Patched automated suite
+```text
+27 passed, 0 failed
+```
 
-2. **Add security headers** - Remove server information leak
-   - Estimated time: 15 minutes
-   - Risk if not fixed: MEDIUM
+### Dependency audit
+```text
+No known vulnerabilities found
+```
 
-3. **Add rate limiting** - Protect auth endpoints from brute force
-   - Estimated time: 45 minutes
-   - Risk if not fixed: MEDIUM
-
-### SHORT-TERM (Fix This Week)
-4. Add refresh token mechanism
-5. Implement token revocation support
-6. Add logging/audit trail for sensitive operations
-7. Enable database SSL in production
-8. Add non-root user to Docker container
-9. Restrict database port to localhost
-
-### LONG-TERM (Plan for Sprint)
-10. Implement Web Application Firewall (WAF)
-11. Add security scanning to CI/CD
-12. Penetration testing
-13. Security audit of ML model endpoints
-14. Implement secrets management (HashiCorp Vault, AWS Secrets Manager)
+### Live localhost note
+```text
+Existing localhost :8000 process was not restarted during this audit.
+Its initial server-header behavior should be considered stale runtime state,
+not the final verified state of the patched code.
+```
 
 ---
 
-## 11. COMPLIANCE CHECKLIST
+## Recommended Next Steps
 
-- [ ] OWASP Top 10 compliance verification
-- [ ] GDPR compliance (data encryption, right to deletion)
-- [ ] SOC 2 compliance review
-- [ ] Healthcare data (HIPAA if applicable)
-- [ ] API rate limiting and throttling
-- [ ] Audit logging for all authentication attempts
-- [ ] Regular security updates and patch management
-- [ ] Incident response plan
-- [ ] Security training for developers
+### Immediate
+1. Restart the existing native API process on `:8000` with `--no-server-header` so the live localhost runtime matches the patched repo state.
+2. Rebuild any Docker image that consumes `requirements.docker.txt` so the `python-jose` fix is actually deployed.
+3. Keep using the updated `tests/security_tests.py` suite in CI or local verification.
 
----
+### Short-term
+1. Fail closed on weak/default `SECRET_KEY` values outside development.
+2. Add persistent token revocation and a logout/refresh flow.
+3. Consider adding rate limiting to other write-heavy or sensitive endpoints beyond `/auth/token`.
 
-## 12. TESTING ENVIRONMENT NOTES
-
-- **Test Framework:** pytest
-- **Security Testing Library:** httpx
-- **Coverage:** 25 comprehensive security tests
-- **Test Run Time:** ~2.6 seconds
-- **Environment:** Local development (Docker containers running)
+### Long-term
+1. Add production-oriented static analysis execution to local/release workflows, not just CI.
+2. Add Redis-backed rate-limit and token revocation storage for multi-instance deployment.
+3. Review MLflow exposure and authentication if used beyond local development.
 
 ---
 
-## 13. NEXT STEPS
+## Conclusion
 
-1. **Immediate Action:** Fix the authentication endpoint
-   ```bash
-   # Debug steps:
-   python -c "from ingestion.routers.auth_router import router; print(router.routes)"
-   docker logs aegis-api --tail 50
-   ```
+As of **April 24, 2026**, the stale critical findings from the earlier report are no longer accurate for the patched codebase.
 
-2. **Run Security Tests Regularly:**
-   ```bash
-   python -m pytest tests/security_tests.py -v
-   ```
+This audit confirmed and remediated the most important current issues:
+- missing auth throttling
+- cross-company ingest authorization bypass
+- DB health error leakage
+- vulnerable Docker dependency pin
 
-3. **Add to CI/CD Pipeline:**
-   - Run security tests on every commit
-   - Scan dependencies with `pip-audit` or `safety`
-   - Run SAST (Static Application Security Testing)
+The patched code verified cleanly with **27/27 security tests passing** and a **clean dependency audit**.
 
-4. **Security Hardening:**
-   - Review and implement all IMMEDIATE recommendations
-   - Establish security review process for code changes
-   - Schedule regular penetration testing
-
----
-
-## 14. CONCLUSION
-
-The Aegis AI platform has a reasonable security foundation but requires immediate attention to critical issues. The main blockers are:
-
-1. **Broken authentication endpoint** - Prevents entire security model from functioning
-2. **Missing security headers** - Allows information disclosure
-3. **No rate limiting** - Vulnerable to brute force attacks
-
-Once these are fixed, the platform will have good security posture for a SaaS application. However, comprehensive penetration testing and security audit are recommended before production deployment.
-
----
-
-**Report Generated By:** Automated Security Test Suite  
-**Total Tests Executed:** 25  
-**Pass Rate:** 68% (initial) → **100% after remediation**  
-**Recommendation:** Address CRITICAL issues before production deployment ← ✅ Done
-
----
-
-## 15. REMEDIATION LOG (2026-04-22)
-
-All 7 failures resolved in the same session. Final result: **25/25 passing**.
-
-| # | Original Failure | Root Cause | Fix Applied | Commits |
-|---|-----------------|------------|-------------|---------|
-| 1 | Auth endpoint 404 | Stale Docker image — `auth_router` module didn't exist in container | Added `COPY config/ ./config/` to Dockerfile; rebuilt image | `f692a1c` |
-| 2 | Missing credentials 422 | Cascaded from #1 (no auth endpoint to test) | Resolved by #1 | `f692a1c` |
-| 3 | SQL injection in auth 404 | Cascaded from #1 | Resolved by #1 | `f692a1c` |
-| 4 | Expired token → 405 | Test used `GET` on a `POST`-only endpoint | Fixed test to use `POST /predict/employee` | `300c212` |
-| 5 | Missing token → 422 | Already correct (422 = validation error from OAuth2PasswordBearer) | Updated test assertion; 422 is accepted | `300c212` |
-| 6 | Server header exposes "uvicorn" | Uvicorn appends its own `Server` header after middleware | Added `--no-server-header` to uvicorn startup in `entrypoint.sh` | `300c212` |
-| 7 | DATABASE_URL not set | Test runner env doesn't load `.env` | Added `load_dotenv()` to the test before `os.environ.get()` | `300c212` |
-
-### Additional Fixes (not test failures, but flagged in report)
-
-| Issue | Fix |
-|-------|-----|
-| No rate limiting | `slowapi` integrated, 5 req/min on `/auth/token` |
-| Missing security headers | Middleware added: X-Frame-Options, CSP, HSTS, X-Content-Type-Options, Referrer-Policy |
-| Container running as root | `Dockerfile.api`: `useradd appuser` + `USER appuser` |
-| DB port exposed to all interfaces | `docker-compose.yml`: `127.0.0.1:5432:5432` |
-| `DATABASE_URL=localhost` fails in container | Changed to `db:5432` in `.env` |
-
-### Remaining Known Issue (not in test suite)
-
-**MEDIUM — ingest authorization bypass**: `POST /ingest/wearable|clinical|company` use `get_current_user` but not `require_company_access`. An authenticated `hr_admin` for COMP_001 can inject data tagged as COMP_002. Fix: add `require_company_access` dependency matching pattern in `companies.py:32` and `predict.py:63`.
+The only notable mismatch left is runtime-specific: the already-running localhost API process observed at the start of this audit was not restarted, so its server-header behavior may still reflect pre-audit startup flags until relaunched.

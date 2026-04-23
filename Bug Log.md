@@ -1,7 +1,7 @@
 # Bug Log — Aegis AI
 
-**Last Updated**: 2026-04-22  
-**Total Bugs Logged**: 9  
+**Last Updated**: 2026-04-24  
+**Total Bugs Logged**: 10  
 **Status**: All resolved ✅
 
 ---
@@ -411,14 +411,70 @@ DATABASE_URL=postgresql://aegis_user:aegis_pass@db:5432/aegis_db
 
 ---
 
+## BUG-010: Plotly Waterfall `marker_color` Array Not a Valid Property
+
+**Severity**: 🔴 High (dashboard crash — HR ROI tab completely unrenderable)  
+**Date Found**: 2026-04-24  
+**Date Fixed**: 2026-04-24  
+**Status**: ✅ Resolved  
+**Commit**: `b6afd7c`
+
+### Symptom
+```
+ValueError: Invalid property specified for object of type
+plotly.graph_objs.Waterfall: 'marker'
+
+Bad property path:
+marker_color
+```
+The HR Manager dashboard crashed when loading the Wellness ROI simulator tab. Full traceback pointed to `hr_view.py:216 → go.Waterfall(marker_color=[...])`.
+
+### Root Cause
+`go.Waterfall` does not support `marker_color` as a top-level array property (unlike `go.Bar`, which does). The Waterfall trace uses per-category sub-objects instead:
+- `increasing` → bars that go up (positive relative measures)
+- `decreasing` → bars that go down (negative relative measures)
+- `totals` → absolute and total measure bars
+
+The previous code was copied from a Bar chart pattern and never caught during testing because the HR view test path didn't reach the ROI tab.
+
+### Solution
+Replaced `marker_color=[...]` array with the correct sub-object API:
+
+```python
+# BEFORE (crashes):
+go.Waterfall(
+    ...
+    marker_color=["#374151", "#22C55E", "#9BC800"],
+)
+
+# AFTER (correct):
+go.Waterfall(
+    ...
+    decreasing={"marker": {"color": "#22C55E"}},   # savings bar (negative relative)
+    totals={"marker": {"color": "#9BC800"}},        # projected premium (total measure)
+    increasing={"marker": {"color": "#374151"}},    # current premium (absolute measure)
+)
+```
+
+Color mapping:
+- Current premium (`measure="absolute"`) → routed via `increasing` → `#374151` dark gray
+- Wellness savings (`measure="relative"`, negative) → `decreasing` → `#22C55E` green
+- Projected premium (`measure="total"`) → `totals` → `#9BC800` NullMask accent
+
+### Prevention
+- `go.Waterfall` and `go.Bar` look similar but have different coloring APIs — don't copy Bar chart color patterns to Waterfall
+- Per-bar coloring in Waterfall must go through `increasing`/`decreasing`/`totals`, not `marker_color`
+
+---
+
 ## Summary Statistics
 
 | Severity | Count | Avg. Fix Time | Impact |
 |----------|-------|---------------|--------|
-| 🔴 High | 5 | ~25 min | Blocks dev / service |
+| 🔴 High | 6 | ~25 min | Blocks dev / service |
 | 🟠 Medium | 3 | ~20 min | UX broken |
 | 🟡 Low | 1 | ~5 min | Cosmetic |
-| **Total** | **9** | **~130 min** | **All resolved** |
+| **Total** | **10** | **~135 min** | **All resolved** |
 
 ### Timeline
 
@@ -432,8 +488,9 @@ DATABASE_URL=postgresql://aegis_user:aegis_pass@db:5432/aegis_db
 2026-04-18 14:15 — BUG-007: Dark mode metric text invisible → explicit stMetricValue CSS + full dark theme (20 min)
 2026-04-22 01:00 — BUG-008: /auth/token 404, stale Docker image → add COPY config/, rebuild (20 min)
 2026-04-22 01:20 — BUG-009: DATABASE_URL localhost fails in container → change to db:5432 (5 min)
+2026-04-24 — BUG-010: Plotly Waterfall marker_color invalid → decreasing/totals/increasing dicts (5 min)
 
-Total: ~135 min across 3 days, all resolved ✅
+Total: ~140 min across 3 days, all resolved ✅
 ```
 
 ---
