@@ -1,6 +1,6 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + NullMask UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + NullMask UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
 **Last Updated**: 2026-04-24
 
@@ -120,6 +120,8 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **Plotly Waterfall API fix** — replaced invalid `marker_color` array with correct `decreasing`/`totals`/`increasing` sub-objects; HR ROI tab now renders correctly (`b6afd7c`)
 - [x] **Brand fonts** — NType82 (display headlines/tabs), LetteraMonoLL (metric values/delta/chart numbers), Inter (body/labels/captions) embedded as base64 `@font-face` in `dashboard/illustrations.py`; `BRAND_FONT_CSS` injected globally from `app.py` (`925c6ee`)
 - [x] **Compliance illustrations** — replaced 4 NullMask privacy SVGs with Aegis-specific compliance art from design bundle: SOC 2 → login, Group Insurance → underwriter portfolio, HIPAA Privacy → HR workforce tab, Employee Health → upload empty state (`925c6ee`)
+- [x] **README security fix** — removed demo credentials table (`underwriter@safenet.com`, `hr@technova.com`, `hr@bharatsteel.com`) from public README to prevent credential exposure (`0da4a1e`)
+- [x] **`/startserver` Claude Code skill** — `.claude/commands/startserver.md` automates full stack startup: stops native processes, `docker compose down/up`, health checks (API/Dashboard/MLflow/PostgreSQL/nginx), module import tests, syntax checks (`dbf8b2c`)
 
 ## 🔧 Next Steps (Post-Capstone)
 

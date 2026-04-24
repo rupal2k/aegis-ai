@@ -21,4 +21,5 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | 5dfbe76 | fix: render SVG illustrations via base64 data URI instead of raw inline SVG
 - 2026-04-24 | b6afd7c | fix: use correct Plotly Waterfall color API — decreasing/totals/increasing dicts
 - 2026-04-24 | 925c6ee | feat: brand fonts (NType82 + LetteraMonoLL) + compliance illustrations
+- 2026-04-24 | 0da4a1e | security: remove demo credentials from public README
 - 2026-04-24 | dbf8b2c | feat: add /startserver skill for full stack startup + health checks

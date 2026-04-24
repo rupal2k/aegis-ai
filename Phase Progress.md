@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-04-24  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅
 
 ---
 
@@ -762,6 +762,42 @@ SVGs extracted from `Compliance Design Elements.html`, base64-encoded as data UR
 
 ---
 
+### README Security Fix (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `0da4a1e`
+
+Removed the demo credentials table from `README.md` — the public-facing README previously listed plaintext login credentials (`underwriter@safenet.com / demo123`, `hr@technova.com / demo123`, `hr@bharatsteel.com / demo123`). Exposing credentials in a public GitHub README is a security risk even for demo accounts, as it invites credential stuffing and gives attackers a known valid username list.
+
+#### File changed
+- `README.md` — deleted 9 lines (Demo Credentials section)
+
+---
+
+### /startserver Claude Code Skill (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `dbf8b2c`
+
+Added `.claude/commands/startserver.md` — a project-level Claude Code slash command that automates full Aegis AI stack startup from scratch.
+
+#### What `/startserver` does
+
+1. Kill any stale native Streamlit process (`pkill -f "streamlit run"`)
+2. `docker compose down` — clean teardown of all containers
+3. `docker compose up -d` — start all 5 services (db, api, dashboard, mlflow, nginx)
+4. Wait + show container status table (names, health, ports)
+5. HTTP health checks — API `/health`, Dashboard `/healthz`, MLflow `/health`, nginx port 80
+6. PostgreSQL probe — `pg_isready` via `docker exec aegis-db`
+7. Module import test — all 9 `dashboard.*` modules (`OK` / `FAIL`)
+8. Syntax check — `py_compile` on all 10 `.py` files
+9. Final summary table — per-service ✅ / ❌ with `docker logs` diagnosis on failure
+
+#### File added
+- `.claude/commands/startserver.md` — 92-line skill definition
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -781,8 +817,10 @@ SVGs extracted from `Compliance Design Elements.html`, base64-encoded as data UR
 | Post-capstone | ✅ NullMask isometric illustrations (4 pages) | ~0.5h | — | 2 |
 | Post-capstone | ✅ Plotly Waterfall API fix | ~0.1h | — | 1 |
 | Post-capstone | ✅ Brand fonts (NType82 + LetteraMonoLL) + compliance illustrations | ~1h | — | 1 |
+| Post-capstone | ✅ README security fix (removed demo credentials) | ~0.1h | — | 1 |
+| Post-capstone | ✅ /startserver Claude Code skill | ~0.2h | — | 1 |
 
-**Total Effort to Date**: ~34.5 hours  
-**Total Commits**: 30  
+**Total Effort to Date**: ~34.8 hours  
+**Total Commits**: 32  
 **Total Tests**: 88 passing (63 functional + 25 security)
 
