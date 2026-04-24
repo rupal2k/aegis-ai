@@ -164,6 +164,28 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
     box-shadow: 0 0 24px rgba(196,255,0,0.10) !important;
 }
 
+/* ── Text inputs — compact height ─── */
+.stTextInput input,
+[data-testid="stTextInput"] input {
+    height: 38px !important;
+    padding: 0 12px !important;
+    font-size: 14px !important;
+    line-height: 38px !important;
+}
+.stTextInput > div > div,
+[data-testid="stTextInput"] > div > div {
+    min-height: unset !important;
+}
+
+/* ── Form submit button — normal height */
+.stFormSubmitButton button,
+[data-testid="stFormSubmitButton"] button {
+    height: 38px !important;
+    padding: 0 16px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+}
+
 /* ── Scrollbar ────────────────────── */
 ::-webkit-scrollbar { width: 4px; background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
