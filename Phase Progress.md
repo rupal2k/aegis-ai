@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-04-24  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ (57 passed, 5 skipped, 0 failed) + Security Suite Clean ✅ (27/27) + Login Form Fix ✅ + /loadcontext Skill ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ (57 passed, 5 skipped, 0 failed) + Security Suite Clean ✅ (27/27) + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅
 
 ---
 
@@ -810,6 +810,21 @@ Streamlit's default `st.text_input` renders with oversized input height (~46px).
 
 ---
 
+### Remove NullMask Brand References (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `84597d2`
+
+Removed all 7 occurrences of "NullMask" from the codebase. The design tokens, fonts, and visual style are unchanged — only the third-party brand name was stripped. References replaced with "Aegis AI" or generic terms throughout module docstrings, function docstrings, inline comments, CSS comments, and the /loadcontext skill.
+
+#### Files changed
+- `dashboard/illustrations.py` — module docstring: "NullMask" → "Aegis AI"
+- `dashboard/underwriter_view.py` — function docstring + inline comment updated
+- `dashboard/app.py` — CSS comment updated; BaseWeb input-height CSS also included
+- `.claude/commands/loadcontext.md` — 3 guardrail references updated to "Aegis AI"
+
+---
+
 ### /loadcontext Claude Code Skill (2026-04-24)
 
 **Status**: ✅ Complete  
@@ -846,8 +861,9 @@ Added `.claude/commands/loadcontext.md` — a session-start slash command that r
 | Post-capstone | ✅ /startserver Claude Code skill | ~0.2h | — | 1 |
 | Post-capstone | ✅ Login form input sizing fix | ~0.1h | — | 1 |
 | Post-capstone | ✅ /loadcontext skill + gitmastersync update | ~0.3h | — | 1 |
+| Post-capstone | ✅ Remove NullMask brand references from codebase | ~0.1h | — | 1 |
 
-**Total Effort to Date**: ~35.2 hours  
-**Total Commits**: 34  
+**Total Effort to Date**: ~35.3 hours  
+**Total Commits**: 35  
 **Total Tests**: 88 passing (63 functional + 25 security)
 
