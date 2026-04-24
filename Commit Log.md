@@ -29,3 +29,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | bdfe1c0 | design: retheme presentation to NullMask light design system (vault)
 - 2026-04-24 | dd820ca | chore: remove tracked __pycache__ and .pyc files from repo
 - 2026-04-24 | 677e3e0 | test: fix auth headers, rate-limit token cache, DB-skip markers in test suite
+- 2026-04-24 | 4551f47 | fix: compact login form input fields to normal height
