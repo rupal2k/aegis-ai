@@ -1,4 +1,4 @@
-"""NullMask Compliance & Health isometric SVG illustrations.
+"""Aegis AI compliance & health isometric SVG illustrations.
 
 Each constant is a base64-encoded data URI for an <img> tag.
 Fonts (NType82 display, LetteraMonoLL mono) are embedded as base64 @font-face.

@@ -39,7 +39,7 @@ body, .stApp, p, li, span, div {
 }
 
 /* ── Typography ───────────────────── */
-/* NType82 for all headings — the NullMask display face */
+/* NType82 for all headings — Aegis display face */
 h1, h2, h3, h4, h5, h6 {
     font-family: 'NType82', 'Space Grotesk', system-ui, sans-serif !important;
     color: #111111 !important;
@@ -165,25 +165,47 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
 }
 
 /* ── Text inputs — compact height ─── */
-.stTextInput input,
+/* BaseWeb container (the outer shell Streamlit builds on) */
+[data-baseweb="input"],
+[data-baseweb="base-input"] {
+    min-height: unset !important;
+    height: 40px !important;
+}
+/* Every wrapper div inside stTextInput */
+[data-testid="stTextInput"] > div,
+[data-testid="stTextInput"] > div > div,
+[data-testid="stTextInput"] > div > div > div {
+    min-height: unset !important;
+    height: auto !important;
+}
+/* The actual <input> element */
+[data-baseweb="input"] input,
+[data-baseweb="base-input"] input,
 [data-testid="stTextInput"] input {
-    height: 38px !important;
+    height: 40px !important;
+    min-height: unset !important;
     padding: 0 12px !important;
     font-size: 14px !important;
-    line-height: 38px !important;
+    line-height: 40px !important;
+    box-sizing: border-box !important;
 }
-.stTextInput > div > div,
-[data-testid="stTextInput"] > div > div {
+/* Password eye-icon — keep it vertically centred */
+[data-testid="stTextInput"] [data-testid="stTextInputRootElement"] {
+    height: 40px !important;
     min-height: unset !important;
+    align-items: center !important;
 }
 
 /* ── Form submit button — normal height */
-.stFormSubmitButton button,
+[data-testid="stFormSubmitButton"] > button,
+[data-testid="stFormSubmitButton"] button[kind="primaryFormSubmit"],
 [data-testid="stFormSubmitButton"] button {
-    height: 38px !important;
-    padding: 0 16px !important;
+    height: 42px !important;
+    min-height: unset !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     font-size: 14px !important;
-    line-height: 1 !important;
+    line-height: 42px !important;
 }
 
 /* ── Scrollbar ────────────────────── */

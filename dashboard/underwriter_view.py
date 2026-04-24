@@ -52,7 +52,7 @@ def _render_help_banner():
 
 
 def _render_alerts(df):
-    """Render a NullMask-styled alerts panel driven by real portfolio data."""
+    """Render an Aegis-styled alerts panel driven by real portfolio data."""
     LEVEL_COLORS = {
         "high": "#D63030",
         "med":  "#D07000",
@@ -263,7 +263,7 @@ def render():
         )
         st.plotly_chart(gauge, use_container_width=True)
 
-        # ── Risk band mini-cards (NullMask design) ──────────────────────────
+        # ── Risk band mini-cards ─────────────────────────────────────────────
         band_data = [
             ("Low",      pred["low_risk_pct"],      "#22C55E", int(pred["employee_count"] * pred["low_risk_pct"]      / 100)),
             ("Moderate", pred["moderate_risk_pct"],  "#F59E0B", int(pred["employee_count"] * pred["moderate_risk_pct"] / 100)),
