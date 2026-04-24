@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-04-24  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System Implementation ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅
 
 ---
 
@@ -717,6 +717,51 @@ Fixes to `dashboard/hr_view.py` after visual review of the Wellness ROI tab:
 
 ---
 
+### Plotly Waterfall API Fix (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `b6afd7c`
+
+`go.Waterfall` does not accept `marker_color` as a top-level array (that's a `go.Bar` API). Replaced with per-category sub-objects: `decreasing` (savings bar, green), `totals` (projected premium, accent), `increasing` (current premium, dark gray).
+
+---
+
+### Brand Fonts + Compliance Illustrations (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `925c6ee`  
+**Source**: Design bundle `i6HuHm-Oohtk-Q0s2nLb-w` — fonts + `Compliance Design Elements.html`
+
+#### Font hierarchy
+
+| Role | Font | Where applied |
+|------|------|---------------|
+| Display / headings | **NType82** (400 + 700) | All `h1/h2/h3`, tabs, logo mark, inline HTML headings |
+| Body / labels | **Inter** | Captions, metric labels, body paragraphs, download buttons |
+| Metric values / numbers | **LetteraMonoLL** (400 + 500) | `stMetricValue`, `stMetricDelta`, waterfall text labels, donut annotation |
+
+NType82 and LetteraMonoLL are embedded as base64 `@font-face` data URIs in `BRAND_FONT_CSS` (exported from `illustrations.py`) and injected via `st.markdown(f"<style>{BRAND_FONT_CSS}</style>")` in `app.py`. Inter + Space Grotesk loaded from Google Fonts. JetBrains Mono removed throughout.
+
+#### Compliance illustrations
+
+| # | SVG | Placed on | Replaces |
+|---|-----|-----------|---------|
+| 01 | SOC 2 Compliance | Login page (right column) | Privacy Vault |
+| 02 | Group Insurance | Underwriter portfolio tab header | Privacy Router |
+| 03 | HIPAA Privacy | HR workforce tab header | Privacy Shield |
+| 04 | Employee Health | Upload empty state | Zero Node |
+
+SVGs extracted from `Compliance Design Elements.html`, base64-encoded as data URIs in `illustrations.py`.
+
+#### Files changed
+- `dashboard/illustrations.py` — 4 new compliance SVG constants; `BRAND_FONT_CSS` string with embedded fonts; old privacy SVGs removed
+- `dashboard/app.py` — font injection; CSS hierarchy updated; `SOC2_COMPLIANCE` on login
+- `dashboard/underwriter_view.py` — `GROUP_INSURANCE`; chart font → Inter
+- `dashboard/hr_view.py` — `HIPAA_PRIVACY`; chart/mono fonts → Inter / LetteraMonoLL
+- `dashboard/upload_view.py` — `EMPLOYEE_HEALTH`; chart font → Inter
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -734,8 +779,10 @@ Fixes to `dashboard/hr_view.py` after visual review of the Wellness ROI tab:
 | Post-capstone | ✅ NullMask design system implementation | ~1h | — | 1 |
 | Post-capstone | ✅ HR dashboard chart fixes (waterfall + donut) | ~0.5h | — | 1 |
 | Post-capstone | ✅ NullMask isometric illustrations (4 pages) | ~0.5h | — | 2 |
+| Post-capstone | ✅ Plotly Waterfall API fix | ~0.1h | — | 1 |
+| Post-capstone | ✅ Brand fonts (NType82 + LetteraMonoLL) + compliance illustrations | ~1h | — | 1 |
 
-**Total Effort to Date**: ~33 hours  
-**Total Commits**: 28  
+**Total Effort to Date**: ~34.5 hours  
+**Total Commits**: 30  
 **Total Tests**: 88 passing (63 functional + 25 security)
 
