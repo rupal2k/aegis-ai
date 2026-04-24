@@ -25,3 +25,5 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | dbf8b2c | feat: add /startserver skill for full stack startup + health checks
 - 2026-04-24 | 85c3042 | vault: log README security fix + /startserver skill (2026-04-24)
 - 2026-04-24 | d12f7df | feat: add /gitmastersync skill for vault sync + dual repo push
+- 2026-04-24 | 50b475c | fix: SVG illustrations, legend visibility, form labels, legend conflict
+- 2026-04-24 | bdfe1c0 | design: retheme presentation to NullMask light design system (vault)
