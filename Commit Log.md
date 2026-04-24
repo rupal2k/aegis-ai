@@ -23,3 +23,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | 925c6ee | feat: brand fonts (NType82 + LetteraMonoLL) + compliance illustrations
 - 2026-04-24 | 0da4a1e | security: remove demo credentials from public README
 - 2026-04-24 | dbf8b2c | feat: add /startserver skill for full stack startup + health checks
+- 2026-04-24 | 85c3042 | vault: log README security fix + /startserver skill (2026-04-24)
