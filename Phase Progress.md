@@ -798,6 +798,18 @@ Added `.claude/commands/startserver.md` — a project-level Claude Code slash co
 
 ---
 
+### Login Form Input Sizing Fix (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `4551f47`
+
+Streamlit's default `st.text_input` renders with oversized input height (~46px). Added CSS rules targeting `.stTextInput input` and `.stFormSubmitButton button` to cap height at 38px with matching `font-size: 14px` and padding — bringing the login form inputs and Sign In button to standard compact proportions.
+
+#### Files changed
+- `dashboard/app.py` — added compact input height CSS (22 lines)
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -819,8 +831,9 @@ Added `.claude/commands/startserver.md` — a project-level Claude Code slash co
 | Post-capstone | ✅ Brand fonts (NType82 + LetteraMonoLL) + compliance illustrations | ~1h | — | 1 |
 | Post-capstone | ✅ README security fix (removed demo credentials) | ~0.1h | — | 1 |
 | Post-capstone | ✅ /startserver Claude Code skill | ~0.2h | — | 1 |
+| Post-capstone | ✅ Login form input sizing fix | ~0.1h | — | 1 |
 
-**Total Effort to Date**: ~34.8 hours  
-**Total Commits**: 32  
+**Total Effort to Date**: ~34.9 hours  
+**Total Commits**: 33  
 **Total Tests**: 88 passing (63 functional + 25 security)
 

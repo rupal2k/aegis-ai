@@ -1,6 +1,6 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + NullMask UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + NullMask UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Login Form Fix ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
 **Last Updated**: 2026-04-24
 
@@ -122,6 +122,7 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **Compliance illustrations** — replaced 4 NullMask privacy SVGs with Aegis-specific compliance art from design bundle: SOC 2 → login, Group Insurance → underwriter portfolio, HIPAA Privacy → HR workforce tab, Employee Health → upload empty state (`925c6ee`)
 - [x] **README security fix** — removed demo credentials table (`underwriter@safenet.com`, `hr@technova.com`, `hr@bharatsteel.com`) from public README to prevent credential exposure (`0da4a1e`)
 - [x] **`/startserver` Claude Code skill** — `.claude/commands/startserver.md` automates full stack startup: stops native processes, `docker compose down/up`, health checks (API/Dashboard/MLflow/PostgreSQL/nginx), module import tests, syntax checks (`dbf8b2c`)
+- [x] **Login form input sizing fix** — reduced oversized Streamlit `st.text_input` fields from ~46px to compact 38px height via targeted CSS in `app.py` (`4551f47`)
 
 ## 🔧 Next Steps (Post-Capstone)
 
