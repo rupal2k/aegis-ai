@@ -43,15 +43,6 @@ Then open:
 - **API docs:** http://localhost:8000/docs
 - **MLflow:** http://localhost:5000
 
-### Demo Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Insurance underwriter | `underwriter@safenet.com` | `demo123` |
-| HR admin (TechNova) | `hr@technova.com` | `demo123` |
-| HR admin (Bharat Steel) | `hr@bharatsteel.com` | `demo123` |
-
----
 
 ## Key Features
 
