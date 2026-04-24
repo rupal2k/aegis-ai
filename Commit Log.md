@@ -24,3 +24,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | 0da4a1e | security: remove demo credentials from public README
 - 2026-04-24 | dbf8b2c | feat: add /startserver skill for full stack startup + health checks
 - 2026-04-24 | 85c3042 | vault: log README security fix + /startserver skill (2026-04-24)
+- 2026-04-24 | d12f7df | feat: add /gitmastersync skill for vault sync + dual repo push
