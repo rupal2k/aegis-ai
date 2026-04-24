@@ -273,10 +273,18 @@ def main():
     user = st.session_state.get("user")
 
     if not user:
+        # Login-page-only: vertically center in viewport + align columns to each other
+        st.markdown("""
+<style>
+.main .block-container { padding-top: 8vh !important; padding-bottom: 4vh !important; }
+[data-testid="stHorizontalBlock"] { align-items: center !important; }
+</style>
+""", unsafe_allow_html=True)
+
         _lc, _rc = st.columns([1, 1], gap="large")
         with _lc:
             st.markdown("""
-<div style="padding-top:60px;">
+<div style="max-width:380px;">
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
     <div style="width:44px;height:44px;background:#111;border-radius:11px;
                 display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -293,7 +301,7 @@ def main():
             Underwriting Platform</div>
     </div>
 </div>
-<div style="font-size:13px;color:#555;margin-bottom:32px;line-height:1.6;max-width:340px;">
+<div style="font-size:13px;color:#555;margin-bottom:28px;line-height:1.6;">
     AI-powered group insurance underwriting. Predict workforce health risk, adjust premiums
     dynamically, and surface wellness ROI — in one platform.</div>
 </div>
@@ -301,8 +309,7 @@ def main():
             login_form()
             _render_login_reference()
         with _rc:
-            st.markdown('<div style="padding-top:30px;"></div>', unsafe_allow_html=True)
-            _illus(SOC2_COMPLIANCE, "320px", height_px=360, align="center", opacity=0.92)
+            _illus(SOC2_COMPLIANCE, "300px", height_px=340, align="center", opacity=0.92)
             st.markdown(
                 "<p style='text-align:center;color:#555555;font-size:13px;margin-top:8px;'>"
                 "Your role determines which workspace opens after sign-in.</p>",
