@@ -34,3 +34,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | 17d9b68 | feat: add /loadcontext skill — vault + memory context loader with guardrails
 - 2026-04-24 | e13136c | vault: log 17d9b68 /loadcontext skill (2026-04-24)
 - 2026-04-24 | 84597d2 | refactor: remove all NullMask brand references from codebase
+- 2026-04-24 | 09821e3 | vault: log 84597d2 NullMask brand ref removal (2026-04-24)
