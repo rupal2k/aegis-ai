@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-04-24  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ (57 passed, 5 skipped, 0 failed) + Security Suite Clean ✅ (27/27)
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + NullMask UI Redesign ✅ + NullMask Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ (57 passed, 5 skipped, 0 failed) + Security Suite Clean ✅ (27/27) + Login Form Fix ✅ + /loadcontext Skill ✅
 
 ---
 
@@ -810,6 +810,19 @@ Streamlit's default `st.text_input` renders with oversized input height (~46px).
 
 ---
 
+### /loadcontext Claude Code Skill (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `17d9b68`
+
+Added `.claude/commands/loadcontext.md` — a session-start slash command that reads all 6 Claude memory files and 5 vault files, synthesises a structured context brief, and outputs hard guardrails covering architecture, security, NullMask design tokens, CSS rules, code conventions, and vault/git workflow. Includes a self-check checklist Claude runs silently before every file edit, and a guardrail violation handler that blocks deviating changes before they happen.
+
+#### Files changed
+- `.claude/commands/loadcontext.md` — new skill (105 lines)
+- `.claude/commands/gitmastersync.md` — updated with dedup fix, nginx rebuild, full Docker map, health check
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -832,8 +845,9 @@ Streamlit's default `st.text_input` renders with oversized input height (~46px).
 | Post-capstone | ✅ README security fix (removed demo credentials) | ~0.1h | — | 1 |
 | Post-capstone | ✅ /startserver Claude Code skill | ~0.2h | — | 1 |
 | Post-capstone | ✅ Login form input sizing fix | ~0.1h | — | 1 |
+| Post-capstone | ✅ /loadcontext skill + gitmastersync update | ~0.3h | — | 1 |
 
-**Total Effort to Date**: ~34.9 hours  
-**Total Commits**: 33  
+**Total Effort to Date**: ~35.2 hours  
+**Total Commits**: 34  
 **Total Tests**: 88 passing (63 functional + 25 security)
 
