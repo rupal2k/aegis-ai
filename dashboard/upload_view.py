@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from dashboard.api_client import predict_employee, calculate_premium
 from dashboard.currency import fmt, active_code, CURRENCIES
 from dashboard.pdf_report import generate_underwriting_report
-from dashboard.illustrations import EMPLOYEE_HEALTH, _svg_img as _illus
+from dashboard.illustrations import EMPLOYEE_HEALTH, _render_illus as _illus
 
 PLOT_BG  = "#FFFFFF"
 GRID_CLR = "rgba(0,0,0,0.06)"
@@ -380,11 +380,7 @@ def render_tab() -> None:
         with _eu:
             st.info("Upload a CSV to get started. Use the template above for the correct format.")
         with _ei:
-            st.markdown(
-                f'<div style="display:flex;justify-content:center;opacity:0.88;">'
-                f'{_illus(EMPLOYEE_HEALTH, "220px")}</div>',
-                unsafe_allow_html=True,
-            )
+            _illus(EMPLOYEE_HEALTH, "220px", height_px=230, align="center", opacity=0.88)
         return
 
     try:

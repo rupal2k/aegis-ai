@@ -10,7 +10,7 @@ from dashboard.api_client import (
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.currency import fmt, fmt_crore, active_code, CURRENCIES
 import dashboard.upload_view as upload_view
-from dashboard.illustrations import GROUP_INSURANCE, _svg_img as _illus
+from dashboard.illustrations import GROUP_INSURANCE, _render_illus as _illus
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -108,6 +108,10 @@ def _chart_defaults():
         paper_bgcolor=PLOT_BG,
         font=dict(color=FONT_CLR, family="Inter, system-ui, sans-serif"),
         margin=dict(l=0, r=20, t=24, b=40),
+        legend=dict(
+            font=dict(color=FONT_CLR),
+            title=dict(font=dict(color=FONT_CLR)),
+        ),
     )
 
 
@@ -159,11 +163,7 @@ def render():
             st.subheader("All companies — ranked by risk")
             st.caption("Use this tab to compare the full book of business, spot outliers quickly, and review how risk affects pricing.")
         with _h2:
-            st.markdown(
-                f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
-                f'{_illus(GROUP_INSURANCE, "160px")}</div>',
-                unsafe_allow_html=True,
-            )
+            _illus(GROUP_INSURANCE, "160px", height_px=170, align="right", opacity=0.85)
 
         fig = px.bar(
             df.sort_values("mean_hrs"),

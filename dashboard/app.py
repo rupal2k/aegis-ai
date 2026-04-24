@@ -7,7 +7,7 @@ import streamlit as st
 from dashboard.auth import login_form, logout_button
 from dashboard import underwriter_view, hr_view
 from dashboard.currency import sidebar_selector
-from dashboard.illustrations import SOC2_COMPLIANCE, BRAND_FONT_CSS, _svg_img as _illus
+from dashboard.illustrations import SOC2_COMPLIANCE, BRAND_FONT_CSS, _render_illus as _illus
 
 st.set_page_config(
     page_title="Aegis AI — Underwriting Platform",
@@ -51,6 +51,18 @@ h3 { font-size: 1.05rem !important; font-weight: 400 !important; letter-spacing:
 
 /* Inter for body copy, captions, labels */
 p, .stMarkdown p { font-family: 'Inter', system-ui, sans-serif !important; }
+
+/* Form input / select / textarea labels — black */
+.stTextInput label,
+.stSelectbox label,
+.stTextArea label,
+.stNumberInput label,
+[data-testid="stWidgetLabel"] {
+    color: #111111 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+}
 
 /* ── Metric cards ─────────────────── */
 [data-testid="stMetric"] {
@@ -245,13 +257,13 @@ def main():
             login_form()
             _render_login_reference()
         with _rc:
+            st.markdown('<div style="padding-top:30px;"></div>', unsafe_allow_html=True)
+            _illus(SOC2_COMPLIANCE, "320px", height_px=360, align="center", opacity=0.92)
             st.markdown(
-                f'<div style="display:flex;align-items:center;justify-content:center;'
-                f'padding-top:40px;opacity:0.92;">'
-                f'{_illus(SOC2_COMPLIANCE, "100%", "max-width:380px;")}</div>',
+                "<p style='text-align:center;color:#555555;font-size:13px;margin-top:8px;'>"
+                "Your role determines which workspace opens after sign-in.</p>",
                 unsafe_allow_html=True,
             )
-            st.caption("Your role determines which workspace opens after sign-in.")
         return
 
     with st.sidebar:

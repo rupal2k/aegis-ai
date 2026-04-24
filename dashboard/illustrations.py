@@ -7,8 +7,33 @@ import base64 as _b64
 
 
 def _svg_img(data_uri: str, width: str = "100%", style: str = "") -> str:
-    """Wrap a data URI in an <img> tag for st.markdown injection."""
+    """Return raw img HTML (use _render_illus to display — nh3 strips data URIs in markdown)."""
     return f'<img src="{data_uri}" style="width:{width};height:auto;display:block;{style}"/>'
+
+
+def _render_illus(
+    data_uri: str,
+    width: str = "160px",
+    height_px: int = 180,
+    align: str = "right",
+    opacity: float = 0.85,
+) -> None:
+    """Render an SVG illustration via components.html, bypassing Streamlit's nh3 sanitizer."""
+    import streamlit.components.v1 as components
+    margin = (
+        "margin-left:auto;" if align == "right"
+        else "margin:0 auto;" if align == "center"
+        else ""
+    )
+    html = (
+        "<html><head><style>"
+        "html,body{margin:0;padding:0;background:transparent;overflow:hidden;}"
+        "</style></head><body>"
+        f'<img src="{data_uri}" '
+        f'style="width:{width};max-width:100%;height:auto;display:block;{margin}opacity:{opacity};">'
+        "</body></html>"
+    )
+    components.html(html, height=height_px, scrolling=False)
 
 
 # ── Compliance & Health Illustrations ───────────────────────────

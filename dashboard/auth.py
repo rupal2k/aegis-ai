@@ -11,7 +11,7 @@ SESSION_TIMEOUT_SECONDS = 1800  # 30 minutes idle
 def login_form():
     """Renders login form. Returns user dict if authenticated."""
     st.markdown(
-        "<p style='text-align:center;color:#999999;font-size:14px;margin-bottom:24px;letter-spacing:0.01em;'>"
+        "<p style='text-align:center;color:#444444;font-size:14px;margin-bottom:24px;letter-spacing:0.01em;'>"
         "Sign in to continue</p>",
         unsafe_allow_html=True,
     )

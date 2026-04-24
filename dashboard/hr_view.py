@@ -10,7 +10,7 @@ from dashboard.api_client import (
     calculate_wellness_roi,
 )
 from dashboard.currency import fmt, active_code, CURRENCIES
-from dashboard.illustrations import HIPAA_PRIVACY, _svg_img as _illus
+from dashboard.illustrations import HIPAA_PRIVACY, _render_illus as _illus
 
 COLOR_MAP = {
     "Low":      "#22C55E",
@@ -54,6 +54,10 @@ def _chart_defaults():
         paper_bgcolor=PLOT_BG,
         font=dict(color=FONT_CLR, family="Inter, system-ui, sans-serif"),
         margin=dict(l=0, r=20, t=24, b=40),
+        legend=dict(
+            font=dict(color=FONT_CLR),
+            title=dict(font=dict(color=FONT_CLR)),
+        ),
     )
 
 
@@ -95,11 +99,7 @@ def render():
             st.subheader("Risk band distribution")
             st.caption("Use this tab to understand your current workforce risk mix, core health metrics, and where claims pressure is showing up.")
         with _ti:
-            st.markdown(
-                f'<div style="display:flex;justify-content:flex-end;opacity:0.85;">'
-                f'{_illus(HIPAA_PRIVACY, "130px")}</div>',
-                unsafe_allow_html=True,
-            )
+            _illus(HIPAA_PRIVACY, "130px", height_px=140, align="right", opacity=0.85)
         dist_df = pd.DataFrame({
             "band": ["Low", "Moderate", "High", "Critical"],
             "pct":  [pred["low_risk_pct"], pred["moderate_risk_pct"],
@@ -110,10 +110,11 @@ def render():
             dist_df, names="band", values="pct", hole=0.58,
             color="band", color_discrete_map=COLOR_MAP,
         )
+        _pie_layout = _chart_defaults()
+        _pie_layout["legend"].update(orientation="h", yanchor="bottom", y=-0.2)
         fig.update_layout(
-            **_chart_defaults(),
+            **_pie_layout,
             height=320,
-            legend=dict(orientation="h", yanchor="bottom", y=-0.2),
             annotations=[dict(
                 text=f"<b>{pred['mean_hrs']:.1f}</b><br><span style='font-size:10px'>HRS</span>",
                 x=0.5, y=0.5, font_size=18, showarrow=False,
