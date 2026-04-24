@@ -18,10 +18,17 @@ def _server_up():
 requires_server = pytest.mark.skipif(not _server_up(), reason="API server not running")
 
 
+# Module-level token cache — avoids hitting /auth/token repeatedly and
+# triggering the 5/minute rate limit when each class calls setup_method.
+_TOKEN_CACHE: dict[str, str] = {}
+
 def _get_token(email: str = "underwriter@safenet.com", password: str = "demo123") -> str:
-    r = httpx.post(f"{BASE}/auth/token", data={"username": email, "password": password}, timeout=10)
-    r.raise_for_status()
-    return r.json()["access_token"]
+    if email not in _TOKEN_CACHE:
+        r = httpx.post(f"{BASE}/auth/token",
+                       data={"username": email, "password": password}, timeout=10)
+        r.raise_for_status()
+        _TOKEN_CACHE[email] = r.json()["access_token"]
+    return _TOKEN_CACHE[email]
 
 
 def _auth_headers(token: str) -> dict:
@@ -55,9 +62,10 @@ class TestAuth:
 
 @requires_server
 class TestCompaniesEndpoint:
-    def setup_method(self):
-        self.token = _get_token()
-        self.headers = _auth_headers(self.token)
+    # setup_class runs once per class — avoids per-test token requests.
+    @classmethod
+    def setup_class(cls):
+        cls.headers = _auth_headers(_get_token())
 
     def test_list_companies_count(self):
         r = httpx.get(f"{BASE}/companies", headers=self.headers)
@@ -100,8 +108,9 @@ class TestCompaniesEndpoint:
 
 @requires_server
 class TestUnderwriterPortfolio:
-    def setup_method(self):
-        self.headers = _auth_headers(_get_token())
+    @classmethod
+    def setup_class(cls):
+        cls.headers = _auth_headers(_get_token())
 
     def test_all_companies_predictable(self):
         companies = httpx.get(f"{BASE}/companies", headers=self.headers).json()
@@ -132,8 +141,9 @@ class TestUnderwriterPortfolio:
 
 @requires_server
 class TestHRView:
-    def setup_method(self):
-        self.headers = _auth_headers(_get_token())
+    @classmethod
+    def setup_class(cls):
+        cls.headers = _auth_headers(_get_token())
 
     def test_hr_company_prediction(self):
         pred = httpx.get(f"{BASE}/predict/company/COMP_001",
@@ -157,8 +167,9 @@ class TestHRView:
 
 @requires_server
 class TestWellnessROI:
-    def setup_method(self):
-        self.headers = _auth_headers(_get_token())
+    @classmethod
+    def setup_class(cls):
+        cls.headers = _auth_headers(_get_token())
 
     def test_savings_increase_with_improvement(self):
         base_premium = 1_000_000.0
@@ -197,8 +208,9 @@ class TestWellnessROI:
 
 @requires_server
 class TestPDFReport:
-    def setup_method(self):
-        self.headers = _auth_headers(_get_token())
+    @classmethod
+    def setup_class(cls):
+        cls.headers = _auth_headers(_get_token())
 
     def _get_data(self):
         pred = httpx.get(f"{BASE}/predict/company/COMP_001",

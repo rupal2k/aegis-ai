@@ -3,6 +3,9 @@ import pytest
 from fastapi.testclient import TestClient
 from ingestion.main import app
 
+client = TestClient(app)
+
+
 def _db_available():
     import os
     db_url = os.environ.get("DATABASE_URL", "")
@@ -17,7 +20,18 @@ def _db_available():
 
 requires_db = pytest.mark.skipif(not _db_available(), reason="PostgreSQL not available")
 
-client = TestClient(app)
+
+# Module-level cached token so rate limiter isn't hit per test.
+_TOKEN = None
+
+def _headers() -> dict:
+    global _TOKEN
+    if _TOKEN is None:
+        r = client.post("/auth/token",
+                        data={"username": "underwriter@safenet.com", "password": "demo123"})
+        assert r.status_code == 200, f"Auth failed: {r.status_code}"
+        _TOKEN = r.json()["access_token"]
+    return {"Authorization": f"Bearer {_TOKEN}"}
 
 
 HEALTHY_EMP = {
@@ -40,7 +54,7 @@ HIGH_RISK_EMP = {
 
 
 def test_predict_employee_healthy():
-    r = client.post("/predict/employee", json=HEALTHY_EMP)
+    r = client.post("/predict/employee", json=HEALTHY_EMP, headers=_headers())
     assert r.status_code == 200
     body = r.json()
     assert 0 <= body["health_risk_score"] <= 100
@@ -48,24 +62,24 @@ def test_predict_employee_healthy():
     assert len(body["top_drivers"]) == 5
 
 def test_predict_employee_high_risk():
-    r = client.post("/predict/employee", json=HIGH_RISK_EMP)
+    r = client.post("/predict/employee", json=HIGH_RISK_EMP, headers=_headers())
     assert r.status_code == 200
     body = r.json()
     assert body["health_risk_score"] > 50
 
 def test_healthy_lower_hrs_than_high_risk():
-    r_healthy = client.post("/predict/employee", json=HEALTHY_EMP).json()
-    r_high    = client.post("/predict/employee", json=HIGH_RISK_EMP).json()
+    r_healthy = client.post("/predict/employee", json=HEALTHY_EMP, headers=_headers()).json()
+    r_high    = client.post("/predict/employee", json=HIGH_RISK_EMP, headers=_headers()).json()
     assert r_healthy["health_risk_score"] < r_high["health_risk_score"]
 
 def test_predict_employee_validates_bmi():
     bad = {**HEALTHY_EMP, "bmi": 200}
-    r = client.post("/predict/employee", json=bad)
+    r = client.post("/predict/employee", json=bad, headers=_headers())
     assert r.status_code == 422
 
 @requires_db
 def test_predict_company_happy_path():
-    r = client.get("/predict/company/COMP_001")
+    r = client.get("/predict/company/COMP_001", headers=_headers())
     assert r.status_code == 200
     body = r.json()
     assert body["employee_count"] > 0
@@ -76,34 +90,37 @@ def test_predict_company_happy_path():
 
 @requires_db
 def test_predict_company_unknown():
-    r = client.get("/predict/company/COMP_999")
+    r = client.get("/predict/company/COMP_999", headers=_headers())
     assert r.status_code == 404
 
 def test_predict_premium_discount():
-    r = client.post("/predict/premium", json={"base_premium": 100000, "hrs": 20})
+    r = client.post("/predict/premium",
+                    json={"base_premium": 100000, "hrs": 20},
+                    headers=_headers())
     assert r.status_code == 200
     body = r.json()
     assert body["zone"] == "discount"
     assert body["adjusted_premium"] < 100000
 
 def test_predict_premium_loading():
-    r = client.post("/predict/premium", json={"base_premium": 100000, "hrs": 85})
+    r = client.post("/predict/premium",
+                    json={"base_premium": 100000, "hrs": 85},
+                    headers=_headers())
     assert r.status_code == 200
     body = r.json()
     assert body["zone"] == "loading"
     assert body["adjusted_premium"] > 100000
 
 def test_wellness_roi_positive():
-    r = client.post("/predict/wellness-roi", json={
-        "base_premium": 1000000,
-        "current_hrs": 75,
-        "projected_hrs_after_program": 45,
-    })
+    r = client.post("/predict/wellness-roi",
+                    json={"base_premium": 1000000, "current_hrs": 75,
+                          "projected_hrs_after_program": 45},
+                    headers=_headers())
     assert r.status_code == 200
     assert r.json()["annual_savings"] > 0
 
 def test_shap_drivers_have_explanations():
-    r = client.post("/predict/employee", json=HEALTHY_EMP)
+    r = client.post("/predict/employee", json=HEALTHY_EMP, headers=_headers())
     drivers = r.json()["top_drivers"]
     for d in drivers:
         assert "explanation" in d
