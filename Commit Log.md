@@ -35,3 +35,44 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | e13136c | vault: log 17d9b68 /loadcontext skill (2026-04-24)
 - 2026-04-24 | 84597d2 | refactor: remove all NullMask brand references from codebase
 - 2026-04-24 | 09821e3 | vault: log 84597d2 NullMask brand ref removal (2026-04-24)
+- 2026-04-17 | fcf7a10 | Creating new repository for the aegis AI
+- 2026-04-17 | d85201f | Creating repo
+- 2026-04-17 | dc8d72d | update
+- 2026-04-17 | 14cbd18 | Sm update
+- 2026-04-17 | c15dd10 | Sm update
+- 2026-04-17 | efd7bdc | Sm update
+- 2026-04-17 | 3a034dc | Phase 2 API complete
+- 2026-04-17 | 3b21d74 | sm update
+- 2026-04-17 | acd785c | 3.8 done
+- 2026-04-17 | 1ec95a4 | sm update
+- 2026-04-17 | 945cb28 | Phase 3 complete
+- 2026-04-17 | b27fe8a | ml trial
+- 2026-04-17 | cf1f98c | Phase 3 test complete
+- 2026-04-17 | b1df1f3 | Update README.md
+- 2026-04-18 | c0da6cf | module 4 complete
+- 2026-04-18 | 07e71f3 | sm update
+- 2026-04-18 | 252c2f6 | Phase 4 check complete
+- 2026-04-18 | 8485c41 | Phase 5 completed
+- 2026-04-18 | a856d9b | sm update
+- 2026-04-18 | 48dfbef | sm update
+- 2026-04-18 | dc9d3aa | sm update
+- 2026-04-18 | 4f9b401 | sm update
+- 2026-04-18 | 0c4379e | Final Update
+- 2026-04-18 | e4ab265 | Sm update
+- 2026-04-18 | 0fde0fb | sm update
+- 2026-04-18 | b8007d3 | Phase 6: update README and reduce Optuna trials to 30
+- 2026-04-18 | dd57169 | Fix dashboard->API connection in Docker
+- 2026-04-18 | 01816bb | Switch dashboard to dark mode
+- 2026-04-18 | b150f3b | sm update
+- 2026-04-20 | 11bd281 | sm update
+- 2026-04-20 | c9d4350 | sm update
+- 2026-04-21 | 71ceba4 | sm update
+- 2026-04-22 | 95851e9 | tests updated
+- 2026-04-22 | b63e9b7 | feat: add comprehensive security test suite and reports
+- 2026-04-24 | 30859d3 | Merge branch 'main' of https://github.com/rupal2k/aegis-ai
+- 2026-04-24 | 3eb17a6 | sm update
+- 2026-04-24 | 45178db | sm update
+- 2026-04-24 | ad2c5f2 | sm update
+- 2026-04-24 | 1382053 | sm update
+- 2026-04-24 | 24e96dd | sm update
+- 2026-04-24 | 2cd85f0 | sm update
