@@ -18,10 +18,10 @@ FONT_CLR = "#111111"
 ACCENT   = "#9BC800"
 
 COLOR_MAP = {
-    "Low":      "#22C55E",
-    "Moderate": "#F59E0B",
-    "High":     "#EF4444",
-    "Critical": "#991B1B",
+    "Low":      "#5A8A00",
+    "Moderate": "#B06000",
+    "High":     "#C42020",
+    "Critical": "#8B0000",
 }
 
 REQUIRED_COLS = {
@@ -218,10 +218,24 @@ def _render_results(res: dict) -> None:
     rate = CURRENCIES[code]["rate"]
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Employees",        res["employee_count"])
-    c2.metric("Mean HRS",         f"{res['mean_hrs']:.1f}", res["risk_band"])
-    c3.metric("Adjusted premium", fmt(res["premium"]["adjusted_premium"] * rate))
-    c4.metric("Premium change",   f"{res['premium']['adjustment_pct']:+.2f}%")
+    c1.metric(
+        "Employees", res["employee_count"],
+        help="Total employees scored in this analysis.",
+    )
+    c2.metric(
+        "Mean HRS", f"{res['mean_hrs']:.1f}", res["risk_band"],
+        delta_color="inverse",
+        help="Average Health Risk Score — lower is healthier. Bands: Low <30 · Moderate 30–59 · High 60–79 · Critical 80+.",
+    )
+    c3.metric(
+        "Adjusted premium", fmt(res["premium"]["adjusted_premium"] * rate),
+        help="Estimated premium based on your workforce HRS in the selected currency.",
+    )
+    c4.metric(
+        "Premium change", f"{res['premium']['adjustment_pct']:+.2f}%",
+        delta_color="inverse" if res["premium"]["adjustment_pct"] > 0 else "normal",
+        help="Premium change vs the base premium you entered.",
+    )
 
     st.divider()
 
@@ -301,7 +315,9 @@ def _render_results(res: dict) -> None:
         use_container_width=True,
         hide_index=True,
         column_config={
-            "HRS": st.column_config.ProgressColumn("HRS", min_value=0, max_value=100, format="%.1f"),
+            "HRS": st.column_config.ProgressColumn(
+                "HRS", min_value=0, max_value=100, format="%.1f",
+                help="Individual Health Risk Score — 0 (healthiest) to 100 (critical risk)"),
         },
     )
 
@@ -333,11 +349,17 @@ def _render_results(res: dict) -> None:
 
 def render_tab() -> None:
     st.subheader("Analyse your own workforce data")
-    st.caption("Upload a CSV of employee records for instant risk scoring — no data is stored on the server.")
     st.caption(
-        "Each employee is scored to HRS using the same underwriting model. "
-        "When wearable data is not provided, Aegis applies national-average telemetry defaults for analysis."
+        "Upload a CSV of employee records for instant HRS scoring using the same underwriting model. "
+        "No data is stored on the server. When wearable data is absent, national-average telemetry defaults are applied."
     )
+    with st.expander("Required CSV format", expanded=False):
+        st.markdown(
+            "**Required columns:** `employee_id`, `age` (18–70), `gender` (M/F/O), "
+            "`bmi` (10–60), `smoker`, `diabetic`, `hypertension` (true/false), "
+            "`job_category` (desk/field/manual)\n\n"
+            "Download the template below to get started with the correct column structure."
+        )
 
     res = st.session_state.get("upload_results")
 

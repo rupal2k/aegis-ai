@@ -10,26 +10,53 @@ SESSION_TIMEOUT_SECONDS = 1800  # 30 minutes idle
 
 def login_form():
     """Renders login form. Returns user dict if authenticated."""
-    st.markdown(
-        "<p style='text-align:center;color:#444444;font-size:14px;margin-bottom:24px;letter-spacing:0.01em;'>"
-        "Sign in to continue</p>",
-        unsafe_allow_html=True,
-    )
+    saved_email = st.session_state.get("_login_email", "")
 
     with st.form("login_form"):
-        email  = st.text_input("Email")
-        pwd    = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Sign in", use_container_width=True)
+        email = st.text_input(
+            "Work email",
+            value=saved_email,
+            placeholder="you@company.com",
+        )
+        pwd = st.text_input(
+            "Password",
+            type="password",
+            placeholder="Enter your password",
+        )
+        submit = st.form_submit_button(
+            "Sign in",
+            use_container_width=True,
+            type="primary",
+        )
+
+    st.caption("Forgot your password? Contact your Aegis administrator to reset it.")
 
     if submit:
-        token_data = _fetch_token(email.lower().strip(), pwd)
+        _email = email.strip()
+        if not _email:
+            st.error("Work email is required.")
+            return st.session_state.get("user")
+        if "@" not in _email or "." not in _email.split("@")[-1]:
+            st.error("Enter a valid work email address.")
+            return st.session_state.get("user")
+        if not pwd:
+            st.error("Password is required.")
+            return st.session_state.get("user")
+
+        # Preserve email so failed logins don't clear the field
+        st.session_state["_login_email"] = _email
+
+        with st.spinner("Signing in…"):
+            token_data = _fetch_token(_email.lower(), pwd)
+
         if token_data:
             st.session_state["token"]       = token_data["access_token"]
             st.session_state["user"]        = _decode_token_claims(token_data["access_token"])
             st.session_state["last_active"] = time.time()
+            st.session_state.pop("_login_email", None)
             st.rerun()
         else:
-            st.error("Invalid credentials.")
+            st.error("Incorrect email or password — please try again.")
 
     return st.session_state.get("user")
 
