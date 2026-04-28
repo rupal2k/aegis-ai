@@ -11,6 +11,11 @@ from dashboard.api_client import (
 )
 from dashboard.currency import fmt, active_code, CURRENCIES
 from dashboard.illustrations import HIPAA_PRIVACY, _render_illus as _illus
+from dashboard.design_helpers import (
+    page_header, section_header, apply_chart_theme, empty_state,
+    inline_note, divider as nm_divider, ICON_DATA, ICON_CHART,
+    card, render_card,
+)
 
 COLOR_MAP = {
     "Low":      "#5A8A00",
@@ -42,8 +47,11 @@ def render():
     user = st.session_state["user"]
     company_id = user["company_id"]
 
-    st.title(f"{user['org']} — Workforce Health Dashboard")
-    st.caption(f"Signed in as {user['name']}")
+    page_header(
+        eyebrow="HR Workspace",
+        title=f"{user['org']} — Workforce Health",
+        subtitle=f"Signed in as {user['name']} · scope limited to your company",
+    )
 
     # Collapsed help — doesn't compete with KPIs on load
     with st.expander("How this workspace works", expanded=False):
@@ -125,17 +133,19 @@ def render():
         })
         dist_df = dist_df[dist_df["pct"] > 0]
         if dist_df.empty:
-            st.info("No risk band data available for your company.")
+            empty_state(
+                title="No risk-band data yet",
+                hint="Once your workforce is scored, the band mix will appear here.",
+                icon_svg=ICON_DATA,
+            )
         else:
             fig = px.pie(
                 dist_df, names="band", values="pct", hole=0.58,
                 color="band", color_discrete_map=COLOR_MAP,
             )
-            _pie_layout = _chart_defaults()
-            _pie_layout["legend"].update(orientation="h", yanchor="bottom", y=-0.2)
+            apply_chart_theme(fig, height=320, show_legend=True, legend_horizontal=True)
             fig.update_layout(
-                **_pie_layout,
-                height=320,
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2),
                 annotations=[dict(
                     text=f"<b>{pred['mean_hrs']:.1f}</b><br><span style='font-size:10px'>HRS</span>",
                     x=0.5, y=0.5, font_size=18, showarrow=False,
@@ -145,9 +155,14 @@ def render():
             fig.update_traces(textinfo="percent+label", textfont_size=12, textposition="outside")
             st.plotly_chart(fig, use_container_width=True)
 
-        st.subheader("Key workforce metrics")
+        nm_divider()
+        section_header("Health Metrics", "Key workforce indicators")
         if emp_df.empty:
-            st.info("No individual employee data available for this company.")
+            empty_state(
+                title="No employee-level data yet",
+                hint="Individual telemetry and clinical fields appear here once the ingestion pipeline runs.",
+                icon_svg=ICON_DATA,
+            )
         else:
             m1, m2, m3, m4 = st.columns(4)
             m1.metric(
@@ -167,25 +182,34 @@ def render():
                 help="Percentage of employees with one or more chronic conditions.",
             )
 
-            st.subheader("Age vs claims")
+            nm_divider()
+            section_header("Cohort Lens", "Age vs predicted claims",
+                           "Each point is one employee. Color shades denote chronic-condition count.")
             scatter = px.scatter(
                 emp_df, x="age", y="loss_ratio", color="chronic_count",
                 labels={"age": "Age", "loss_ratio": "Loss ratio",
                         "chronic_count": "Chronic conditions"},
-                color_continuous_scale=["#22C55E", "#F59E0B", "#EF4444"],
+                color_continuous_scale=["#5A8A00", "#B06000", "#C42020"],
             )
-            scatter.update_layout(**_chart_defaults(), height=340)
-            scatter.update_traces(marker=dict(size=6, opacity=0.7))
+            apply_chart_theme(scatter, height=340, x_title="Age", y_title="Loss ratio")
+            scatter.update_traces(marker=dict(size=6, opacity=0.75))
             st.plotly_chart(scatter, use_container_width=True)
 
     # ── Tab 2: Risk Drivers ───────────────────────────────────────────────────
     with tab2:
-        st.subheader("What's driving your risk score?")
-        st.caption("SHAP importance — higher value = bigger contribution to HRS. Use these to prioritise your wellness investments.")
+        section_header(
+            "Explainability",
+            "What's driving your risk score?",
+            "SHAP importance — higher value = bigger contribution to HRS. Use these to prioritise wellness investments.",
+        )
 
         drivers = pred.get("top_risk_drivers", [])
         if not drivers:
-            st.info("No risk driver data available for your company. Contact your administrator.")
+            empty_state(
+                title="No risk-driver data yet",
+                hint="Once SHAP explanations are generated for your workforce, the top drivers will surface here.",
+                icon_svg=ICON_CHART,
+            )
         else:
             driver_df = pd.DataFrame(drivers)
             fig = px.bar(
@@ -194,7 +218,7 @@ def render():
                 color_discrete_sequence=[ACCENT],
                 labels={"importance": "SHAP importance", "feature": ""},
             )
-            fig.update_layout(**_chart_defaults(), height=380)
+            apply_chart_theme(fig, height=380, show_legend=False, x_title="SHAP importance")
             fig.update_traces(marker_line_width=0)
             st.plotly_chart(fig, use_container_width=True)
 
@@ -218,42 +242,33 @@ def render():
             if d["feature"] in recs
         ]
         if matched:
-            items_html = ""
-            for idx, (rank, d, (action, impact, hrs_mid)) in enumerate(matched):
+            nm_divider(top=20, bottom=8)
+            section_header("Action Plan", "AI recommendations",
+                           "Top-priority interventions ranked by SHAP impact and modelled savings.")
+            rec_cards = []
+            for rank, d, (action, impact, hrs_mid) in matched:
                 est = (hrs_mid / 100) * prem["adjusted_premium"] * 0.8
-                border = "border-bottom:1px solid rgba(0,0,0,0.07);" if idx < len(matched) - 1 else ""
-                items_html += (
-                    f'<div style="display:flex;align-items:center;gap:16px;padding:12px 0;{border}">'
-                    f'<span style="width:22px;height:22px;background:rgba(196,255,0,0.14);'
-                    f'border:1px solid rgba(150,200,0,0.40);border-radius:5px;flex-shrink:0;'
-                    f'display:flex;align-items:center;justify-content:center;'
-                    f'font-size:11px;color:#5A7A00;'
-                    f'font-family:\'NType82\',\'Space Grotesk\',sans-serif;font-weight:700;">{rank}</span>'
-                    f'<div style="flex:1;">'
-                    f'<div style="font-size:13px;color:#111;font-weight:500;'
-                    f'font-family:\'NType82\',\'Space Grotesk\',sans-serif;margin-bottom:2px;">{action}</div>'
-                    f'<div style="font-size:12px;color:#999;">{impact}</div>'
-                    f'</div>'
-                    f'<div style="text-align:right;flex-shrink:0;">'
-                    f'<div style="font-size:13px;font-weight:700;color:#9BC800;'
-                    f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{fmt(est)}</div>'
-                    f'<div style="font-size:10px;color:#999;">est. annual savings</div>'
-                    f'</div></div>'
-                )
-            st.markdown(
-                f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);'
-                f'border-radius:12px;padding:22px 24px;margin-top:16px;">'
-                f'<div style="font-size:11px;color:#999;text-transform:uppercase;'
-                f'letter-spacing:0.1em;margin-bottom:8px;font-weight:500;">AI Recommendations</div>'
-                f'{items_html}'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+                rec_cards.append(card(
+                    eyebrow=f"PRIORITY · {rank:02d}",
+                    title=action,
+                    body=impact,
+                    stat=fmt(est),
+                    stat_color="#5A7A00",
+                    mono_footer="EST. ANNUAL SAVINGS",
+                    variant="accent" if rank == 1 else "default",
+                ))
+            cols = st.columns(min(len(rec_cards), 2))
+            for i, ch in enumerate(rec_cards):
+                with cols[i % len(cols)]:
+                    st.markdown(ch, unsafe_allow_html=True)
 
     # ── Tab 3: ROI Simulator ──────────────────────────────────────────────────
     with tab3:
-        st.subheader("Wellness program ROI simulator")
-        st.caption("Model the financial impact of reducing your workforce HRS before renewal.")
+        section_header(
+            "Forecasting",
+            "Wellness program ROI simulator",
+            "Model the financial impact of reducing your workforce HRS before renewal.",
+        )
 
         col1, col2 = st.columns(2)
         with col1:
@@ -306,20 +321,24 @@ def render():
             text=[f"{sym}{cur_y:,.0f}", f"-{sym}{sav_y:,.0f}", f"{sym}{proj_y:,.0f}"],
             textfont={"family": "LetteraMonoLL, Space Mono, monospace", "size": 12, "color": "#111111"},
         ))
+        apply_chart_theme(wf, height=340, show_legend=False)
         wf.update_layout(
-            **_chart_defaults(),
-            height=340,
-            title=dict(text=f"Premium savings breakdown ({code})", font=dict(size=14)),
-            yaxis=dict(gridcolor=GRID_CLR, tickprefix=sym, showgrid=True),
-            showlegend=False,
+            title=dict(text=f"Premium savings breakdown ({code})",
+                       font=dict(color="#111111", size=14)),
+            yaxis=dict(gridcolor=GRID_CLR, tickprefix=sym, showgrid=True,
+                       tickfont=dict(color="#111111", family="Inter, system-ui, sans-serif")),
         )
         st.plotly_chart(wf, use_container_width=True)
 
         if roi["annual_savings"] > 0:
-            st.success(
-                f"A {improvement}-point HRS improvement could save "
-                f"**{fmt(roi['annual_savings'])}** annually. "
-                f"Use this projection when renewing with your insurer."
+            inline_note(
+                f"A <b>{improvement}-point</b> HRS improvement could save "
+                f"<b>{fmt(roi['annual_savings'])}</b> annually. "
+                f"Use this projection when renewing with your insurer.",
+                level="ok",
             )
         else:
-            st.info("Adjust the improvement target above to see potential savings.")
+            inline_note(
+                "Adjust the improvement target above to see potential savings.",
+                level="info",
+            )

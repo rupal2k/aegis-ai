@@ -183,6 +183,79 @@ def generate_clinical_events(employees: pd.DataFrame, companies: pd.DataFrame) -
     return pd.DataFrame(events)
 
 
+def add_synthetic_lab_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Generate probabilistic lab domain flags for synthetic employees based on
+    their existing health profile (smoker, diabetic, hypertension, bmi, age).
+
+    Outofrange rates are calibrated to match real-world distributions:
+      Vitamin Deficiency ~90%, Heart Health ~70%, Liver ~60%, Inflammation ~51%,
+      Kidney ~34%, Iron ~28%, Diabetes ~20%, Bone ~9%, Thyroid ~9%.
+    """
+    rng_lab = np.random.default_rng(seed=99)
+    n = len(df)
+
+    steps  = df["avg_daily_steps"].values if "avg_daily_steps" in df.columns else np.full(n, 5000.0)
+    smoker = df["smoker"].values.astype(float)
+    diab   = df["diabetic"].values.astype(float)
+    htn    = df["hypertension"].values.astype(float)
+    bmi    = df["bmi"].values
+    age    = df["age"].values
+    female = (df["gender"].values == "F").astype(float) if "gender" in df.columns else np.zeros(n)
+
+    df["lab_heart_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.40 + htn * 0.28 + smoker * 0.18 + (bmi > 28).astype(float) * 0.12, 0.05, 0.95
+    )).astype(int)
+
+    df["lab_inflammation_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.28 + smoker * 0.22 + htn * 0.12 + (bmi > 30).astype(float) * 0.12, 0.05, 0.92
+    )).astype(int)
+
+    df["lab_diabetes_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.06 + diab * 0.78 + (bmi > 30).astype(float) * 0.08 + (age > 45).astype(float) * 0.05,
+        0.02, 0.95
+    )).astype(int)
+
+    df["lab_kidney_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.12 + diab * 0.22 + htn * 0.18 + (age > 50).astype(float) * 0.08, 0.03, 0.88
+    )).astype(int)
+
+    df["lab_liver_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.28 + smoker * 0.18 + (bmi > 28).astype(float) * 0.14 + diab * 0.12, 0.05, 0.92
+    )).astype(int)
+
+    df["lab_iron_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.13 + female * 0.14 + (age < 35).astype(float) * 0.04, 0.03, 0.72
+    )).astype(int)
+
+    df["lab_thyroid_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.06 + female * 0.05 + (age > 45).astype(float) * 0.03, 0.02, 0.38
+    )).astype(int)
+
+    df["lab_bone_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.05 + female * 0.04 + (age > 50).astype(float) * 0.06, 0.02, 0.32
+    )).astype(int)
+
+    # Vitamin Deficiency is near-universal; low activity slightly increases risk
+    df["lab_vitamin_flag"] = (rng_lab.uniform(size=n) < np.clip(
+        0.76 + smoker * 0.08 + (steps < 4000).astype(float) * 0.06, 0.50, 0.98
+    )).astype(int)
+
+    lab_flags = [
+        "lab_heart_flag", "lab_inflammation_flag", "lab_diabetes_flag",
+        "lab_kidney_flag", "lab_liver_flag", "lab_iron_flag",
+        "lab_thyroid_flag", "lab_bone_flag", "lab_vitamin_flag",
+    ]
+    lab_weights = [0.20, 0.10, 0.25, 0.18, 0.12, 0.05, 0.03, 0.04, 0.03]
+
+    df["lab_domain_count"] = df[lab_flags].sum(axis=1)
+    df["lab_risk_score"]   = sum(
+        w * df[col] for w, col in zip(lab_weights, lab_flags)
+    ).round(4)
+
+    return df
+
+
 def build_training_dataset(employees, telemetry, clinical, companies):
     tele_agg = telemetry.groupby("employee_id").agg(
         avg_daily_steps=("avg_daily_steps", "mean"),
@@ -221,6 +294,10 @@ def build_training_dataset(employees, telemetry, clinical, companies):
     df["chronic_count"] = df["diabetic"] + df["hypertension"]
 
     df.drop(columns=["company_base_premium", "emp_count"], inplace=True)
+
+    # Add synthetic lab features based on each employee's health profile
+    df = add_synthetic_lab_features(df)
+
     return df
 
 
@@ -257,4 +334,6 @@ if __name__ == "__main__":
     print(f"Avg daily steps  : {training['avg_daily_steps'].mean():.0f}")
     print(f"Avg resting HR   : {training['avg_resting_hr'].mean():.1f} bpm")
     print(f"Diabetic pct     : {training['diabetic'].mean()*100:.1f}%")
+    print(f"Lab domain count : {training['lab_domain_count'].mean():.2f} avg")
+    print(f"Lab risk score   : {training['lab_risk_score'].mean():.3f} avg")
     print("\nAll files saved to data/output/")

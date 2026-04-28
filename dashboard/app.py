@@ -8,6 +8,7 @@ from dashboard.auth import login_form, logout_button
 from dashboard import underwriter_view, hr_view
 from dashboard.currency import sidebar_selector
 from dashboard.illustrations import SOC2_COMPLIANCE, BRAND_FONT_CSS, _render_illus as _illus
+from dashboard.design_tokens import DESIGN_TOKENS_CSS
 
 st.set_page_config(
     page_title="Aegis AI — Underwriting Platform",
@@ -18,6 +19,11 @@ st.set_page_config(
 
 # Inject NType82 + LetteraMonoLL brand fonts (base64 embedded, no server needed)
 st.markdown(f"<style>{BRAND_FONT_CSS}</style>", unsafe_allow_html=True)
+
+# Inject design system CSS custom properties (--nm-*). Additive only — does not
+# override existing inline colors in already-built views. New modules should
+# reference var(--nm-*) tokens; see design.md at repo root for the full contract.
+st.markdown(DESIGN_TOKENS_CSS, unsafe_allow_html=True)
 
 st.markdown("""
 <style>
@@ -95,7 +101,7 @@ p, .stMarkdown p { font-family: 'Inter', system-ui, sans-serif !important; }
     font-family: 'NType82', 'Space Grotesk', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
-    color: #666666;
+    color: #222222;
     letter-spacing: -0.01em;
 }
 [data-testid="stTabs"] button[aria-selected="true"] {
@@ -181,7 +187,7 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
 
 /* ── Captions ─────────────────────── */
 .stCaption, [data-testid="stCaptionContainer"] p {
-    color: #666666 !important;
+    color: #222222 !important;
     font-family: 'Inter', system-ui, sans-serif !important;
 }
 
@@ -312,7 +318,7 @@ button:focus-visible,
 /* ── Spinner text ─────────────────── */
 [data-testid="stSpinner"] p {
     font-size: 13px !important;
-    color: #777 !important;
+    color: #333333 !important;
     font-family: 'Inter', system-ui, sans-serif !important;
 }
 
@@ -367,6 +373,131 @@ code {
 /* ── Scrollbar ────────────────────── */
 ::-webkit-scrollbar { width: 4px; background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+/* ── Enterprise polish — main block container spacing ────── */
+.main .block-container {
+    padding-top: 2.5rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1200px !important;
+}
+
+/* ── Tab headers — bigger active underline + spacing ────── */
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+    gap: 4px;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    margin-bottom: 6px;
+}
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+    height: 2.5px !important;
+    border-radius: 2px;
+}
+[data-testid="stTabs"] button {
+    padding: 10px 18px !important;
+}
+
+/* ── Number input — match text input height ────────────── */
+[data-testid="stNumberInput"] [data-baseweb="input"],
+[data-testid="stNumberInput"] [data-baseweb="base-input"] {
+    height: 40px !important;
+}
+
+/* ── Slider track — brand accent ───────────────────────── */
+[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
+    background-color: #C4FF00 !important;
+    border: 1.5px solid #9BC800 !important;
+}
+[data-testid="stSlider"] [data-baseweb="slider"] > div > div > div:first-child {
+    background: linear-gradient(90deg, #9BC800, #C4FF00) !important;
+}
+
+/* ── Checkbox — accent fill when checked ───────────────── */
+[data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
+    background-color: #C4FF00 !important;
+    border-color: #9BC800 !important;
+}
+
+/* ── File uploader dropzone — subtle dashed border ───── */
+[data-testid="stFileUploader"] section {
+    background: #FFFFFF !important;
+    border: 1.5px dashed rgba(0,0,0,0.16) !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    transition: border-color 0.15s, background 0.15s;
+}
+[data-testid="stFileUploader"] section:hover {
+    border-color: #9BC800 !important;
+    background: rgba(196,255,0,0.04) !important;
+}
+[data-testid="stFileUploader"] section button {
+    background: #111111 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 8px !important;
+    height: 38px !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-weight: 500 !important;
+}
+
+/* ── Spinner — accent stroke ───────────────────────────── */
+[data-testid="stSpinner"] svg circle { stroke: #C4FF00 !important; }
+
+/* ── Streamlit alert boxes (st.success/info/warning/error) — brand-tone ─ */
+[data-testid="stAlert"] {
+    border-radius: 10px !important;
+    border: 1px solid rgba(0,0,0,0.07) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    font-family: 'Inter', system-ui, sans-serif !important;
+}
+/* Success — chartreuse left border */
+[data-testid="stAlertContainer"][kind="success"],
+[data-baseweb="notification"][role="status"] {
+    background: rgba(90,138,0,0.06) !important;
+    border-left: 3px solid #5A8A00 !important;
+}
+/* Info — blue left border */
+[data-testid="stAlertContainer"][kind="info"] {
+    background: rgba(0,96,176,0.06) !important;
+    border-left: 3px solid #0060B0 !important;
+}
+/* Warning — orange left border */
+[data-testid="stAlertContainer"][kind="warning"] {
+    background: rgba(176,96,0,0.06) !important;
+    border-left: 3px solid #B06000 !important;
+}
+/* Error — red left border */
+[data-testid="stAlertContainer"][kind="error"] {
+    background: rgba(196,32,32,0.06) !important;
+    border-left: 3px solid #C42020 !important;
+}
+
+/* ── Plotly modebar — match brand on hover ───────────── */
+.modebar-btn:hover svg path { fill: #C4FF00 !important; }
+
+/* ── Status / data badges in tables — pill chips ─────── */
+[data-testid="stDataFrame"] [data-testid="stDataFrameCell"] {
+    font-family: 'Inter', system-ui, sans-serif !important;
+}
+[data-testid="stDataFrame"] [data-testid="stDataFrameCell"] [data-testid="stDataFrameCell"] {
+    color: #111 !important;
+}
+
+/* ── Code block (st.code) — brand mono background ────── */
+[data-testid="stCodeBlock"] pre,
+[data-testid="stCode"] pre {
+    background: #F5F5EF !important;
+    border: 1px solid rgba(0,0,0,0.07) !important;
+    border-radius: 8px !important;
+    color: #111 !important;
+    font-family: 'LetteraMonoLL', 'Space Mono', monospace !important;
+    font-size: 12.5px !important;
+}
+
+/* ── Captions — slightly darker than default ─────────── */
+[data-testid="stCaptionContainer"], .stCaption {
+    color: #444444 !important;
+    font-size: 12.5px !important;
+    line-height: 1.55 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -384,7 +515,7 @@ def _render_right_panel():
     )
     st.markdown(f"""
 <div style="padding:4px 0 0;">
-  <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:12px;">What you get</div>
+  <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:12px;">What you get</div>
   <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
     <div style="display:flex;align-items:flex-start;gap:10px;">
       <span style="{_BULLET}">&#10003;</span>
@@ -399,24 +530,24 @@ def _render_right_panel():
       <div style="font-size:13px;color:#333;line-height:1.5;"><strong style="color:#111;">Prove wellness ROI</strong> — HR managers quantify intervention impact and share renewal-ready reports directly with underwriters.</div>
     </div>
   </div>
-  <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:10px;">Your workspace after sign-in</div>
+  <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:10px;">Your workspace after sign-in</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;">
     <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:10px;padding:14px 16px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
         <div style="width:6px;height:6px;border-radius:50%;background:#C4FF00;flex-shrink:0;"></div>
-        <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Underwriter</div>
+        <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Underwriter</div>
       </div>
       <div style="font-size:12px;color:#444;line-height:1.55;">Portfolio risk · Premium movement · Company drivers · PDF reports</div>
     </div>
     <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:10px;padding:14px 16px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
         <div style="width:6px;height:6px;border-radius:50%;background:#C4FF00;flex-shrink:0;"></div>
-        <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">HR Manager</div>
+        <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">HR Manager</div>
       </div>
       <div style="font-size:12px;color:#444;line-height:1.55;">Workforce trends · Key drivers · Wellness ROI · Renewal prep</div>
     </div>
   </div>
-  <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:10px;">Health Risk Score (HRS) scale</div>
+  <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:10px;">Health Risk Score (HRS) scale</div>
   <div style="display:flex;gap:7px;flex-wrap:wrap;">
     <div style="background:#F0FFF0;border:1px solid rgba(0,140,0,0.20);border-radius:20px;padding:4px 13px;font-size:11px;color:#276227;font-weight:500;white-space:nowrap;">0–29 · Low</div>
     <div style="background:#FFFBF0;border:1px solid rgba(180,110,0,0.25);border-radius:20px;padding:4px 13px;font-size:11px;color:#8B5E00;font-weight:500;white-space:nowrap;">30–59 · Moderate</div>
@@ -444,12 +575,12 @@ def _render_sidebar_reference(role: str):
         f"""
 <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:10px;
             padding:12px 14px;margin-top:4px;">
-    <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.08em;
+    <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.08em;
                 margin-bottom:6px;font-weight:500;">Session Notes</div>
     <div style="font-size:12px;color:#444;line-height:1.55;margin-bottom:8px;">
         {role_copy}
     </div>
-    <div style="font-size:11px;color:#666;line-height:1.5;">
+    <div style="font-size:11px;color:#222222;line-height:1.5;">
         <strong style="color:#111;">Currency:</strong> changing the selector updates displayed premium values only.<br>
         <strong style="color:#111;">Session:</strong> sign out clears the current dashboard session.
     </div>
@@ -478,24 +609,23 @@ def main():
             st.markdown("""
 <div style="max-width:400px;">
 
-  <!-- Logo -->
+  <!-- Logo (official shield + check mark from design package) -->
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:30px;">
-    <div style="width:40px;height:40px;background:#111;border-radius:10px;
+    <div style="width:42px;height:42px;background:#111;border-radius:10px;
                 display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                box-shadow:0 4px 16px rgba(0,0,0,0.15);">
-      <svg width="24" height="24" viewBox="0 0 28 30" fill="none">
-        <path d="M 14,1 L 26,1 Q 28,1 28,3 L 28,17 C 28,24 21,28 14,30 C 7,28 0,24 0,17 L 0,3 Q 0,1 2,1 Z" fill="#111"/>
-        <path d="M 14,6 L 23,6 Q 25,6 25,8 L 25,16 C 25,21 20,24 14,26 C 8,24 3,21 3,16 L 3,8 Q 3,6 5,6 Z" fill="none" stroke="#C4FF00" stroke-width="1" opacity="0.25"/>
-        <polyline points="3,17 8,17 10,11 13,23 15,15 17,19 20,17 25,17" stroke="#C4FF00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M 2,1 L 0,1 L 0,3" stroke="#C4FF00" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-        <path d="M 26,1 L 28,1 L 28,3" stroke="#C4FF00" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+                box-shadow:0 4px 16px rgba(0,0,0,0.18);">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M 12,3 L 21,7.5 L 21,14 C 21,19 17,22.5 12,24 C 7,22.5 3,19 3,14 L 3,7.5 Z"
+              stroke="#C4FF00" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+        <polyline points="7.5,14 10.5,18 16.5,11" stroke="#C4FF00" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       </svg>
     </div>
     <div>
       <div style="font-size:20px;font-weight:700;
                   font-family:'NType82','Space Grotesk',system-ui,sans-serif;
-                  color:#111;letter-spacing:-0.02em;line-height:1.1;">Aegis AI</div>
-      <div style="font-size:10px;color:#999;letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;">
+                  color:#111;letter-spacing:0.03em;line-height:1.1;text-transform:uppercase;">AEGIS&nbsp;AI</div>
+      <div style="font-size:10px;color:#333333;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;">
         Underwriting Platform</div>
     </div>
   </div>
@@ -522,7 +652,7 @@ def main():
     <path d="M6.5 1L2 3.2v3.8C2 9.8 4 11.8 6.5 12.5 9 11.8 11 9.8 11 7V3.2L6.5 1z"
           stroke="#999" stroke-width="1.1" fill="none"/>
   </svg>
-  <span style="font-size:11px;color:#999;font-family:'Inter',system-ui,sans-serif;
+  <span style="font-size:11px;color:#333333;font-family:'Inter',system-ui,sans-serif;
                letter-spacing:0.01em;">
     Secure login &nbsp;·&nbsp; SOC 2 Type II &nbsp;·&nbsp; Enterprise ready
   </span>
@@ -539,20 +669,19 @@ def main():
         st.markdown("""
 <div style="display:flex;align-items:center;gap:10px;padding:4px 0 16px;
             border-bottom:1px solid rgba(0,0,0,0.07);margin-bottom:12px;">
-    <div style="width:30px;height:30px;background:#111;border-radius:8px;
+    <div style="width:32px;height:32px;background:#111;border-radius:8px;
                 display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="18" height="18" viewBox="0 0 28 30" fill="none">
-            <path d="M 14,1 L 26,1 Q 28,1 28,3 L 28,17 C 28,24 21,28 14,30 C 7,28 0,24 0,17 L 0,3 Q 0,1 2,1 Z" fill="#111"/>
-            <path d="M 14,6 L 23,6 Q 25,6 25,8 L 25,16 C 25,21 20,24 14,26 C 8,24 3,21 3,16 L 3,8 Q 3,6 5,6 Z" fill="none" stroke="#C4FF00" stroke-width="1" opacity="0.25"/>
-            <polyline points="3,17 8,17 10,11 13,23 15,15 17,19 20,17 25,17" stroke="#C4FF00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M 2,1 L 0,1 L 0,3" stroke="#C4FF00" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-            <path d="M 26,1 L 28,1 L 28,3" stroke="#C4FF00" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+            <path d="M 12,3 L 21,7.5 L 21,14 C 21,19 17,22.5 12,24 C 7,22.5 3,19 3,14 L 3,7.5 Z"
+                  stroke="#C4FF00" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+            <polyline points="7.5,14 10.5,18 16.5,11" stroke="#C4FF00" stroke-width="2.2"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
     </div>
     <div>
         <div style="font-size:14px;font-weight:700;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
-                    color:#111;line-height:1.15;">Aegis AI</div>
-        <div style="font-size:10px;color:#999;letter-spacing:0.06em;text-transform:uppercase;margin-top:1px;">
+                    color:#111;line-height:1.15;letter-spacing:0.03em;text-transform:uppercase;">AEGIS&nbsp;AI</div>
+        <div style="font-size:10px;color:#333333;letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">
             Underwriting Platform</div>
     </div>
 </div>
@@ -571,7 +700,7 @@ def main():
   <div style="min-width:0;">
     <div style="font-size:13px;font-weight:600;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
                 color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{_name}</div>
-    <div style="font-size:10px;color:#999;letter-spacing:0.08em;text-transform:uppercase;margin-top:1px;">{_role_label}</div>
+    <div style="font-size:10px;color:#333333;letter-spacing:0.08em;text-transform:uppercase;margin-top:1px;">{_role_label}</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -579,7 +708,7 @@ def main():
             _company = user.get("org", "Your Company")
             st.markdown(f"""
 <div style="background:#F2F2EC;border:1px solid rgba(0,0,0,0.07);border-radius:8px;padding:8px 12px;margin-top:4px;margin-bottom:2px;">
-  <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:3px;">Active Client</div>
+  <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:3px;">Active Client</div>
   <div style="font-size:13px;font-weight:600;font-family:'NType82','Space Grotesk',system-ui,sans-serif;color:#111;">{_company}</div>
 </div>
 """, unsafe_allow_html=True)
@@ -591,16 +720,22 @@ def main():
         logout_button()
         st.divider()
         st.markdown("""
-<div style="background:#111;border:1px solid #1e1e1e;border-radius:8px;
-            padding:10px 12px;margin-top:4px;">
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+<div style="background:#111;border:1px solid #1e1e1e;border-radius:10px;
+            padding:12px 14px;margin-top:4px;box-shadow:0 4px 16px rgba(0,0,0,0.30);">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
         <span style="width:6px;height:6px;border-radius:50%;background:#C4FF00;
-                     display:inline-block;flex-shrink:0;"></span>
-        <span style="font-size:10px;color:#C4FF00;font-weight:500;
-                     letter-spacing:0.08em;text-transform:uppercase;
+                     display:inline-block;flex-shrink:0;
+                     box-shadow:0 0 0 4px rgba(196,255,0,0.18);"></span>
+        <span style="font-size:10px;color:#C4FF00;font-weight:600;
+                     letter-spacing:0.10em;text-transform:uppercase;
                      font-family:'NType82','Space Grotesk',system-ui,sans-serif;">Model Active</span>
     </div>
-    <div style="font-size:11px;color:#888;line-height:1.4;">XGBoost v2.1 · SHAP enabled</div>
+    <div style="font-family:'LetteraMonoLL','Space Mono',monospace;
+                font-size:11px;color:#C4FF00;background:rgba(196,255,0,0.08);
+                padding:5px 8px;border-radius:5px;border:1px solid rgba(196,255,0,0.15);
+                margin-bottom:6px;">XGBOOST v2.1 · SHAP</div>
+    <div style="font-size:11px;color:#AAAAAA;line-height:1.4;">
+        Last trained · live underwriting</div>
 </div>
 """, unsafe_allow_html=True)
 

@@ -10,7 +10,13 @@ from dashboard.api_client import (
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.currency import fmt, fmt_crore, active_code, CURRENCIES
 import dashboard.upload_view as upload_view
+import dashboard.training_data_view as training_data_view
 from dashboard.illustrations import GROUP_INSURANCE, _render_illus as _illus
+from dashboard.design_helpers import (
+    page_header, section_header, apply_chart_theme, empty_state,
+    inline_note, divider as nm_divider, ICON_DATA, ICON_UPLOAD,
+    card, render_card,
+)
 
 COLOR_MAP = {
     "Low":      "#5A8A00",
@@ -134,7 +140,7 @@ def _render_risk_drivers(drivers: list) -> None:
             f'<div style="margin-bottom:14px;">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">'
             f'<span style="font-size:12px;color:#333;font-family:\'Inter\',system-ui,sans-serif;">'
-            f'<span style="font-size:10px;color:#aaa;margin-right:6px;">{i:02d}</span>{d["feature"]}</span>'
+            f'<span style="font-size:10px;color:#444444;margin-right:6px;">{i:02d}</span>{d["feature"]}</span>'
             f'<span style="font-size:12px;font-weight:600;color:#111;'
             f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{d["importance"]:.3f}</span>'
             f'</div>'
@@ -159,24 +165,24 @@ def _render_decision_card(prem: dict, base_premium: float, risk_band: str) -> No
     adj_pct = prem["adjustment_pct"]
     base_fmt = fmt(base_premium)
     sign = "▲" if adj_pct > 0 else ("▼" if adj_pct < 0 else "—")
-    sign_color = "#EF4444" if adj_pct > 0 else ("#22C55E" if adj_pct < 0 else "#999")
+    sign_color = "#EF4444" if adj_pct > 0 else ("#22C55E" if adj_pct < 0 else "#444444")
     st.markdown(
         f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);'
         f'border-left:4px solid {border_color};border-radius:10px;padding:20px 24px;margin-bottom:16px;">'
-        f'<div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.12em;'
+        f'<div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.12em;'
         f'font-weight:600;margin-bottom:10px;">Underwriting Decision</div>'
         f'<div style="font-size:14px;color:#111;font-weight:600;'
         f'font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;margin-bottom:14px;'
         f'line-height:1.4;">{rec}</div>'
         f'<div style="display:flex;gap:32px;">'
-        f'<div><div style="font-size:10px;color:#aaa;margin-bottom:2px;">Adjusted premium</div>'
+        f'<div><div style="font-size:10px;color:#444444;margin-bottom:2px;">Adjusted premium</div>'
         f'<div style="font-size:18px;font-weight:700;color:#111;'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{adj}</div></div>'
-        f'<div><div style="font-size:10px;color:#aaa;margin-bottom:2px;">vs base premium</div>'
+        f'<div><div style="font-size:10px;color:#444444;margin-bottom:2px;">vs base premium</div>'
         f'<div style="font-size:18px;font-weight:700;color:{sign_color};'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">'
         f'{sign} {abs(adj_pct):.2f}%</div></div>'
-        f'<div><div style="font-size:10px;color:#aaa;margin-bottom:2px;">Base premium</div>'
+        f'<div><div style="font-size:10px;color:#444444;margin-bottom:2px;">Base premium</div>'
         f'<div style="font-size:16px;font-weight:500;color:#555;'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{base_fmt}</div></div>'
         f'</div>'
@@ -187,17 +193,10 @@ def _render_decision_card(prem: dict, base_premium: float, risk_band: str) -> No
 
 def render():
     user = st.session_state["user"]
-    st.markdown(
-        f'<div style="margin-bottom:4px;">'
-        f'<div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.14em;'
-        f'font-weight:600;margin-bottom:6px;">Underwriting Console</div>'
-        f'<div style="font-size:28px;font-weight:700;color:#111;line-height:1.15;'
-        f'font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;letter-spacing:-0.03em;">'
-        f'Portfolio Risk Intelligence</div>'
-        f'<div style="font-size:13px;color:#888;margin-top:6px;">'
-        f'{user["name"]} &nbsp;·&nbsp; {user["org"]}</div>'
-        f'</div>',
-        unsafe_allow_html=True,
+    page_header(
+        eyebrow="Underwriting Console",
+        title="Portfolio Risk Intelligence",
+        subtitle=f"{user['name']} · {user['org']} · scope: full underwriting book",
     )
 
     # Collapsed help — doesn't compete with KPIs on load
@@ -235,7 +234,13 @@ def render():
                 st.warning(f"Skipping {c['company_name']}: {e}")
 
     if not rows:
-        st.info("No company data available. Upload a dataset in the **CSV Scoring** tab to get started.")
+        empty_state(
+            title="No portfolio data yet",
+            hint="Upload an employee CSV in the CSV Scoring tab, or ingest your first company "
+                 "via the API. Predictions will appear here once data exists.",
+            icon_svg=ICON_UPLOAD,
+            cta="Try the CSV Scoring tab →",
+        )
         return
 
     df = pd.DataFrame(rows)
@@ -271,31 +276,50 @@ def render():
         help="Total adjusted premium. Delta = adjustment vs base premium.",
     )
 
-    # Primary CTA — guide the next decision
-    if n_risk > 0:
-        _cta, _ = st.columns([2, 5])
-        with _cta:
+    # Spotlight — highest-risk company surfaced as an accent card
+    df_sorted = df.sort_values("mean_hrs", ascending=False)
+    spotlight = df_sorted.iloc[0]
+    sp_col, cta_col = st.columns([3, 2])
+    with sp_col:
+        render_card(
+            variant="accent",
+            badge=f"{spotlight['risk_band'].upper()} RISK · TOP OF BOOK",
+            stat=f"{spotlight['mean_hrs']:.1f}",
+            stat_color={"Critical": "#8B0000", "High": "#C42020",
+                        "Moderate": "#B06000", "Low": "#5A8A00"}.get(
+                            spotlight["risk_band"], "#5A7A00"),
+            title=spotlight["company_name"],
+            body=(f"{int(spotlight['employees']):,} employees · {spotlight['industry']} · "
+                  f"premium adjustment {spotlight['adjustment_pct']:+.2f}%"),
+            mono_footer=f"COMPANY ID · {spotlight['company_id']}",
+        )
+    with cta_col:
+        # Primary CTA — guide the next decision
+        if n_risk > 0:
+            st.markdown('<div style="margin-top:8px;"></div>', unsafe_allow_html=True)
             if st.button(
                 f"Review {n_risk} high-risk account{'s' if n_risk != 1 else ''} →",
                 type="primary",
                 use_container_width=True,
             ):
                 st.session_state["uw_filter_band"] = "High"
+            st.caption("Filters Portfolio Overview to the high-risk slice.")
 
-    st.divider()
+    nm_divider(top=8, bottom=14)
 
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Portfolio Overview",
         "Account Review",
         "Risk Distribution",
         "CSV Scoring",
+        "Training Data",
     ])
 
     # ── Tab 1: Portfolio Overview ─────────────────────────────────────────────
     with tab1:
         _h1, _h2 = st.columns([3, 1])
         with _h1:
-            st.subheader("All companies — ranked by risk")
+            section_header("Portfolio", "All companies — ranked by risk")
         with _h2:
             _illus(GROUP_INSURANCE, "160px", height_px=170, align="right", opacity=0.85)
 
@@ -307,17 +331,15 @@ def render():
             labels={"mean_hrs": "Health Risk Score (HRS)", "company_name": ""},
             height=max(400, len(df) * 28),
         )
-        fig.update_layout(
-            **_chart_defaults(),
-            showlegend=True,
-            xaxis=dict(range=[0, 100], gridcolor=GRID_CLR, zeroline=False, title_standoff=10,
-                       tickfont=dict(color="#333333", size=12)),
-            yaxis=dict(gridcolor=GRID_CLR, tickfont=dict(color="#222222", size=12)),
+        apply_chart_theme(
+            fig,
+            x_range=(0, 100),
+            x_title="Health Risk Score (HRS)",
         )
         fig.add_vline(
             x=50, line_width=1.5, line_dash="dot", line_color="rgba(0,0,0,0.30)",
             annotation_text="Benchmark 50", annotation_position="top right",
-            annotation_font=dict(size=11, color="#777"),
+            annotation_font=dict(size=11, color="#333333"),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -443,7 +465,7 @@ def render():
                     f'<div style="background:#F5F5EF;border:1px solid rgba(0,0,0,0.08);'
                     f'border-radius:8px;padding:10px 16px;margin-top:4px;">'
                     f'<span style="font-size:12px;font-weight:600;color:#111;">{sel_name}</span>'
-                    f'<span style="font-size:12px;color:#888;margin-left:8px;">— row selected</span>'
+                    f'<span style="font-size:12px;color:#333333;margin-left:8px;">— row selected</span>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -474,8 +496,11 @@ def render():
 
     # ── Tab 2: Account Review ─────────────────────────────────────────────────
     with tab2:
-        st.subheader("Account review")
-        st.caption("Inspect one employer in detail, understand what drives its HRS, and export the underwriting report.")
+        section_header(
+            "Single Account",
+            "Account review",
+            "Inspect one employer in detail, understand what drives its HRS, and export the underwriting report.",
+        )
 
         default_cid = st.session_state.get("uw_deep_dive_company", df["company_id"].iloc[0])
         if default_cid not in df["company_id"].values:
@@ -527,46 +552,42 @@ def render():
                       help="Recommended premium change vs base, driven by this company's HRS.")
 
             band_data = [
-                ("Low",      pred["low_risk_pct"],      "#22C55E",
+                ("Low",      pred["low_risk_pct"],
                  int(pred["employee_count"] * pred["low_risk_pct"]      / 100)),
-                ("Moderate", pred["moderate_risk_pct"],  "#F59E0B",
+                ("Moderate", pred["moderate_risk_pct"],
                  int(pred["employee_count"] * pred["moderate_risk_pct"] / 100)),
-                ("High",     pred["high_risk_pct"],      "#EF4444",
+                ("High",     pred["high_risk_pct"],
                  int(pred["employee_count"] * pred["high_risk_pct"]     / 100)),
-                ("Critical", pred["critical_risk_pct"],  "#991B1B",
+                ("Critical", pred["critical_risk_pct"],
                  int(pred["employee_count"] * pred["critical_risk_pct"] / 100)),
             ]
-            cards_html = "".join(
-                f'<div style="flex:1;background:#F5F5EF;border-radius:8px;padding:12px 14px;">'
-                f'<div style="font-size:12px;font-weight:600;'
-                f'font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;'
-                f'color:#111;margin-bottom:6px;">{label}</div>'
-                f'<div style="font-size:20px;font-weight:700;color:{color};'
-                f'font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;'
-                f'letter-spacing:-0.02em;">{pct:.0f}%</div>'
-                f'<div style="font-size:10px;color:#999;margin-top:2px;">{count} emp</div>'
-                f'<div style="height:3px;background:rgba(0,0,0,0.07);border-radius:2px;margin-top:8px;">'
-                f'<div style="height:100%;width:{pct}%;background:{color};border-radius:2px;opacity:0.7;">'
-                f'</div></div></div>'
-                for label, pct, color, count in band_data
+            mini_cards = "".join(
+                card(
+                    eyebrow=label,
+                    stat=f"{pct:.0f}%",
+                    stat_color=COLOR_MAP[label],
+                    body=f"{count} employees",
+                )
+                for label, pct, count in band_data
             )
             st.markdown(
-                f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:12px;'
-                f'padding:14px 18px;margin-top:10px;">'
-                f'<div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.1em;'
-                f'margin-bottom:10px;font-weight:500;">Risk Band Breakdown</div>'
-                f'<div style="display:flex;gap:8px;">{cards_html}</div>'
-                f'</div>',
+                f'<div style="margin-top:10px;">'
+                f'<div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.12em;'
+                f'margin-bottom:10px;font-weight:600;font-family:Inter,system-ui,sans-serif;">'
+                f'Risk Band Breakdown</div>'
+                f'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">'
+                f'{mini_cards}</div></div>',
                 unsafe_allow_html=True,
             )
 
         st.divider()
 
-        st.subheader("Top risk drivers")
+        nm_divider()
+        section_header("Explainability", "Top risk drivers")
         _render_risk_drivers(pred.get("top_risk_drivers", []))
 
-        st.divider()
-        st.subheader("Underwriting decision")
+        nm_divider()
+        section_header("Decision", "Underwriting decision")
         _render_decision_card(prem, float(row["base_premium"]), pred["risk_band"])
 
         pdf_bytes = generate_underwriting_report(
@@ -584,22 +605,20 @@ def render():
 
     # ── Tab 3: Risk Distribution ──────────────────────────────────────────────
     with tab3:
-        st.subheader("Portfolio risk distribution")
-        st.caption("Understand how company HRS values are distributed and which industries carry the most risk.")
+        section_header(
+            "Portfolio Lens",
+            "Risk distribution",
+            "How company HRS values are distributed and which industries carry the most risk.",
+        )
 
         hist = px.histogram(
             df, x="mean_hrs", nbins=20,
             labels={"mean_hrs": "Company Health Risk Score (HRS)", "count": "Companies"},
             color_discrete_sequence=[ACCENT],
         )
-        hist.update_layout(
-            **_chart_defaults(), height=320,
-            showlegend=False,
-            xaxis=dict(gridcolor=GRID_CLR, title_standoff=10, range=[0, 100],
-                       tickfont=dict(color="#333333", size=12),
-                       title=dict(text="Company Health Risk Score (HRS)", font=dict(color="#444444"))),
-            yaxis=dict(gridcolor=GRID_CLR, title="Companies",
-                       tickfont=dict(color="#333333", size=12)),
+        apply_chart_theme(
+            hist, height=320, show_legend=False, x_range=(0, 100),
+            x_title="Company Health Risk Score (HRS)", y_title="Companies",
         )
         hist.add_vrect(x0=0,  x1=30,  fillcolor="rgba(34,197,94,0.05)",  layer="below", line_width=0)
         hist.add_vrect(x0=30, x1=60,  fillcolor="rgba(245,158,11,0.07)", layer="below", line_width=0)
@@ -609,11 +628,12 @@ def render():
             hist.add_vline(
                 x=x, line_width=1, line_dash="dot", line_color="rgba(0,0,0,0.20)",
                 annotation_text=label, annotation_position="top left",
-                annotation_font=dict(size=10, color="#999"),
+                annotation_font=dict(size=10, color="#444444"),
             )
         st.plotly_chart(hist, use_container_width=True)
 
-        st.subheader("Industry risk profile")
+        nm_divider()
+        section_header("Industry Cut", "Industry risk profile")
         ind = df.groupby("industry").agg(
             avg_hrs=("mean_hrs", "mean"),
             employees=("employees", "sum"),
@@ -621,7 +641,7 @@ def render():
         ).reset_index().sort_values("avg_hrs", ascending=False)
 
         if ind.empty:
-            st.info("No industry data available.")
+            empty_state(title="No industry data", hint="Industry rollups appear here once companies are loaded.", icon_svg=ICON_DATA)
         else:
             st.dataframe(
                 ind, use_container_width=True, hide_index=True,
@@ -637,3 +657,7 @@ def render():
     # ── Tab 4: CSV Scoring ────────────────────────────────────────────────────
     with tab4:
         upload_view.render_tab()
+
+    # ── Tab 5: Training Data ──────────────────────────────────────────────────
+    with tab5:
+        training_data_view.render_tab()

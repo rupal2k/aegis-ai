@@ -11,6 +11,11 @@ from dashboard.api_client import predict_employee, calculate_premium
 from dashboard.currency import fmt, active_code, CURRENCIES
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.illustrations import EMPLOYEE_HEALTH, _render_illus as _illus
+from dashboard.design_helpers import (
+    section_header, apply_chart_theme, empty_state, inline_note,
+    divider as nm_divider, ICON_UPLOAD,
+)
+from dashboard.data_normalizer import detect_format, to_feature_records
 
 PLOT_BG  = "#FFFFFF"
 GRID_CLR = "rgba(0,0,0,0.06)"
@@ -24,9 +29,11 @@ COLOR_MAP = {
     "Critical": "#8B0000",
 }
 
-REQUIRED_COLS = {
-    "employee_id", "age", "gender", "bmi",
-    "smoker", "diabetic", "hypertension", "job_category",
+FORMAT_LABELS = {
+    "roster":   "Employee roster",
+    "lab":      "LAB markers (long-format)",
+    "activity": "Activity / wellness records",
+    "unknown":  "Unrecognized",
 }
 
 INDUSTRIES = [
@@ -65,61 +72,6 @@ def _parse_bool(v) -> bool:
     if isinstance(v, bool):
         return v
     return str(v).strip().lower() in ("true", "1", "yes")
-
-
-def _validate_and_parse(df: pd.DataFrame) -> tuple[list[dict], list[str]]:
-    errors: list[str] = []
-    records: list[dict] = []
-
-    missing = REQUIRED_COLS - set(df.columns.str.lower())
-    if missing:
-        return [], [f"Missing columns: {', '.join(sorted(missing))}"]
-
-    df = df.copy()
-    df.columns = df.columns.str.lower()
-
-    for i, row in df.iterrows():
-        row_errors: list[str] = []
-
-        try:
-            age = int(row["age"])
-            if not 18 <= age <= 70:
-                row_errors.append(f"age {age} must be 18-70")
-        except (ValueError, TypeError):
-            row_errors.append("age must be an integer")
-            age = None
-
-        try:
-            bmi = float(row["bmi"])
-            if not 10.0 <= bmi <= 60.0:
-                row_errors.append(f"bmi {bmi:.1f} must be 10-60")
-        except (ValueError, TypeError):
-            row_errors.append("bmi must be a number")
-            bmi = None
-
-        gender = str(row["gender"]).strip().upper()
-        if gender not in ("M", "F", "O"):
-            row_errors.append(f"gender '{gender}' must be M, F, or O")
-
-        job = str(row["job_category"]).strip().lower()
-        if job not in ("desk", "field", "manual"):
-            row_errors.append(f"job_category '{job}' must be desk, field, or manual")
-
-        if row_errors:
-            errors.append(f"Row {i + 2} ({row.get('employee_id', '?')}): {'; '.join(row_errors)}")
-        else:
-            records.append({
-                "employee_id": str(row["employee_id"]),
-                "age":         age,
-                "gender":      gender,
-                "bmi":         bmi,
-                "smoker":      _parse_bool(row["smoker"]),
-                "diabetic":    _parse_bool(row["diabetic"]),
-                "hypertension":_parse_bool(row["hypertension"]),
-                "job_category":job,
-            })
-
-    return records, errors
 
 
 def _run_analysis(employees: list[dict], company_name: str, base_premium: float) -> dict:
@@ -212,7 +164,7 @@ def _chart_defaults() -> dict:
 
 
 def _render_results(res: dict) -> None:
-    st.success(f"Analysis complete — {res['company_name']}")
+    inline_note(f"Analysis complete — <b>{res['company_name']}</b>", level="ok")
 
     code = active_code()
     rate = CURRENCIES[code]["rate"]
@@ -252,12 +204,10 @@ def _render_results(res: dict) -> None:
             dist_df, x="pct", y="band", orientation="h",
             color="band", color_discrete_map=COLOR_MAP,
             labels={"pct": "% of workforce", "band": ""},
-            height=220,
         )
-        dist_fig.update_layout(
-            **_chart_defaults(), showlegend=False,
-            xaxis=dict(gridcolor=GRID_CLR, zeroline=False),
-            yaxis=dict(gridcolor=GRID_CLR),
+        apply_chart_theme(
+            dist_fig, height=220, show_legend=False,
+            x_title="% of workforce",
         )
         st.plotly_chart(dist_fig, use_container_width=True)
 
@@ -348,10 +298,11 @@ def _render_results(res: dict) -> None:
 
 
 def render_tab() -> None:
-    st.subheader("Analyse your own workforce data")
-    st.caption(
-        "Upload a CSV of employee records for instant HRS scoring using the same underwriting model. "
-        "No data is stored on the server. When wearable data is absent, national-average telemetry defaults are applied."
+    section_header(
+        "Ad-hoc Scoring",
+        "Analyse your own workforce data",
+        "Upload a CSV of employee records for instant HRS scoring using the production model. "
+        "No data is stored on the server. When wearable data is absent, national-average telemetry defaults are applied.",
     )
     with st.expander("Required CSV format", expanded=False):
         st.markdown(
@@ -400,7 +351,13 @@ def render_tab() -> None:
     if not uploaded:
         _eu, _ei = st.columns([1, 1])
         with _eu:
-            st.info("Upload a CSV to get started. Use the template above for the correct format.")
+            empty_state(
+                title="Upload a CSV to begin",
+                hint="Drop an employee roster above. The same underwriting model that powers the portfolio "
+                     "scores each row in seconds. Nothing is persisted server-side.",
+                icon_svg=ICON_UPLOAD,
+                cta="Need the format? Download the template above.",
+            )
         with _ei:
             _illus(EMPLOYEE_HEALTH, "220px", height_px=230, align="center", opacity=0.88)
         return
