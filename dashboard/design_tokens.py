@@ -32,13 +32,14 @@ DESIGN_TOKENS_CSS = """
     --nm-accent-text:    #5A7A00;
 
     /* ── Text ─────────────────────────────────────
-       Project rule (feedback_text_colors): pale greys are banned for
-       USER-FACING TEXT on the light theme. Use --nm-text-secondary
-       (#444) for muted copy and --nm-text-tertiary (#333) for labels.
-       --nm-text-muted (#999) exists for parity with the design package
-       but should only be used on dark/inverse surfaces. */
+       Project rule (feedback_text_colors): user-facing text on the light
+       theme MUST be dark. The token scale is now strict-dark:
+         --nm-text-primary   (#111) — headings, key values
+         --nm-text-secondary (#222) — body copy, muted-but-readable
+         --nm-text-tertiary  (#333) — eyebrow labels, captions
+       --nm-text-muted (#999) is reserved for DARK/INVERSE surfaces only. */
     --nm-text-primary:   #111111;
-    --nm-text-secondary: #444444;
+    --nm-text-secondary: #222222;
     --nm-text-tertiary:  #333333;
     --nm-text-muted:     #999999;
     --nm-text-inverse:   #FFFFFF;
@@ -140,7 +141,7 @@ NM = {
     "accent_border":  "rgba(150,200,0,0.40)",
 
     "text_primary":   "#111111",
-    "text_secondary": "#444444",
+    "text_secondary": "#222222",
     "text_tertiary":  "#333333",
     "text_inverse":   "#FFFFFF",
 

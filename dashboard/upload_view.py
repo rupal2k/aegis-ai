@@ -74,34 +74,32 @@ def _parse_bool(v) -> bool:
     return str(v).strip().lower() in ("true", "1", "yes")
 
 
-def _run_analysis(employees: list[dict], company_name: str, base_premium: float) -> dict:
+def _run_analysis(records: list[dict], company_name: str, base_premium: float) -> dict:
+    """`records` is the output of `to_feature_records` — each item has
+    `employee_id` and `_features` (a fully-defaulted feature dict)."""
     results: list[dict] = []
-    total = len(employees)
+    total = len(records)
     bar = st.progress(0, text=f"Scoring employees... 0 / {total}")
 
-    for i, emp in enumerate(employees):
-        features = {
-            **{k: v for k, v in emp.items() if k != "employee_id"},
-            "chronic_count": int(emp["diabetic"]) + int(emp["hypertension"]),
-            **_TELEMETRY_DEFAULTS,
-        }
+    for i, rec in enumerate(records):
+        features = rec["_features"]
         try:
             pred = predict_employee(features)
             results.append({
-                "employee_id": emp["employee_id"],
-                "age":         emp["age"],
-                "gender":      emp["gender"],
-                "bmi":         emp["bmi"],
-                "smoker":      emp["smoker"],
-                "diabetic":    emp["diabetic"],
-                "hypertension":emp["hypertension"],
-                "job_category":emp["job_category"],
+                "employee_id": rec["employee_id"],
+                "age":         features["age"],
+                "gender":      features["gender"],
+                "bmi":         features["bmi"],
+                "smoker":      features["smoker"],
+                "diabetic":    features["diabetic"],
+                "hypertension":features["hypertension"],
+                "job_category":features["job_category"],
                 "hrs":         pred["health_risk_score"],
                 "loss_ratio":  pred["predicted_loss_ratio"],
                 "risk_band":   pred["risk_band"],
             })
         except Exception as exc:
-            st.warning(f"Skipped {emp['employee_id']}: {exc}")
+            st.warning(f"Skipped {rec['employee_id']}: {exc}")
 
         bar.progress((i + 1) / total, text=f"Scoring employees... {i + 1} / {total}")
 
@@ -304,12 +302,20 @@ def render_tab() -> None:
         "Upload a CSV of employee records for instant HRS scoring using the production model. "
         "No data is stored on the server. When wearable data is absent, national-average telemetry defaults are applied.",
     )
-    with st.expander("Required CSV format", expanded=False):
+    with st.expander("Accepted CSV formats", expanded=False):
         st.markdown(
-            "**Required columns:** `employee_id`, `age` (18–70), `gender` (M/F/O), "
-            "`bmi` (10–60), `smoker`, `diabetic`, `hypertension` (true/false), "
-            "`job_category` (desk/field/manual)\n\n"
-            "Download the template below to get started with the correct column structure."
+            "The uploader **auto-detects** the dataset shape and normalizes it before scoring. "
+            "Three formats are supported:\n\n"
+            "**1. Employee roster (wide)** — `employee_id, age, gender, bmi, smoker, diabetic, hypertension, job_category`. "
+            "Best fidelity — all features come from your data.\n\n"
+            "**2. LAB markers (long-format)** — `unique_id, gender, marker_code, value, status, risk_level, ...`. "
+            "Marker codes are mapped to health domains (heart, diabetes, kidney, liver, iron, thyroid, bone, vitamin, inflammation). "
+            "Demographics not provided in the file are filled with population medians from the training dataset.\n\n"
+            "**3. Activity / wellness records (wide)** — `user_id, year, Bone Health, Diabetes, Heart Health, "
+            "Inflammation, Iron, Kidney Health, Liver Health, Thyroid Health, Vitamin Deficiency, "
+            "step_count, total_active_minutes, ...`. Domain status maps directly to lab flags; "
+            "step count and active minutes feed wearable telemetry features.\n\n"
+            "_Tip: download the roster template below for the highest-fidelity scoring._"
         )
 
     res = st.session_state.get("upload_results")
@@ -343,9 +349,10 @@ def render_tab() -> None:
         )
 
     uploaded = st.file_uploader(
-        "Upload employee roster (CSV)",
+        "Upload CSV — roster, LAB markers, or activity records",
         type=["csv"],
-        help="Required columns: employee_id, age, gender (M/F/O), bmi, smoker, diabetic, hypertension, job_category (desk/field/manual)",
+        help="Auto-detects employee roster, LAB long-format, or activity wide-format. "
+             "Missing demographics are filled with training-set medians.",
     )
 
     if not uploaded:
@@ -365,36 +372,58 @@ def render_tab() -> None:
     try:
         df_raw = pd.read_csv(uploaded)
     except Exception as exc:
-        st.error(f"Could not read CSV: {exc}")
+        inline_note(f"Could not read CSV: {exc}", level="error")
         return
 
-    employees, errors = _validate_and_parse(df_raw)
-
-    if errors:
-        st.error(f"{len(errors)} validation error(s) found:")
-        for err in errors[:10]:
-            st.caption(f"- {err}")
-        if len(errors) > 10:
-            st.caption(f"... and {len(errors) - 10} more")
-        if employees:
-            st.warning(f"{len(employees)} valid row(s) found. Fix errors to include all rows.")
+    fmt = detect_format(df_raw)
+    if fmt == "unknown":
+        inline_note(
+            "Could not recognize this CSV format. Expected one of: "
+            "<b>Employee roster</b> (employee_id+age+bmi), "
+            "<b>LAB markers</b> (unique_id+marker_code+value), or "
+            "<b>Activity records</b> (user_id+step_count+health domains).",
+            level="error",
+        )
         return
 
-    st.success(f"{len(employees)} employees loaded successfully. Preview (first 5 rows):")
+    try:
+        records, report = to_feature_records(df_raw, fmt)
+    except Exception as exc:
+        inline_note(f"Normalization failed: {exc}", level="error")
+        return
+
+    if not records:
+        inline_note("No usable rows after normalization — please check the file.", level="warning")
+        return
+
+    # Format-detection summary banner
+    inline_note(
+        f"Detected <b>{FORMAT_LABELS[fmt]}</b> · {len(records):,} unique subjects ready to score.",
+        level="ok",
+    )
+    if report["filled_with_defaults"]:
+        filled = ", ".join(f"<code>{c}</code>" for c in report["filled_with_defaults"])
+        inline_note(
+            f"Filled missing fields from training-set medians: {filled}. "
+            "Predictions reflect typical-population demographics for those fields.",
+            level="info",
+        )
+
+    st.markdown("**Preview (first 5 rows of upload):**")
     st.dataframe(df_raw.head(5), use_container_width=True, hide_index=True)
 
     if not company_name.strip():
-        st.warning("Enter a company name above before running the analysis.")
+        inline_note("Enter a company name above before running the analysis.", level="warning")
         return
 
     if st.button(
-        f"Run risk analysis for {len(employees)} employees",
+        f"Run risk analysis for {len(records):,} subjects",
         type="primary",
         use_container_width=True,
     ):
-        results = _run_analysis(employees, company_name.strip(), float(base_premium))
+        results = _run_analysis(records, company_name.strip(), float(base_premium))
         if results:
             st.session_state["upload_results"] = results
             st.rerun()
         else:
-            st.error("Analysis failed — no results returned from the API.")
+            inline_note("Analysis failed — no results returned from the API.", level="error")

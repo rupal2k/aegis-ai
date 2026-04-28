@@ -64,7 +64,7 @@ def _render_alerts(df):
         return
 
     st.markdown(
-        '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.10em;'
+        '<div style="font-size:11px;color:#222;text-transform:uppercase;letter-spacing:0.10em;'
         'font-weight:600;margin-bottom:10px;">Portfolio alerts</div>',
         unsafe_allow_html=True,
     )
@@ -82,7 +82,7 @@ def _render_alerts(df):
                     f'<span style="background:{color};color:#fff;font-size:9px;font-weight:700;'
                     f'letter-spacing:0.08em;text-transform:uppercase;padding:2px 8px;border-radius:20px;">'
                     f'{badge_label}</span>'
-                    f'<div style="font-size:12px;color:#333;line-height:1.45;margin-top:8px;">{text}</div>'
+                    f'<div style="font-size:12px;color:#222;line-height:1.45;margin-top:8px;">{text}</div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -139,8 +139,8 @@ def _render_risk_drivers(drivers: list) -> None:
         rows_html += (
             f'<div style="margin-bottom:14px;">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">'
-            f'<span style="font-size:12px;color:#333;font-family:\'Inter\',system-ui,sans-serif;">'
-            f'<span style="font-size:10px;color:#444444;margin-right:6px;">{i:02d}</span>{d["feature"]}</span>'
+            f'<span style="font-size:12px;color:#222;font-family:\'Inter\',system-ui,sans-serif;">'
+            f'<span style="font-size:10px;color:#222222;margin-right:6px;">{i:02d}</span>{d["feature"]}</span>'
             f'<span style="font-size:12px;font-weight:600;color:#111;'
             f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{d["importance"]:.3f}</span>'
             f'</div>'
@@ -165,7 +165,7 @@ def _render_decision_card(prem: dict, base_premium: float, risk_band: str) -> No
     adj_pct = prem["adjustment_pct"]
     base_fmt = fmt(base_premium)
     sign = "▲" if adj_pct > 0 else ("▼" if adj_pct < 0 else "—")
-    sign_color = "#EF4444" if adj_pct > 0 else ("#22C55E" if adj_pct < 0 else "#444444")
+    sign_color = "#EF4444" if adj_pct > 0 else ("#22C55E" if adj_pct < 0 else "#222222")
     st.markdown(
         f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);'
         f'border-left:4px solid {border_color};border-radius:10px;padding:20px 24px;margin-bottom:16px;">'
@@ -175,15 +175,15 @@ def _render_decision_card(prem: dict, base_premium: float, risk_band: str) -> No
         f'font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;margin-bottom:14px;'
         f'line-height:1.4;">{rec}</div>'
         f'<div style="display:flex;gap:32px;">'
-        f'<div><div style="font-size:10px;color:#444444;margin-bottom:2px;">Adjusted premium</div>'
+        f'<div><div style="font-size:10px;color:#222222;margin-bottom:2px;">Adjusted premium</div>'
         f'<div style="font-size:18px;font-weight:700;color:#111;'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{adj}</div></div>'
-        f'<div><div style="font-size:10px;color:#444444;margin-bottom:2px;">vs base premium</div>'
+        f'<div><div style="font-size:10px;color:#222222;margin-bottom:2px;">vs base premium</div>'
         f'<div style="font-size:18px;font-weight:700;color:{sign_color};'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">'
         f'{sign} {abs(adj_pct):.2f}%</div></div>'
-        f'<div><div style="font-size:10px;color:#444444;margin-bottom:2px;">Base premium</div>'
-        f'<div style="font-size:16px;font-weight:500;color:#555;'
+        f'<div><div style="font-size:10px;color:#222222;margin-bottom:2px;">Base premium</div>'
+        f'<div style="font-size:16px;font-weight:500;color:#222;'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{base_fmt}</div></div>'
         f'</div>'
         f'</div>',
@@ -389,7 +389,7 @@ def render():
         active_parts.append(f"Currency: {code}")
         pill_style = (
             "background:rgba(0,0,0,0.06);padding:2px 10px;"
-            "border-radius:20px;font-size:11px;color:#555;"
+            "border-radius:20px;font-size:11px;color:#222;"
         )
         pills_html = " &nbsp;·&nbsp; ".join(
             f'<span style="{pill_style}">{p}</span>' for p in active_parts
@@ -628,7 +628,7 @@ def render():
             hist.add_vline(
                 x=x, line_width=1, line_dash="dot", line_color="rgba(0,0,0,0.20)",
                 annotation_text=label, annotation_position="top left",
-                annotation_font=dict(size=10, color="#444444"),
+                annotation_font=dict(size=10, color="#222222"),
             )
         st.plotly_chart(hist, use_container_width=True)
 

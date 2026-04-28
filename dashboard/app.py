@@ -84,7 +84,7 @@ p, .stMarkdown p { font-family: 'Inter', system-ui, sans-serif !important; }
     letter-spacing: -0.02em;
 }
 [data-testid="stMetricLabel"] {
-    color: #444444 !important;
+    color: #222222 !important;
     font-family: 'Inter', system-ui, sans-serif !important;
     font-size: 0.75rem !important;
     text-transform: uppercase;
@@ -299,7 +299,7 @@ button:focus-visible,
 [data-testid="stExpander"] [data-testid="stMarkdownContainer"] blockquote {
     border-left: 3px solid rgba(0,0,0,0.15) !important;
     padding-left: 12px !important;
-    color: #444444 !important;
+    color: #222222 !important;
 }
 
 /* ── Alert boxes — softer corners ─── */
@@ -494,9 +494,78 @@ code {
 
 /* ── Captions — slightly darker than default ─────────── */
 [data-testid="stCaptionContainer"], .stCaption {
-    color: #444444 !important;
+    color: #222222 !important;
     font-size: 12.5px !important;
     line-height: 1.55 !important;
+}
+
+/* ── DARK-TEXT GUARD-RAIL ──────────────────────────────
+   Project rule: any user-facing text on the light theme must be #333 or
+   darker. This block defensively darkens a curated list of Streamlit
+   primitives plus Plotly tick labels so visible text never washes out,
+   even when a 3rd-party widget defaults to pale grey. */
+
+/* Sidebar text — every label, paragraph, mono digit */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"],
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] li,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
+    color: #111111 !important;
+}
+[data-testid="stSidebar"] .stCaption,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+    color: #222222 !important;
+}
+
+/* Plotly tick / legend / annotation text — dark by default */
+.js-plotly-plot .plotly .xtick text,
+.js-plotly-plot .plotly .ytick text,
+.js-plotly-plot .plotly .legendtext,
+.js-plotly-plot .plotly .annotation-text,
+.js-plotly-plot .plotly .gtitle,
+.js-plotly-plot .plotly .xtitle,
+.js-plotly-plot .plotly .ytitle {
+    fill: #111111 !important;
+}
+
+/* Form labels everywhere */
+.stTextInput label, .stSelectbox label, .stTextArea label,
+.stNumberInput label, .stCheckbox label, .stRadio label,
+.stSlider label, .stMultiSelect label,
+[data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] * {
+    color: #111111 !important;
+}
+
+/* Tab labels — non-active state */
+[data-testid="stTabs"] button {
+    color: #222222 !important;
+}
+[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #111111 !important;
+}
+
+/* Markdown body — paragraphs and list items */
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li {
+    color: #222222;
+}
+[data-testid="stMarkdownContainer"] strong,
+[data-testid="stMarkdownContainer"] b,
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3,
+[data-testid="stMarkdownContainer"] h4 {
+    color: #111111 !important;
+}
+
+/* Selectbox value — make sure picked options stay readable */
+[data-baseweb="select"] [role="combobox"] *,
+[data-baseweb="select"] div[aria-selected],
+[data-baseweb="select"] span {
+    color: #111111 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -505,54 +574,119 @@ code {
 # ── Login page helpers ────────────────────────────────────────────────────────
 
 def _render_right_panel():
-    """Right column content for the login page: benefits, role previews, HRS scale, illustration."""
-    # No blank lines inside the HTML — CommonMark ends an HTML block at the first blank line,
-    # causing everything after it to render as raw text.
-    _BULLET = (
+    """Right column content for the login page: capability strip, role previews,
+    HRS scale, compliance illustration. Aligned with the brand voice and
+    component styles from the design package."""
+    # No blank lines inside the HTML — CommonMark ends an HTML block at the first blank line.
+    _NUMBER = (
         "display:inline-flex;align-items:center;justify-content:center;"
-        "width:20px;height:20px;min-width:20px;background:#111111;border-radius:50%;"
-        "color:#C4FF00;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;"
+        "width:24px;height:24px;min-width:24px;background:#111111;border-radius:6px;"
+        "color:#C4FF00;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;"
+        "font-family:'LetteraMonoLL','Space Mono',monospace;"
     )
     st.markdown(f"""
 <div style="padding:4px 0 0;">
-  <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:12px;">What you get</div>
-  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
-    <div style="display:flex;align-items:flex-start;gap:10px;">
-      <span style="{_BULLET}">&#10003;</span>
-      <div style="font-size:13px;color:#333;line-height:1.5;"><strong style="color:#111;">Predict risk before renewal</strong> — AI scores workforce health from claims and HR data, surfacing high-risk segments weeks ahead.</div>
+
+  <!-- Capability strip -->
+  <div style="font-size:10px;color:#222;text-transform:uppercase;letter-spacing:0.14em;
+              font-weight:600;margin-bottom:14px;
+              font-family:'Inter',system-ui,sans-serif;">PLATFORM CAPABILITIES</div>
+  <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:32px;">
+    <div style="display:flex;align-items:flex-start;gap:14px;">
+      <span style="{_NUMBER}">01</span>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#111;
+                    font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                    letter-spacing:-0.015em;line-height:1.2;margin-bottom:3px;">Predict risk before renewal</div>
+        <div style="font-size:13px;color:#222;line-height:1.55;
+                    font-family:'Inter',system-ui,sans-serif;">
+          XGBoost + SHAP score workforce health from claims and HR data, surfacing high-risk segments weeks ahead.</div>
+      </div>
     </div>
-    <div style="display:flex;align-items:flex-start;gap:10px;">
-      <span style="{_BULLET}">&#10003;</span>
-      <div style="font-size:13px;color:#333;line-height:1.5;"><strong style="color:#111;">Price with confidence</strong> — dynamic premium recommendations adjust to risk tier, reducing manual overrides and pricing errors.</div>
+    <div style="display:flex;align-items:flex-start;gap:14px;">
+      <span style="{_NUMBER}">02</span>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#111;
+                    font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                    letter-spacing:-0.015em;line-height:1.2;margin-bottom:3px;">Price with confidence</div>
+        <div style="font-size:13px;color:#222;line-height:1.55;
+                    font-family:'Inter',system-ui,sans-serif;">
+          Dynamic premium recommendations adjust to risk tier, reducing manual overrides and pricing errors.</div>
+      </div>
     </div>
-    <div style="display:flex;align-items:flex-start;gap:10px;">
-      <span style="{_BULLET}">&#10003;</span>
-      <div style="font-size:13px;color:#333;line-height:1.5;"><strong style="color:#111;">Prove wellness ROI</strong> — HR managers quantify intervention impact and share renewal-ready reports directly with underwriters.</div>
+    <div style="display:flex;align-items:flex-start;gap:14px;">
+      <span style="{_NUMBER}">03</span>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#111;
+                    font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                    letter-spacing:-0.015em;line-height:1.2;margin-bottom:3px;">Prove wellness ROI</div>
+        <div style="font-size:13px;color:#222;line-height:1.55;
+                    font-family:'Inter',system-ui,sans-serif;">
+          HR managers quantify intervention impact and share renewal-ready reports directly with underwriters.</div>
+      </div>
     </div>
   </div>
-  <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:10px;">Your workspace after sign-in</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;">
-    <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:10px;padding:14px 16px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#C4FF00;flex-shrink:0;"></div>
-        <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Underwriter</div>
+
+  <!-- Workspace preview cards -->
+  <div style="font-size:10px;color:#222;text-transform:uppercase;letter-spacing:0.14em;
+              font-weight:600;margin-bottom:12px;
+              font-family:'Inter',system-ui,sans-serif;">YOUR WORKSPACE AFTER SIGN-IN</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:30px;">
+    <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:12px;
+                padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+      <div style="display:inline-flex;align-items:center;gap:6px;
+                  background:rgba(196,255,0,0.14);border:1px solid rgba(150,200,0,0.40);
+                  border-radius:9999px;padding:2px 9px;margin-bottom:10px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#9BC800;"></span>
+        <span style="font-family:'LetteraMonoLL','Space Mono',monospace;font-size:9.5px;
+                     font-weight:600;color:#5A7A00;letter-spacing:0.08em;text-transform:uppercase;">UNDERWRITER</span>
       </div>
-      <div style="font-size:12px;color:#444;line-height:1.55;">Portfolio risk · Premium movement · Company drivers · PDF reports</div>
+      <div style="font-size:13px;font-weight:700;color:#111;
+                  font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                  letter-spacing:-0.015em;margin-bottom:6px;">Full underwriting book</div>
+      <div style="font-size:12px;color:#222;line-height:1.55;
+                  font-family:'Inter',system-ui,sans-serif;">
+        Portfolio risk · Account review · Premium movement · PDF reports</div>
     </div>
-    <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:10px;padding:14px 16px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#C4FF00;flex-shrink:0;"></div>
-        <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">HR Manager</div>
+    <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:12px;
+                padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+      <div style="display:inline-flex;align-items:center;gap:6px;
+                  background:rgba(196,255,0,0.14);border:1px solid rgba(150,200,0,0.40);
+                  border-radius:9999px;padding:2px 9px;margin-bottom:10px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#9BC800;"></span>
+        <span style="font-family:'LetteraMonoLL','Space Mono',monospace;font-size:9.5px;
+                     font-weight:600;color:#5A7A00;letter-spacing:0.08em;text-transform:uppercase;">HR&nbsp;MANAGER</span>
       </div>
-      <div style="font-size:12px;color:#444;line-height:1.55;">Workforce trends · Key drivers · Wellness ROI · Renewal prep</div>
+      <div style="font-size:13px;font-weight:700;color:#111;
+                  font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                  letter-spacing:-0.015em;margin-bottom:6px;">Single-company scope</div>
+      <div style="font-size:12px;color:#222;line-height:1.55;
+                  font-family:'Inter',system-ui,sans-serif;">
+        Workforce trends · Key drivers · Wellness ROI · Renewal prep</div>
     </div>
   </div>
-  <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.10em;font-weight:500;margin-bottom:10px;">Health Risk Score (HRS) scale</div>
-  <div style="display:flex;gap:7px;flex-wrap:wrap;">
-    <div style="background:#F0FFF0;border:1px solid rgba(0,140,0,0.20);border-radius:20px;padding:4px 13px;font-size:11px;color:#276227;font-weight:500;white-space:nowrap;">0–29 · Low</div>
-    <div style="background:#FFFBF0;border:1px solid rgba(180,110,0,0.25);border-radius:20px;padding:4px 13px;font-size:11px;color:#8B5E00;font-weight:500;white-space:nowrap;">30–59 · Moderate</div>
-    <div style="background:#FFF5F0;border:1px solid rgba(190,70,0,0.25);border-radius:20px;padding:4px 13px;font-size:11px;color:#A63200;font-weight:500;white-space:nowrap;">60–79 · High</div>
-    <div style="background:#FFF0F0;border:1px solid rgba(160,0,0,0.20);border-radius:20px;padding:4px 13px;font-size:11px;color:#8B0000;font-weight:500;white-space:nowrap;">80+ · Critical</div>
+
+  <!-- HRS scale -->
+  <div style="font-size:10px;color:#222;text-transform:uppercase;letter-spacing:0.14em;
+              font-weight:600;margin-bottom:12px;
+              font-family:'Inter',system-ui,sans-serif;">HEALTH RISK SCORE (HRS) SCALE</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <div style="background:rgba(90,138,0,0.08);border:1px solid rgba(90,138,0,0.30);
+                border-radius:9999px;padding:4px 12px;font-size:11px;color:#5A8A00;
+                font-weight:700;white-space:nowrap;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                letter-spacing:0.04em;text-transform:uppercase;">0–29 · LOW</div>
+    <div style="background:rgba(176,96,0,0.08);border:1px solid rgba(176,96,0,0.30);
+                border-radius:9999px;padding:4px 12px;font-size:11px;color:#B06000;
+                font-weight:700;white-space:nowrap;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                letter-spacing:0.04em;text-transform:uppercase;">30–59 · MODERATE</div>
+    <div style="background:rgba(196,32,32,0.08);border:1px solid rgba(196,32,32,0.30);
+                border-radius:9999px;padding:4px 12px;font-size:11px;color:#C42020;
+                font-weight:700;white-space:nowrap;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                letter-spacing:0.04em;text-transform:uppercase;">60–79 · HIGH</div>
+    <div style="background:rgba(139,0,0,0.10);border:1px solid rgba(139,0,0,0.35);
+                border-radius:9999px;padding:4px 12px;font-size:11px;color:#8B0000;
+                font-weight:700;white-space:nowrap;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                letter-spacing:0.04em;text-transform:uppercase;">80+ · CRITICAL</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -577,7 +711,7 @@ def _render_sidebar_reference(role: str):
             padding:12px 14px;margin-top:4px;">
     <div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.08em;
                 margin-bottom:6px;font-weight:500;">Session Notes</div>
-    <div style="font-size:12px;color:#444;line-height:1.55;margin-bottom:8px;">
+    <div style="font-size:12px;color:#222;line-height:1.55;margin-bottom:8px;">
         {role_copy}
     </div>
     <div style="font-size:11px;color:#222222;line-height:1.5;">
@@ -609,53 +743,87 @@ def main():
             st.markdown("""
 <div style="max-width:400px;">
 
-  <!-- Logo (official shield + check mark from design package) -->
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:30px;">
-    <div style="width:42px;height:42px;background:#111;border-radius:10px;
-                display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                box-shadow:0 4px 16px rgba(0,0,0,0.18);">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M 12,3 L 21,7.5 L 21,14 C 21,19 17,22.5 12,24 C 7,22.5 3,19 3,14 L 3,7.5 Z"
-              stroke="#C4FF00" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
-        <polyline points="7.5,14 10.5,18 16.5,11" stroke="#C4FF00" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-    </div>
+  <!-- Logo — canonical squared shield + ECG pulse + corner brackets
+       Source: .design-package/.../Aegis AI Logo.html · variant 01 "Primary on light" -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:30px;">
+    <svg width="56" height="63" viewBox="0 0 80 94" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(0,4)">
+        <path d="M 40,4 L 72,4 Q 80,4 80,12 L 80,46 C 80,68 60,82 40,90 C 20,82 0,68 0,46 L 0,12 Q 0,4 8,4 Z" fill="#111111"/>
+        <path d="M 40,14 L 66,14 Q 72,14 72,20 L 72,44 C 72,62 56,73 40,79 C 24,73 8,62 8,44 L 8,20 Q 8,14 14,14 Z" fill="none" stroke="#C4FF00" stroke-width="1.5" opacity="0.25"/>
+        <polyline points="10,46 20,46 25,32 30,60 35,42 40,50 46,46 70,46" stroke="#C4FF00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M 8,4 L 0,4 L 0,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M 72,4 L 80,4 L 80,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg>
     <div>
-      <div style="font-size:20px;font-weight:700;
+      <div style="font-size:26px;font-weight:700;
                   font-family:'NType82','Space Grotesk',system-ui,sans-serif;
-                  color:#111;letter-spacing:0.03em;line-height:1.1;text-transform:uppercase;">AEGIS&nbsp;AI</div>
-      <div style="font-size:10px;color:#333333;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;">
-        Underwriting Platform</div>
+                  color:#111;letter-spacing:-0.025em;line-height:1;text-transform:uppercase;">AEGIS&nbsp;AI</div>
+      <div style="font-size:10px;color:#222;letter-spacing:0.20em;text-transform:uppercase;
+                  font-family:'Inter',system-ui,sans-serif;font-weight:500;margin-top:5px;">
+        UNDERWRITING&nbsp;INTELLIGENCE</div>
     </div>
   </div>
 
-  <!-- Title + value prop -->
-  <div style="margin-bottom:24px;">
-    <div style="font-size:26px;font-weight:700;
-                font-family:'NType82','Space Grotesk',system-ui,sans-serif;
-                color:#111;letter-spacing:-0.025em;line-height:1.15;">Sign in</div>
-    <div style="font-size:13px;color:#555;margin-top:8px;line-height:1.55;">
-      Predict workforce risk. Price accurately. Renew with confidence.
-    </div>
+  <!-- Brand tagline pill -->
+  <div style="display:inline-flex;align-items:center;gap:7px;
+              background:rgba(196,255,0,0.14);
+              border:1px solid rgba(150,200,0,0.40);
+              border-radius:9999px;padding:4px 12px;margin-bottom:18px;">
+    <span style="width:6px;height:6px;border-radius:50%;background:#9BC800;"></span>
+    <span style="font-family:'LetteraMonoLL','Space Mono',monospace;
+                 font-size:10.5px;font-weight:600;color:#5A7A00;
+                 letter-spacing:0.10em;text-transform:uppercase;">
+      AI-POWERED · GROUP INSURANCE</span>
   </div>
+
+  <!-- Hero — brand tagline + sign-in cue -->
+  <div style="margin-bottom:8px;">
+    <div style="font-size:38px;font-weight:700;
+                font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                color:#111;letter-spacing:-0.03em;line-height:1.0;">
+      Predict.<br>Protect.<br>Perform.</div>
+  </div>
+  <div style="font-size:14px;color:#222;margin-top:14px;line-height:1.55;
+              font-family:'Inter',system-ui,sans-serif;max-width:380px;
+              margin-bottom:26px;">
+    AI-powered group insurance underwriting. Score workforce risk, adjust premiums dynamically, and prove wellness ROI — all from one workspace.
+  </div>
+
+  <!-- Sign-in eyebrow -->
+  <div style="font-size:10px;color:#222;text-transform:uppercase;letter-spacing:0.14em;
+              font-weight:600;margin-bottom:8px;
+              font-family:'Inter',system-ui,sans-serif;">SIGN IN TO CONTINUE</div>
 
 </div>
 """, unsafe_allow_html=True)
 
             login_form()
 
-            # Trust signals
+            # Trust signals — security & enterprise compliance row
             st.markdown("""
-<div style="display:flex;align-items:center;gap:7px;margin-top:18px;max-width:400px;">
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-    <path d="M6.5 1L2 3.2v3.8C2 9.8 4 11.8 6.5 12.5 9 11.8 11 9.8 11 7V3.2L6.5 1z"
-          stroke="#999" stroke-width="1.1" fill="none"/>
-  </svg>
-  <span style="font-size:11px;color:#333333;font-family:'Inter',system-ui,sans-serif;
-               letter-spacing:0.01em;">
-    Secure login &nbsp;·&nbsp; SOC 2 Type II &nbsp;·&nbsp; Enterprise ready
-  </span>
+<div style="display:flex;align-items:center;gap:14px;margin-top:22px;max-width:400px;
+            padding-top:14px;border-top:1px solid rgba(0,0,0,0.07);">
+  <div style="display:inline-flex;align-items:center;gap:6px;">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1L2 3.2v3.8C2 9.8 4 11.8 6.5 12.5 9 11.8 11 9.8 11 7V3.2L6.5 1z"
+            stroke="#5A7A00" stroke-width="1.4" fill="none"/>
+    </svg>
+    <span style="font-family:'LetteraMonoLL','Space Mono',monospace;font-size:10px;
+                 color:#5A7A00;letter-spacing:0.06em;font-weight:500;">SOC 2 · TYPE II</span>
+  </div>
+  <div style="width:1px;height:14px;background:rgba(0,0,0,0.10);"></div>
+  <div style="display:inline-flex;align-items:center;gap:6px;">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <rect x="2" y="5" width="9" height="6.5" rx="1" stroke="#5A7A00" stroke-width="1.4" fill="none"/>
+      <path d="M4 5V3.5a2.5 2.5 0 0 1 5 0V5" stroke="#5A7A00" stroke-width="1.4" fill="none"/>
+    </svg>
+    <span style="font-family:'LetteraMonoLL','Space Mono',monospace;font-size:10px;
+                 color:#5A7A00;letter-spacing:0.06em;font-weight:500;">HIPAA SAFE</span>
+  </div>
+  <div style="width:1px;height:14px;background:rgba(0,0,0,0.10);"></div>
+  <span style="font-family:'LetteraMonoLL','Space Mono',monospace;font-size:10px;
+               color:#222;letter-spacing:0.06em;font-weight:500;">ENTERPRISE READY</span>
 </div>
 """, unsafe_allow_html=True)
 
@@ -669,20 +837,20 @@ def main():
         st.markdown("""
 <div style="display:flex;align-items:center;gap:10px;padding:4px 0 16px;
             border-bottom:1px solid rgba(0,0,0,0.07);margin-bottom:12px;">
-    <div style="width:32px;height:32px;background:#111;border-radius:8px;
-                display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
-            <path d="M 12,3 L 21,7.5 L 21,14 C 21,19 17,22.5 12,24 C 7,22.5 3,19 3,14 L 3,7.5 Z"
-                  stroke="#C4FF00" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
-            <polyline points="7.5,14 10.5,18 16.5,11" stroke="#C4FF00" stroke-width="2.2"
-                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
-    </div>
+    <svg width="32" height="36" viewBox="0 0 80 94" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(0,4)">
+            <path d="M 40,4 L 72,4 Q 80,4 80,12 L 80,46 C 80,68 60,82 40,90 C 20,82 0,68 0,46 L 0,12 Q 0,4 8,4 Z" fill="#111111"/>
+            <polyline points="10,46 20,46 25,32 30,60 35,42 40,50 46,46 70,46" stroke="#C4FF00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M 8,4 L 0,4 L 0,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M 72,4 L 80,4 L 80,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+    </svg>
     <div>
-        <div style="font-size:14px;font-weight:700;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
-                    color:#111;line-height:1.15;letter-spacing:0.03em;text-transform:uppercase;">AEGIS&nbsp;AI</div>
-        <div style="font-size:10px;color:#333333;letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">
-            Underwriting Platform</div>
+        <div style="font-size:15px;font-weight:700;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
+                    color:#111;line-height:1.05;letter-spacing:-0.02em;text-transform:uppercase;">AEGIS&nbsp;AI</div>
+        <div style="font-size:9px;color:#222;letter-spacing:0.18em;text-transform:uppercase;
+                    font-family:'Inter',system-ui,sans-serif;font-weight:500;margin-top:3px;">
+            UNDERWRITING&nbsp;INTELLIGENCE</div>
     </div>
 </div>
 """, unsafe_allow_html=True)

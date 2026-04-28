@@ -259,83 +259,162 @@ def divider(top: int = 18, bottom: int = 18) -> None:
     )
 
 
-# ── Brand logo (official shield + checkmark mark) ───────────────────────────
-# Source: .design-package/aegis-ai-design-system/project/preview/brand-logo.html
-# The mark is a shield outline with an embedded check — symbolises "Predict.
-# Protect. Perform." Use this everywhere the product is identified.
+# ── Brand logo (canonical from .design-package/.../Aegis AI Logo.html) ──────
+# The mark is a SQUARED SHIELD with CORNER BRACKETS and an integrated ECG /
+# pulse line. Six lockup variants are supported, matching the design package:
+#   primary  — dark shield, chartreuse pulse + brackets, on light
+#   dark     — chartreuse shield, dark pulse + brackets, on dark surface
+#   compact  — small mark + AEGIS AI wordmark with chartreuse divider rule
+#   stacked  — centered mark above stacked AEGIS AI wordmark + tagline
+#   accent   — dark mark + chartreuse pulse, on a chartreuse field
+#   icon     — mark only
 
-def brand_mark_svg(size: int = 20, stroke: str = "#C4FF00", weight: float = 1.8) -> str:
-    """Return just the shield+check SVG, color-configurable."""
-    cw = max(weight, 1.5)
-    return (
-        f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none">'
-        f'<path d="M 12,3 L 21,7.5 L 21,14 C 21,19 17,22.5 12,24 C 7,22.5 3,19 3,14 L 3,7.5 Z" '
-        f'stroke="{stroke}" stroke-width="{weight}" stroke-linejoin="round" fill="none"/>'
-        f'<polyline points="7.5,14 10.5,18 16.5,11" stroke="{stroke}" '
-        f'stroke-width="{cw + 0.2}" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
-        f'</svg>'
+def brand_mark_svg(
+    width: int = 80,
+    *,
+    body: str = "#111111",       # shield fill
+    accent: str = "#C4FF00",      # ECG line + corner brackets
+    stroke: float = 2.5,
+    show_inner: bool = True,      # inner outline at 25% opacity for depth
+) -> str:
+    """Return the canonical shield+ECG+brackets SVG, color-configurable.
+
+    Aspect ratio is fixed at 80:90 (the design source uses 80×90 viewBox).
+    """
+    height = int(width * 90 / 80)
+    inner = (
+        f'<path d="M 40,14 L 66,14 Q 72,14 72,20 L 72,44 C 72,62 56,73 40,79 '
+        f'C 24,73 8,62 8,44 L 8,20 Q 8,14 14,14 Z" fill="none" '
+        f'stroke="{accent}" stroke-width="1.5" opacity="0.25"/>'
+        if show_inner else ""
     )
+    return (
+        f'<svg width="{width}" height="{height}" viewBox="0 0 80 94" fill="none" '
+        f'xmlns="http://www.w3.org/2000/svg">'
+        f'<g transform="translate(0,4)">'
+        # Shield body — squared top, rounded corners, pointed bottom
+        f'<path d="M 40,4 L 72,4 Q 80,4 80,12 L 80,46 C 80,68 60,82 40,90 '
+        f'C 20,82 0,68 0,46 L 0,12 Q 0,4 8,4 Z" fill="{body}"/>'
+        f'{inner}'
+        # ECG / pulse polyline
+        f'<polyline points="10,46 20,46 25,32 30,60 35,42 40,50 46,46 70,46" '
+        f'stroke="{accent}" stroke-width="{stroke}" stroke-linecap="round" '
+        f'stroke-linejoin="round" fill="none"/>'
+        # Corner brackets (top-left and top-right Ls)
+        f'<path d="M 8,4 L 0,4 L 0,12" stroke="{accent}" stroke-width="2" '
+        f'fill="none" stroke-linecap="round"/>'
+        f'<path d="M 72,4 L 80,4 L 80,12" stroke="{accent}" stroke-width="2" '
+        f'fill="none" stroke-linecap="round"/>'
+        f'</g></svg>'
+    )
+
+
+_LOGO_VARIANTS = {
+    "primary": {  # on light surface
+        "bg":          "transparent",
+        "body":        "#111111",
+        "accent":      "#C4FF00",
+        "wordmark":    "#111111",
+        "subtitle":    "#222222",
+        "subtitle_text": "UNDERWRITING INTELLIGENCE",
+    },
+    "dark": {  # on dark surface
+        "bg":          "#111111",
+        "body":        "#C4FF00",
+        "accent":      "#111111",
+        "wordmark":    "#FFFFFF",
+        "subtitle":    "#888888",
+        "subtitle_text": "UNDERWRITING INTELLIGENCE",
+    },
+    "accent": {  # on chartreuse field
+        "bg":          "#C4FF00",
+        "body":        "#111111",
+        "accent":      "#C4FF00",
+        "wordmark":    "#111111",
+        "subtitle":    "rgba(0,0,0,0.55)",
+        "subtitle_text": "GROUP INSURANCE",
+    },
+    "compact": {  # white card
+        "bg":          "#FFFFFF",
+        "body":        "#111111",
+        "accent":      "#C4FF00",
+        "wordmark":    "#111111",
+        "subtitle":    "#222222",
+        "subtitle_text": "GROUP INSURANCE",
+    },
+}
 
 
 def brand_logo_html(
     *,
-    size: str = "md",                 # "sm" 22 / "md" 32 / "lg" 48 / "xl" 64
-    variant: str = "primary",         # primary | inverse | card
+    variant: str = "primary",     # primary | dark | accent | compact | stacked | icon
+    width: int = 64,              # mark width in px (height auto from 80:90)
     show_wordmark: bool = True,
-    tagline: str | None = None,
+    show_subtitle: bool = True,
+    subtitle: str | None = None,  # override default subtitle
+    stacked: bool = False,        # mark above wordmark instead of beside
+    bordered: bool = False,       # wrap in a card with border + shadow
 ) -> str:
-    """Return HTML for the Aegis AI brand lockup at a chosen size and variant."""
-    box_dim = {"sm": 22, "md": 32, "lg": 48, "xl": 64}.get(size, 32)
-    icon_dim = int(box_dim * 0.58)
-    box_radius = {"sm": 5, "md": 8, "lg": 11, "xl": 14}.get(size, 8)
-    word_size = {"sm": 13, "md": 15, "lg": 19, "xl": 24}.get(size, 15)
+    """Return HTML for an Aegis AI brand lockup matching the design package."""
+    if variant == "icon":
+        return brand_mark_svg(width=width)
 
-    if variant == "inverse":
-        box_bg, mark_stroke, word_color, bg, border = (
-            NM["accent"], NM["text_primary"], NM["text_inverse"], NM["bg_inverse"],
-            "none",
+    if variant == "stacked":
+        return brand_logo_html(
+            variant="dark", width=width, show_wordmark=show_wordmark,
+            show_subtitle=show_subtitle, subtitle=subtitle, stacked=True,
+            bordered=bordered,
         )
-        wrap_padding = "10px 16px"
-    elif variant == "card":
-        box_bg, mark_stroke, word_color, bg, border = (
-            NM["bg_inverse"], NM["accent"], NM["text_primary"], NM["bg_card"],
-            "1px solid rgba(0,0,0,0.09)",
-        )
-        wrap_padding = "10px 16px"
-    else:  # primary — bare on the page
-        box_bg, mark_stroke, word_color, bg, border = (
-            NM["bg_inverse"], NM["accent"], NM["text_primary"], "transparent", "none",
-        )
-        wrap_padding = "0"
 
-    wrap_style = (
-        f"display:inline-flex;align-items:center;gap:9px;"
-        f"background:{bg};border:{border};border-radius:10px;"
-        f"padding:{wrap_padding};"
+    cfg = _LOGO_VARIANTS.get(variant, _LOGO_VARIANTS["primary"])
+    word_size = max(int(width * 0.50), 16)
+    sub_size  = max(int(width * 0.16), 9)
+    sub_text  = subtitle if subtitle is not None else cfg["subtitle_text"]
+
+    mark = brand_mark_svg(width=width, body=cfg["body"], accent=cfg["accent"])
+
+    word_block = ""
+    if show_wordmark:
+        sub = (
+            f'<div style="font-family:Inter,system-ui,sans-serif;font-weight:500;'
+            f'font-size:{sub_size}px;color:{cfg["subtitle"]};letter-spacing:0.20em;'
+            f'text-transform:uppercase;margin-top:4px;">{sub_text}</div>'
+            if show_subtitle and sub_text else ""
+        )
+        rule = (
+            f'<div style="height:1.5px;background:#C4FF00;border-radius:1px;'
+            f'width:60%;margin:6px 0 4px;"></div>'
+            if variant == "compact" else ""
+        )
+        align = "center" if stacked else "flex-start"
+        word_block = (
+            f'<div style="display:flex;flex-direction:column;align-items:{align};'
+            f'line-height:1;">'
+            f'<div style="font-family:NType82,\'Space Grotesk\',system-ui,sans-serif;'
+            f'font-weight:700;font-size:{word_size}px;color:{cfg["wordmark"]};'
+            f'letter-spacing:-0.025em;text-transform:uppercase;line-height:1;">'
+            f'AEGIS&nbsp;AI</div>'
+            f'{rule}{sub}'
+            f'</div>'
+        )
+
+    direction = "column" if stacked else "row"
+    gap = 14 if stacked else max(int(width * 0.22), 12)
+    align = "center" if stacked else "center"
+
+    wrap_padding = "16px 22px" if bordered else "0"
+    wrap_border  = (
+        "1px solid rgba(0,0,0,0.08)" if bordered and variant != "dark"
+        else ("1px solid #222" if bordered and variant == "dark" else "none")
     )
-    box_style = (
-        f"width:{box_dim}px;height:{box_dim}px;background:{box_bg};"
-        f"border-radius:{box_radius}px;display:flex;align-items:center;"
-        f"justify-content:center;flex-shrink:0;"
-    )
-    word_html = (
-        f'<span style="font-size:{word_size}px;font-weight:700;color:{word_color};'
-        f'letter-spacing:0.03em;text-transform:uppercase;'
-        f'font-family:NType82,\'Space Grotesk\',system-ui,sans-serif;">AEGIS&nbsp;AI</span>'
-        if show_wordmark else ""
-    )
-    tagline_html = (
-        f'<div style="font-size:10px;color:{NM["text_tertiary"]};letter-spacing:0.04em;'
-        f'font-family:LetteraMonoLL,\'Space Mono\',monospace;margin-top:6px;">{tagline}</div>'
-        if tagline else ""
-    )
+    wrap_radius  = "14px" if bordered else "0"
+    wrap_shadow  = "0 1px 4px rgba(0,0,0,0.06)" if bordered else "none"
+
     return (
-        f'<div>'
-        f'<div style="{wrap_style}">'
-        f'<div style="{box_style}">{brand_mark_svg(icon_dim, stroke=mark_stroke, weight=1.8)}</div>'
-        f'{word_html}'
-        f'</div>'
-        f'{tagline_html}'
+        f'<div style="display:inline-flex;flex-direction:{direction};align-items:{align};'
+        f'gap:{gap}px;background:{cfg["bg"]};padding:{wrap_padding};'
+        f'border:{wrap_border};border-radius:{wrap_radius};box-shadow:{wrap_shadow};">'
+        f'{mark}{word_block}'
         f'</div>'
     )
 
