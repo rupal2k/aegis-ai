@@ -5,7 +5,7 @@
 ## ðŸ“ Main Navigation
 
 ### LLM Guidelines (Read First)
-- **[[../memory]]** â€” Master LLM guide: Karpathy principles + all project rules (START HERE FOR ANY AI SESSION)
+- **[[Claude Memory]]** — Master LLM guide: user profile, feedback rules, project state (START HERE FOR ANY AI SESSION)
 - **[[behaviour]]** â€” Aegis AI-specific quick-reference (subset of memory.md)
 
 ### Project Management
@@ -85,12 +85,12 @@ C:\Rupalprojects\Rupal\                   â† vault root
 
 ## ðŸ’¡ Quick Tips
 
-1. **AI session starting?** Read **[[../memory]]** before touching any code or docs
+1. **AI session starting?** Read **[[Claude Memory]]** before touching any code or docs
 2. **New to the project?** Start with **[[Aegis AI Hub]]** for overview
 3. **Checking progress?** See **[[Phase Progress]]** â€” all 6 phases complete
 4. **Hit a bug?** Check **[[Bug Log]]** first â€” 7 pitfalls already documented
 5. **Making a design decision?** See **[[Decisions & Rationale]]** and **[[Architecture Decisions]]**
-6. **Updating the vault?** Follow the rules in **[[../memory]]** Part 4
+6. **Updating the vault?** Follow the rules in **[[Claude Memory]]**
 
 ## ðŸ”— External Links
 

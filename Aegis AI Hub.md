@@ -24,7 +24,7 @@ Aegis AI is an **AI-powered B2B group insurance underwriting platform** that pre
 
 | Section | Purpose |
 |---------|---------|
-| [[../memory]] | **Master LLM guide** — read before any AI coding session |
+| [[Claude Memory]] | **Master LLM guide** — read before any AI coding session |
 | [[behaviour]] | Aegis AI-specific LLM rules (quick reference) |
 | [[Phase Progress]] | All 6 phases complete — checklists + dev logs |
 | [[Decisions & Rationale]] | 10 logical decisions with deep tradeoff analysis |

@@ -1,6 +1,6 @@
 # Aegis AI — LLM Quick Reference
 
-**This is a session-start cheat sheet. All rules live in [[../memory]] — read that first.**
+**This is a session-start cheat sheet. Full rules and project state live in [[Claude Memory]] — read that first.**
 
 ---
 
@@ -81,12 +81,11 @@ python -m pytest tests/ -q --tb=no
 
 | Topic | Location |
 |-------|----------|
-| Universal LLM principles (Karpathy) | [[../memory]] Part 1 |
-| Python, CSS/Streamlit, Docker, Git rules | [[../memory]] Part 2 |
-| Known pitfalls — BUG-001 to BUG-007 | [[../memory]] Part 3 |
-| Vault maintenance rules | [[../memory]] Part 4 |
-| Response style | [[../memory]] Part 5 |
-| Constants (ports, credentials, dark mode palette) | [[../memory]] Part 6 |
+| User profile, working style, preferences | [[Claude Memory]] |
+| Known pitfalls — BUG-001 to BUG-007 | [[Bug Log]] |
+| Vault maintenance rules | [[Claude Memory]] |
+| Response style & feedback rules | [[Claude Memory]] |
+| Project state, constants, RBAC, ports | [[Claude Memory]] |
 
 ---
 
@@ -94,12 +93,12 @@ python -m pytest tests/ -q --tb=no
 
 | Change | Update |
 |--------|--------|
-| Bug fixed | `Bug Log.md` + `memory.md` Part 3 |
-| Phase / feature work | `Phase Progress.md` (relevant section) |
-| Architecture decision | `Architecture Decisions.md` or `Decisions & Rationale.md` |
-| New pitfall | `Bug Log.md` + `memory.md` Part 3 |
-| Constants changed | `memory.md` Part 6 |
-| Graph View / vault config changed | `Claude Memory.md` → Graph View Color Scheme section |
+| Bug fixed | [[Bug Log]] |
+| Phase / feature work | [[Phase Progress]] (relevant section) |
+| Architecture decision | [[Architecture Decisions]] or [[Decisions & Rationale]] |
+| New pitfall | [[Bug Log]] |
+| Constants / project state changed | [[Claude Memory]] |
+| Graph View / vault config changed | [[Claude Memory]] → Graph View Color Scheme section |
 
 *No separate daily notes for phase work — merge into `Phase Progress.md`.*
 *Vault is the persistent brain — record all session decisions before closing.*

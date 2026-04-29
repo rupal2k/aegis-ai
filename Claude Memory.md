@@ -2,7 +2,7 @@
 
 What Claude Code remembers about this project across sessions.  
 **Auto-memory files**: `C:\Users\Rupal\.claude\projects\c--Rupalprojects-aegis-ai\memory\`  
-**Rules, code patterns, constants**: [[../memory]]  
+**Rules, code patterns, constants**: auto-memory files (see path above)  
 **Vault root**: `C:\Rupalprojects\Obsidian Vault\Aegis AI`  
 **Vault on GitHub**: `https://github.com/rupal2k/aegis-ai` â†’ branch `vault`  
 **Last synced**: 2026-04-29
@@ -62,9 +62,9 @@ Rupal â€” building Aegis AI as a capstone project (AI-powered B2B group ins
 Recording targets:
 - Feature work â†’ `Phase Progress.md`
 - Config changes (graph, settings) â†’ this file (`Claude Memory.md`)
-- New code pitfalls â†’ `Bug Log.md` + `memory.md` Part 3
-- Architecture decisions â†’ `Architecture Decisions.md`
-- New LLM rules â†’ `behaviour.md` + `memory.md` (relevant Part)
+- New code pitfalls → [[Bug Log]]
+- Architecture decisions → [[Architecture Decisions]]
+- New LLM rules → [[behaviour]]
 
 ---
 
@@ -110,5 +110,5 @@ git push origin vault
 
 ## How to Update This File
 
-Add entries here only for things not already in [[../memory]]: user working-style preferences, session corrections, vault config, and project state changes. Do not copy code rules, pitfalls, or constants â€” link to the relevant Part of memory.md instead.
+Add entries here for user working-style preferences, session corrections, vault config, and project state changes. Link to [[Bug Log]], [[behaviour]], or [[Architecture Decisions]] for pitfalls, rules, and decisions respectively.
 
