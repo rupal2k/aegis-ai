@@ -147,7 +147,8 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
 }
 
 /* ── Primary buttons — dark brand ─── */
-[data-testid="stButton"] > button[kind="primary"] {
+[data-testid="stButton"] > button[kind="primary"],
+[data-testid="stBaseButton-primary"] {
     background-color: #111111 !important;
     color: #C4FF00 !important;
     border: none !important;
@@ -158,12 +159,28 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
     letter-spacing: -0.01em;
     height: 40px !important;
 }
-[data-testid="stButton"] > button[kind="primary"]:hover {
+/* Force text color onto all child elements — Streamlit wraps label in <p>/<span> */
+[data-testid="stButton"] > button[kind="primary"] p,
+[data-testid="stButton"] > button[kind="primary"] span,
+[data-testid="stButton"] > button[kind="primary"] *,
+[data-testid="stBaseButton-primary"] p,
+[data-testid="stBaseButton-primary"] span,
+[data-testid="stBaseButton-primary"] * {
+    color: #C4FF00 !important;
+    font-family: 'NType82', 'Space Grotesk', system-ui, sans-serif !important;
+    font-weight: 700 !important;
+}
+[data-testid="stButton"] > button[kind="primary"]:hover,
+[data-testid="stBaseButton-primary"]:hover {
     background-color: #1e1e1e !important;
+}
+[data-testid="stButton"] > button[kind="primary"]:hover *,
+[data-testid="stBaseButton-primary"]:hover * {
     color: #DEFF6E !important;
 }
 /* ── Secondary / default buttons ─── */
-[data-testid="stButton"] > button {
+[data-testid="stButton"] > button,
+[data-testid="stBaseButton-secondary"] {
     font-family: 'Inter', system-ui, sans-serif !important;
     font-size: 13px !important;
     background-color: #FFFFFF !important;
@@ -173,16 +190,31 @@ hr { border-color: rgba(0,0,0,0.08) !important; }
     height: 40px !important;
     font-weight: 500 !important;
 }
-[data-testid="stButton"] > button:hover {
+[data-testid="stButton"] > button p,
+[data-testid="stButton"] > button span,
+[data-testid="stBaseButton-secondary"] p,
+[data-testid="stBaseButton-secondary"] span {
+    color: #333333 !important;
+}
+[data-testid="stButton"] > button:hover,
+[data-testid="stBaseButton-secondary"]:hover {
     background-color: #111111 !important;
     color: #FFFFFF !important;
     border-color: #111111 !important;
 }
-/* Restore primary override after base rule */
-[data-testid="stButton"] > button[kind="primary"] {
+[data-testid="stButton"] > button:hover *,
+[data-testid="stBaseButton-secondary"]:hover * {
+    color: #FFFFFF !important;
+}
+/* Restore primary over base — must come after secondary block */
+[data-testid="stButton"] > button[kind="primary"],
+[data-testid="stBaseButton-primary"] {
     background-color: #111111 !important;
-    color: #C4FF00 !important;
     border: none !important;
+}
+[data-testid="stButton"] > button[kind="primary"] *,
+[data-testid="stBaseButton-primary"] * {
+    color: #C4FF00 !important;
 }
 
 /* ── Captions ─────────────────────── */
@@ -936,7 +968,7 @@ def main():
                 font-size:11px;color:#C4FF00;background:rgba(196,255,0,0.08);
                 padding:5px 8px;border-radius:5px;border:1px solid rgba(196,255,0,0.15);
                 margin-bottom:6px;">XGBOOST v2.1 · SHAP</div>
-    <div style="font-size:11px;color:#AAAAAA;line-height:1.4;">
+    <div style="font-size:11px;color:#CCCCCC;line-height:1.4;">
         Last trained · live underwriting</div>
 </div>
 """, unsafe_allow_html=True)
