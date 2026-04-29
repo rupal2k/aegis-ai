@@ -4,6 +4,52 @@ import pytest
 from ml_engine.training import train
 
 
+# ── Clinical notes parser ────────────────────────────────────────────────────
+
+def test_parse_clinical_note_extracts_age_and_gender():
+    text = (
+        "### Instruction: Hospital Course: A 67-year-old male presented with chest pain. "
+        "He was diagnosed with hypertension. ### Response: ..."
+    )
+    result = train._parse_clinical_note(text)
+    assert result["age"] == 67.0
+    assert result["gender"] == "M"
+
+
+def test_parse_clinical_note_detects_conditions():
+    text = (
+        "### Instruction: A 55-year-old female with diabetes mellitus and hypertension "
+        "was admitted to the ICU with pneumonia. She was a current smoker. ### Response: ..."
+    )
+    result = train._parse_clinical_note(text)
+    assert result["diabetic"] == 1
+    assert result["hypertension"] == 1
+    assert result["smoker"] == 1
+    assert result["hospitalized_count"] >= 2   # regular + ICU
+
+
+def test_parse_clinical_note_loss_ratio_increases_with_severity():
+    mild_text = (
+        "### Instruction: A 30-year-old male with no significant past medical history "
+        "was admitted for a routine procedure. ### Response: ..."
+    )
+    severe_text = (
+        "### Instruction: A 75-year-old female with cancer, renal failure, and sepsis "
+        "was admitted to the ICU and required mechanical ventilation. ### Response: ..."
+    )
+    mild   = train._parse_clinical_note(mild_text)
+    severe = train._parse_clinical_note(severe_text)
+    assert severe["loss_ratio"] > mild["loss_ratio"]
+
+
+def test_parse_clinical_note_defaults_when_age_absent():
+    text = "### Instruction: Patient admitted. ### Response: ..."
+    result = train._parse_clinical_note(text)
+    assert 0 < result["age"] < 120
+
+
+# ── Dataset loading / combining ──────────────────────────────────────────────
+
 def test_resolve_dataset_mode_defaults_to_both():
     args = train.build_arg_parser().parse_args([])
     assert train.resolve_dataset_mode(args) == "both"

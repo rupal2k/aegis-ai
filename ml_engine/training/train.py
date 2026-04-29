@@ -40,7 +40,7 @@ ARTIFACTS.mkdir(exist_ok=True)
 MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
 HF_DATASET_NAME = os.environ.get(
     "AEGIS_HF_DATASET",
-    "gcc-insurance-intelligence-lab-dev/gcc-insurance-underwriting-risk",
+    "ayush0205/clinical_data_rf",
 )
 DEFAULT_DATA_MODE = "both"
 N_OPTUNA_TRIALS = 5 if os.environ.get("AEGIS_CI_FAST") == "1" else 30
@@ -61,70 +61,181 @@ def load_local_dataset():
     return pd.read_csv(DATA_PATH)
 
 
+def _parse_clinical_note(text: str) -> dict:
+    """Extract structured fields from one clinical discharge note."""
+    import re
+
+    # Strip the instruction wrapper
+    idx = text.find("### Instruction:")
+    end = text.find("### Response:")
+    if idx > -1:
+        text = text[idx + len("### Instruction:"):end if end > -1 else None].strip()
+
+    def flag(*patterns) -> int:
+        return int(any(re.search(p, text, re.IGNORECASE) for p in patterns))
+
+    # ── Demographics ─────────────────────────────────────────────
+    age = 45.0
+    for pat in (
+        r"(\d{1,3})[- ]year[s]?[- ]old",
+        r"\bAge:\s*(\d{1,3})",
+        r"\bage[d]?\s+(\d{1,3})\b",
+        r"\b(\d{1,3})[- ]yo\b",
+    ):
+        m = re.search(pat, text, re.IGNORECASE)
+        if m:
+            val = int(m.group(1))
+            if 0 < val < 120:
+                age = float(val)
+                break
+
+    female_hits = len(re.findall(r"\b(female|woman|women|she\b|her\b)", text, re.IGNORECASE))
+    male_hits   = len(re.findall(r"\b(male|man\b|men\b|he\b|his\b)", text, re.IGNORECASE))
+    gender = "F" if female_hits > male_hits else "M"
+
+    # BMI — extract if stated, otherwise default
+    bmi = 26.0
+    m = re.search(r"\bBMI\s*(?:of\s*|=\s*|:\s*)?(\d{1,2}(?:\.\d)?)\b", text, re.IGNORECASE)
+    if m:
+        val = float(m.group(1))
+        if 10 < val < 70:
+            bmi = val
+
+    # ── Conditions ───────────────────────────────────────────────
+    smoker      = flag(r"\bsmok(?:er|ing|ed)\b", r"\bcurrent smoker\b", r"\btobacco\b")
+    diabetic    = flag(r"\bdiabet(?:es|ic|ics)\b", r"\bDM\b", r"\binsulin[- ]dependent\b", r"\bT2DM\b", r"\bT1DM\b")
+    hypertension= flag(r"\bhypertension\b", r"\bhigh blood pressure\b", r"\bHTN\b")
+    cancer      = flag(r"\bcancer\b", r"\bmalignant\b", r"\bcarcinoma\b", r"\blymphoma\b", r"\bleukemia\b", r"\bneoplasm\b", r"\btumou?r\b")
+    heart_dis   = flag(r"\bcardiac\b", r"\bheart failure\b", r"\bmyocardial infarction\b", r"\bcoronary\b", r"\batrial fibr", r"\bangina\b")
+    renal       = flag(r"\brenal failure\b", r"\bkidney failure\b", r"\bCKD\b", r"\bdialysis\b", r"\bnephrop", r"\bcreatinine elevated\b")
+    liver_dis   = flag(r"\bliver failure\b", r"\bhepat(?:itis|ic encephalopathy|orenal)\b", r"\bcirrhosis\b", r"\belevated.*(?:AST|ALT|LFT)\b", r"\bbilirubin\b")
+    respiratory = flag(r"\bCOPD\b", r"\basthma\b", r"\bARDS\b", r"\bpneumonia\b", r"\brespiratory failure\b", r"\bmechanical ventilation\b")
+    sepsis      = flag(r"\bsepsis\b", r"\bseptic shock\b", r"\bbacteremia\b")
+    stroke      = flag(r"\bstroke\b", r"\bcerebral infarct\b", r"\bTIA\b", r"\bischemic.*brain\b")
+    mental      = flag(r"\bdepression\b", r"\banxiety disorder\b", r"\bschizophrenia\b", r"\bbipolar\b", r"\bpsychiat")
+    osteo       = flag(r"\bosteoporosis\b", r"\bosteopenia\b", r"\bone fracture\b", r"\bfragility fracture\b")
+    anemia      = flag(r"\banemia\b", r"\banaemia\b", r"\biron deficiency\b", r"\bhemoglobin\b.*\blow\b")
+    thyroid_dis = flag(r"\bhypothyroid\b", r"\bhyperthyroid\b", r"\bthyroid\b")
+    vitamin_def = flag(r"\bvitamin D deficiency\b", r"\bvitamin B12\b", r"\bvitamin deficiency\b")
+
+    chronic_conditions = [diabetic, hypertension, cancer, heart_dis, renal, liver_dis,
+                          respiratory, sepsis, stroke, mental, osteo, anemia, thyroid_dis]
+    chronic_count = sum(chronic_conditions)
+
+    # ── Clinical events ──────────────────────────────────────────
+    icu          = flag(r"\bICU\b", r"\bintensive care unit\b", r"\bcritical care\b")
+    ventilated   = flag(r"\bmechanical ventilation\b", r"\bintubat", r"\bventilat")
+    hospitalized_count = 1 + icu  # all records are hospitalisations; ICU adds complexity
+    visit_count  = min(2 + chronic_count + icu * 2, 10)
+
+    # ── SpO2 ─────────────────────────────────────────────────────
+    avg_spo2 = 97.0
+    for pat in (
+        r"(?:oxygen saturation|SpO2|O2 sat)[^0-9]*(\d{2,3})%",
+        r"(\d{2,3})%\s*to\s*(\d{2,3})%",
+    ):
+        m = re.search(pat, text, re.IGNORECASE)
+        if m:
+            # If two values (before→after), take the later one
+            val = float(m.group(2) if m.lastindex and m.lastindex >= 2 else m.group(1))
+            if 70 <= val <= 100:
+                avg_spo2 = val
+                break
+
+    # ── Target: loss_ratio ───────────────────────────────────────
+    # Built from clinical severity so the model can learn meaningful signal.
+    age_risk        = max(age - 18, 0) / 80 * 0.4          # 0.0 – 0.40
+    condition_risk  = chronic_count * 0.08                   # 0.08 per condition
+    serious_risk    = (cancer * 0.30 + icu * 0.20 + renal * 0.18
+                       + heart_dis * 0.15 + sepsis * 0.15 + ventilated * 0.15
+                       + stroke * 0.12 + liver_dis * 0.10 + respiratory * 0.08)
+    lifestyle_risk  = smoker * 0.10 + (max(bmi - 30, 0) / 10) * 0.10
+    loss_ratio = 0.20 + age_risk + condition_risk + serious_risk + lifestyle_risk
+
+    return {
+        "age":               age,
+        "gender":            gender,
+        "bmi":               bmi,
+        "smoker":            smoker,
+        "diabetic":          diabetic,
+        "hypertension":      hypertension,
+        "chronic_count":     float(chronic_count),
+        "avg_daily_steps":   None,   # synthesised below
+        "step_volatility":   None,
+        "avg_resting_hr":    None,
+        "hr_trend":          None,
+        "avg_active_mins":   None,
+        "avg_sleep_hours":   None,
+        "avg_spo2":          avg_spo2,
+        "visit_count":       float(visit_count),
+        "hospitalized_count":float(hospitalized_count),
+        "lab_heart_flag":    int(heart_dis),
+        "lab_diabetes_flag": int(diabetic),
+        "lab_kidney_flag":   int(renal),
+        "lab_liver_flag":    int(liver_dis),
+        "lab_inflammation_flag": int(sepsis or respiratory),
+        "lab_iron_flag":     int(anemia),
+        "lab_thyroid_flag":  int(thyroid_dis),
+        "lab_bone_flag":     int(osteo or age > 60),
+        "lab_vitamin_flag":  int(vitamin_def),
+        "loss_ratio":        loss_ratio,
+        "_severity":         age_risk + condition_risk + serious_risk,  # used for telemetry synthesis
+    }
+
+
 def load_from_huggingface(dataset_name: str = HF_DATASET_NAME):
-    """Load dataset from Hugging Face and map it into the Aegis feature schema.
-    
-    Maps the insurance underwriting dataset to Aegis AI health telemetry format.
+    """Parse clinical discharge notes from HF Hub into the Aegis feature schema.
+
+    The dataset (`ayush0205/clinical_data_rf`) contains free-text hospital
+    course / discharge notes.  Each note is parsed with regex to extract age,
+    gender, BMI, conditions, clinical events, and lab abnormalities.
+    Wearable telemetry (steps, HR, sleep) is synthesised from extracted clinical
+    severity so the model receives coherent, correlated features.
     """
     print(f"Loading dataset from Hugging Face ({dataset_name})...")
     try:
         from datasets import load_dataset
     except ImportError:
         raise RuntimeError("'datasets' package not found. Install with: pip install datasets") from None
-    
+
     ds = load_dataset(dataset_name)
-    print(f"  Loaded {len(ds['train'])} training rows from HF")
-    
-    # Convert to pandas DataFrame
-    df = ds['train'].to_pandas()
+    split = list(ds.keys())[0]
+    raw = ds[split].to_pandas()
+    n = len(raw)
+    print(f"  Loaded {n:,} clinical notes from split '{split}'")
+
+    print("  Parsing notes…")
+    records = [_parse_clinical_note(row["text"]) for _, row in raw.iterrows()]
+    df = pd.DataFrame(records)
+
+    # ── Synthesise wearable telemetry from severity ───────────────────────────
+    # severity ≈ 0 (healthy) → 1+ (very ill)  |  cap at 1 for normalisation
     rng = np.random.default_rng(RANDOM_STATE)
-    
-    # Map HF columns to Aegis AI format
-    df_mapped = pd.DataFrame()
-    df_mapped['age'] = df['applicant_age']
-    df_mapped['gender'] = df['gender']
-    df_mapped['bmi'] = df['bmi']
-    df_mapped['smoker'] = df['smoker'].astype(int)
-    
-    # Map health_score to estimated health features
-    # health_score (0-100) -> estimate other telemetry
-    health_normalized = df['health_score'] / 100.0
-    df_mapped['avg_daily_steps'] = (health_normalized * 10000 + rng.normal(0, 500, len(df))).clip(3000, 15000)
-    df_mapped['step_volatility'] = (1 - health_normalized) * 1500 + rng.normal(0, 200, len(df))
-    df_mapped['avg_resting_hr'] = 60 + (1 - health_normalized) * 25 + rng.normal(0, 3, len(df))
-    df_mapped['hr_trend'] = (rng.random(len(df)) - 0.5) * 5
-    df_mapped['avg_active_mins'] = health_normalized * 60 + rng.normal(0, 10, len(df))
-    df_mapped['avg_sleep_hours'] = 6.5 + health_normalized * 1.5 + rng.normal(0, 0.5, len(df))
-    df_mapped['avg_spo2'] = 96 + health_normalized * 2 + rng.normal(0, 0.5, len(df))
-    
-    # Occupation risk to chronic conditions
-    risk_map = {'Low': 0, 'Medium': 1, 'High': 2}
-    occupation_risk_encoded = df['occupation_risk'].map(risk_map).fillna(1)
-    df_mapped['diabetic'] = (occupation_risk_encoded > 1).astype(int)
-    df_mapped['hypertension'] = (occupation_risk_encoded > 0).astype(int)
-    df_mapped['chronic_count'] = occupation_risk_encoded
-    
-    # Clinical events from claims history
-    df_mapped['visit_count'] = df['previous_claims_count'].clip(0, 10)
-    df_mapped['hospitalized_count'] = (df['previous_claims_count'] > 3).astype(int)
-    
-    # Lab features (estimated from health_score)
-    low_health = health_normalized < 0.5
-    df_mapped['lab_heart_flag'] = (low_health & (occupation_risk_encoded > 0)).astype(int)
-    df_mapped['lab_diabetes_flag'] = df_mapped['diabetic']
-    df_mapped['lab_kidney_flag'] = (low_health & (df['bmi'] > 28)).astype(int)
-    df_mapped['lab_liver_flag'] = (low_health & df['smoker']).astype(int)
-    df_mapped['lab_inflammation_flag'] = (low_health & (occupation_risk_encoded > 1)).astype(int)
-    df_mapped['lab_iron_flag'] = (rng.random(len(df)) > 0.8).astype(int)
-    df_mapped['lab_thyroid_flag'] = (rng.random(len(df)) > 0.85).astype(int)
-    df_mapped['lab_bone_flag'] = (df_mapped['age'] > 55).astype(int)
-    df_mapped['lab_vitamin_flag'] = (rng.random(len(df)) > 0.7).astype(int)
-    
-    # Target: Use premium_calculated as proxy for loss_ratio
-    # Normalize premium to 0-1 loss ratio scale
-    df_mapped['loss_ratio'] = np.clip(df['premium_calculated'] / df['premium_calculated'].max() * 2, 0.1, 10)
-    
-    return df_mapped
+    sev = np.clip(df["_severity"].values, 0, 1.2)
+    health = np.clip(1.0 - sev / 1.2, 0.0, 1.0)   # 1 = healthy, 0 = critical
+
+    noise = lambda scale, size=n: rng.normal(0, scale, size)
+    df["avg_daily_steps"]  = np.clip(health * 9000 + 1000 + noise(600),  1000, 15000)
+    df["step_volatility"]  = np.clip((1 - health) * 1400 + 100 + noise(150), 50, 3000)
+    df["avg_resting_hr"]   = np.clip(65 + (1 - health) * 22 + noise(3),  45, 110)
+    df["hr_trend"]         = (rng.random(n) - 0.5) * 6
+    df["avg_active_mins"]  = np.clip(health * 55 + 5 + noise(8),          0,  90)
+    df["avg_sleep_hours"]  = np.clip(6.0 + health * 2.0 + noise(0.5),     3,  10)
+
+    # SpO2 already extracted per-note; blend with synthesised baseline where missing
+    df["avg_spo2"] = np.clip(df["avg_spo2"] + noise(0.3), 80, 100)
+
+    df.drop(columns=["_severity"], inplace=True)
+
+    # Add log-normal noise to loss_ratio for realistic variance
+    lr_noise = rng.lognormal(0, 0.25, n)
+    df["loss_ratio"] = np.clip(df["loss_ratio"] * lr_noise, 0.10, 6.0)
+
+    print(f"  loss_ratio  mean={df['loss_ratio'].mean():.3f}  "
+          f"std={df['loss_ratio'].std():.3f}  "
+          f"p5={df['loss_ratio'].quantile(0.05):.3f}  "
+          f"p95={df['loss_ratio'].quantile(0.95):.3f}")
+    return df
 
 
 def load_training_dataframe(
