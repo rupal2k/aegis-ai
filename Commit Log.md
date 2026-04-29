@@ -87,3 +87,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-29 | 8f208ee | sm update
 - 2026-04-29 | f61f3d8 | feat(ui): workstyle breakdown, filter pills, dark text fixes, primary logo
 - 2026-04-29 | f4b7b00 | feat(ml): clinical notes parser, HF dataset integration, scorer hardening
+- 2026-04-29 | ed95948 | chore: update model artifacts — retrained scorer + xgb model

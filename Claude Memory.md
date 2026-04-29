@@ -45,7 +45,7 @@ Rupal â€” building Aegis AI as a capstone project (AI-powered B2B group ins
 
 **HF training data selection**: Company-profile datasets are not valid inputs for the underwriting model. Structured underwriting tables, insurance-charge tables, and clinical-note corpora can be adapted; generic business profile data should be rejected explicitly.
 
-**Latest retrain**: Combined local 5,237-row dataset with 225 rows from `bubuuunel/healthylife-insurance-charge-log`. MLflow run `b10e7565acbd451e92556509b52dfa6d`; full verification `75 passed, 5 skipped`.
+**Latest retrain**: HF-only run on `bubuuunel/healthylife-insurance-charge-log` (225 rows). MLflow run `3084108b84d147a389cbb6f87375ae04`; metrics `test_mae=0.0583`, `test_rmse=0.0709`, `test_r2=0.9570`; verification `12 passed` in `test_ml_engine` and `8 passed, 2 skipped` in `test_predict_api`.
 
 **Vault structure**: Do not create separate daily notes for phase work â€” merge into `Phase Progress.md`. Confirmed when user asked to merge two phase6 daily notes and delete the separate files.
 

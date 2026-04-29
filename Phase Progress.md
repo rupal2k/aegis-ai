@@ -966,6 +966,30 @@ Consolidated and hardened the ML training pipeline with the full clinical notes 
 - `ml_engine/artifacts/xgb_model.pkl` — updated model artifact (retrained)
 
 ---
+### HF-Only Healthylife Retrain (2026-04-29)
+
+**Status**: Complete  
+**MLflow Run**: `3084108b84d147a389cbb6f87375ae04`
+
+Trained the underwriting model on `bubuuunel/healthylife-insurance-charge-log` using the HF-only path (`--use-hf`) so the saved artifacts reflect that dataset alone rather than the combined local + HF blend.
+
+#### Training run
+- HF rows: 225
+- Dataset mode: `hf`
+
+#### Metrics
+- `train_mae`: 0.0409
+- `test_mae`: 0.0583
+- `train_rmse`: 0.0528
+- `test_rmse`: 0.0709
+- `train_r2`: 0.9764
+- `test_r2`: 0.9570
+
+#### Verification
+- `python -m pytest tests\test_ml_engine.py -q` -> 12 passed
+- `python -m pytest tests\test_predict_api.py -q` -> 8 passed, 2 skipped
+
+---
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
