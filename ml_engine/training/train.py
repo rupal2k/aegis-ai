@@ -328,6 +328,17 @@ def objective(trial, X_train, y_train):
     return -scores.mean()
 
 
+def _build_run_name(dataset_mode: str, hf_dataset_name: str) -> str:
+    """Derive a meaningful MLflow run name from the data sources used."""
+    # Shorten   "owner/repo-name-with-dashes"  →  "repo_name"
+    hf_slug = hf_dataset_name.split("/")[-1].replace("-", "_").replace(".", "_")
+    if dataset_mode == "local":
+        return "xgb_local_csv"
+    if dataset_mode == "hf":
+        return f"xgb_hf_{hf_slug}"
+    return f"xgb_local+{hf_slug}"
+
+
 def tune_and_train(
     X_train,
     y_train,
@@ -361,7 +372,8 @@ def tune_and_train(
     y_tr, y_val = y_train[:-val_size], y_train[-val_size:]
 
     configure_mlflow()
-    with mlflow.start_run(run_name="final_xgb_with_optuna") as run:
+    run_name = _build_run_name(dataset_mode, hf_dataset_name)
+    with mlflow.start_run(run_name=run_name) as run:
         mlflow.log_params(best_params)
         mlflow.log_param("optuna_trials", N_OPTUNA_TRIALS)
         mlflow.log_param("target", "loss_ratio_log")
