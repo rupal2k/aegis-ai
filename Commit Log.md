@@ -90,3 +90,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-29 | ed95948 | chore: update model artifacts — retrained scorer + xgb model
 - 2026-04-29 | 7210b0e | fix(docker): add data/ directory to dashboard image — fixes ModuleNotFoundError
 - 2026-04-29 | 7f94da0 | feat: add CLAUDE.md — lock design system rules + Plotly/CSS patterns
+- 2026-04-29 | dc7d37a | fix(ui): force #C4FF00 text on primary button children + MODEL ACTIVE card
