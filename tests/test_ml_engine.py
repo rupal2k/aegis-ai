@@ -67,6 +67,12 @@ def test_hrs_scorer_bounds():
     assert scorer.score(5.0) == 100  # capped
     assert scorer.score(-1.0) == 0   # floored
 
+def test_hrs_scorer_handles_degenerate_distribution():
+    scorer = HRSScorer()
+    scorer.fit(np.array([0.217, 0.217, 0.217, 0.217]))
+    assert scorer.score(0.217) == 50.0
+    assert np.all(scorer.score_batch(np.array([0.217, 0.217])) == np.array([50.0, 50.0]))
+
 def test_hrs_risk_bands():
     scorer = HRSScorer()
     scorer.fit(np.linspace(0, 5, 100))
