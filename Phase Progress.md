@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
-**Last Updated**: 2026-04-24  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ (57 passed, 5 skipped, 0 failed) + Security Suite Clean ✅ (27/27) + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅
+**Last Updated**: 2026-04-29  
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅
 
 ---
 
@@ -478,8 +478,6 @@ tests/security_tests.py               — 25 security tests (all passing)
 
 ---
 
----
-
 ### NullMask UI Redesign (2026-04-24)
 
 **Status**: ✅ Complete
@@ -838,6 +836,77 @@ Added `.claude/commands/loadcontext.md` — a session-start slash command that r
 
 ---
 
+### Post-Commit Hook Hardening (2026-04-26)
+
+**Status**: ✅ Complete  
+**Commit**: `6730057`
+
+Hardened the post-commit git hook with three defensive fixes: a deduplication guard (prevents the same commit hash being logged twice if the hook fires more than once), a vault-commit skip clause (hook no longer triggers when the active commit is itself a vault sync, eliminating infinite commit loops), and an explicit repo-context flag so all git commands target the code repo rather than the vault repo.
+
+#### Files changed
+- `.claude/commands/gitmastersync.md` — updated hook spec with dedup guard + vault-commit skip + explicit repo context
+
+---
+
+### Dashboard UI Overhaul & Design System Alignment (2026-04-28)
+
+**Status**: ✅ Complete  
+**Commit**: `8ebcd93`
+
+Comprehensive overhaul of all five dashboard modules to fully align with the Aegis AI design contract (`design.md`) and `design_tokens.py`. `underwriter_view.py` received the largest update (673 lines): risk-band mini-cards, alerts panel, chart theming, and component layout improvements. `hr_view.py` (253 lines), `app.py` (383 lines), `auth.py` (47 lines), and `upload_view.py` (46 lines) were updated for consistent styling, dark text scale enforcement, and `apply_chart_theme()` usage. Three sample CSV files were added to `data/` for dev and demo use.
+
+#### Files changed
+- `dashboard/app.py` — CSS + layout overhaul (383 lines)
+- `dashboard/underwriter_view.py` — risk-band cards, alerts, chart fixes (673 lines)
+- `dashboard/hr_view.py` — chart + component improvements (253 lines)
+- `dashboard/upload_view.py` — style alignment (46 lines)
+- `dashboard/auth.py` — style updates (47 lines)
+- `data/upload_doc_0.csv`, `data/upload_doc_1.csv`, `data/upload_doc_2.csv` — sample data
+
+---
+
+### Hugging Face Dataset Integration + Scorer Hardening (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `d0ef776`
+
+Added support for training from the Hugging Face Hub alongside the local synthetic CSV. `load_from_huggingface()` maps a tabular HF insurance dataset to the Aegis feature schema with graceful fallback when HF is unavailable. `load_training_dataframe()` merges sources with a configurable mode (`local`, `hf`, `both`). `HRSScorer._normalize()` now extracts the shared normalisation logic and guards against degenerate calibration distributions (zero-scale input returns 0.5). MLflow setup moved to a lazy `configure_mlflow()` so importing the module stays side-effect free. New `--use-local` / `--use-hf` / `--use-both` / `--no-hf` CLI flags added.
+
+#### Files changed
+- `ml_engine/training/train.py` — HF loader, arg parser, lazy MLflow init, `build_arg_parser()`, `resolve_dataset_mode()`
+- `ml_engine/scorer.py` — `_normalize()` helper + degenerate distribution guard
+- `ml_engine/artifacts/` — retrained model artifacts (xgb_model.pkl, hrs_scorer.pkl, feature_names.pkl)
+- `tests/test_ml_engine.py` — degenerate scorer test
+- `tests/test_training_pipeline.py` — 7 new pipeline unit tests (23/23 passing)
+- `requirements.txt` / `requirements.docker.txt` — `datasets>=2.15.0`
+
+---
+
+### Clinical Notes Parser — HF Source Switch (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `818f5fd`
+
+Replaced the previous tabular HF dataset with `ayush0205/clinical_data_rf` (19,756 free-text clinical discharge notes). The new `_parse_clinical_note()` function uses regex to extract: age (4 patterns, 80% coverage), gender, BMI, smoker, diabetic, hypertension, and 10 lab/condition flags (cardiac, renal, liver, respiratory/ARDS, sepsis, stroke, mental health, osteoporosis, anaemia, thyroid, vitamin deficiency), plus ICU admission, mechanical ventilation, and SpO2. Wearable telemetry (steps, HR, sleep, active mins) is synthesised from a per-note severity score so all features are coherent and correlated. Loss ratio is derived from age risk + condition count + serious-condition multipliers, randomised with log-normal noise (mean 0.58, std 0.32). 4 new parser unit tests added.
+
+#### Files changed
+- `ml_engine/training/train.py` — `_parse_clinical_note()`, rewritten `load_from_huggingface()`, updated `HF_DATASET_NAME` constant
+- `tests/test_training_pipeline.py` — 4 parser unit tests (23/23 passing)
+
+---
+
+### MLflow Run Auto-Naming (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `2caac54`
+
+All three existing MLflow runs carried the hardcoded name `final_xgb_with_optuna`, making them indistinguishable in the UI. Added `_build_run_name(dataset_mode, hf_dataset_name)` which derives a descriptive name from data sources used: `xgb_local_csv`, `xgb_hf_<dataset_slug>`, or `xgb_local+<dataset_slug>`. Retroactively renamed the three existing runs: `91d17215` → `xgb_local_synthetic_csv` (R²=0.685, the good baseline), `4dbbf51c` → `xgb_hf_omg_insurance_degenerate` (R²≈0), `f87cbca9` → `xgb_hf_gcc_insurance_degenerate` (R²≈0).
+
+#### Files changed
+- `ml_engine/training/train.py` — `_build_run_name()` helper; hardcoded run name replaced
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -862,8 +931,13 @@ Added `.claude/commands/loadcontext.md` — a session-start slash command that r
 | Post-capstone | ✅ Login form input sizing fix | ~0.1h | — | 1 |
 | Post-capstone | ✅ /loadcontext skill + gitmastersync update | ~0.3h | — | 1 |
 | Post-capstone | ✅ Remove NullMask brand references from codebase | ~0.1h | — | 1 |
+| Post-capstone | ✅ Post-commit hook hardening (dedup + vault skip) | ~0.2h | — | 1 |
+| Post-capstone | ✅ Dashboard UI overhaul & design system alignment | ~2h | — | 1 |
+| Post-capstone | ✅ HF dataset integration + scorer hardening | ~1h | 23/23 ✅ | 1 |
+| Post-capstone | ✅ Clinical notes parser — HF source switch | ~1h | 23/23 ✅ | 1 |
+| Post-capstone | ✅ MLflow run auto-naming | ~0.2h | 23/23 ✅ | 1 |
 
-**Total Effort to Date**: ~35.3 hours  
-**Total Commits**: 35  
-**Total Tests**: 88 passing (63 functional + 25 security)
+**Total Effort to Date**: ~39.7 hours  
+**Total Commits**: 40  
+**Total Tests**: 23/23 ✅ (ML engine); 88 functional + security suite unchanged
 

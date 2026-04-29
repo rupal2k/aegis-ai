@@ -81,3 +81,7 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-29 | b86ca05 | chore: add HF dataset docs + remove stale vfit_cx vault export
 - 2026-04-29 | 818f5fd | feat(ml): switch HF source to ayush0205/clinical_data_rf with regex parser
 - 2026-04-29 | 2caac54 | feat(ml): auto-name MLflow runs from dataset source + rename existing runs
+- 2026-04-26 | 48a0170 | sm updat
+- 2026-04-28 | 64480a3 | smupdate
+- 2026-04-28 | 8ebcd93 | UI Changes and Model upgrade
+- 2026-04-29 | 8f208ee | sm update

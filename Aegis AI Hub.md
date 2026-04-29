@@ -1,8 +1,8 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
-**Last Updated**: 2026-04-24
+**Last Updated**: 2026-04-29
 
 ---
 
@@ -88,7 +88,7 @@ All 10 bugs resolved ✅ — full root causes, code snippets, and prevention rul
 
 | Metric | Value |
 |--------|-------|
-| **Test Coverage** | 88/88 passing (63 functional + 25 security) |
+| **Test Coverage** | 23/23 ✅ ML engine; 88 functional + security suite |
 | **API Endpoints** | 13 live (incl. `/auth/token` login) |
 | **Dashboard Tabs** | 7 (4 underwriter + 3 HR manager) |
 | **Currencies** | 10 (INR, USD, EUR, GBP, AED, SGD, AUD, JPY, CAD, CHF) |
@@ -125,6 +125,11 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **Login form input sizing fix** — reduced oversized Streamlit `st.text_input` fields from ~46px to compact 38px height via targeted CSS in `app.py` (`4551f47`)
 - [x] **Remove NullMask brand references** — stripped all 7 occurrences of "NullMask" from docstrings, comments, CSS, and skills; design tokens and visual style unchanged (`84597d2`)
 - [x] **`/loadcontext` Claude Code skill** — session-start slash command that loads all 6 memory files + 5 vault files, outputs a structured context brief, and enforces architecture/security/design/code/vault guardrails before any code work begins (`17d9b68`)
+- [x] **Post-commit hook hardening** — dedup guard + vault-commit skip + explicit repo context; prevents duplicate log entries and infinite commit loops (`6730057`)
+- [x] **Dashboard UI overhaul & design system alignment** — comprehensive update of all 5 dashboard modules to `design.md` contract; dark text scale, `apply_chart_theme()` everywhere, risk-band mini-cards and alerts panel refined (`8ebcd93`)
+- [x] **HF dataset integration + scorer hardening** — `load_from_huggingface()` with HF Hub support; `load_training_dataframe()` with `local`/`hf`/`both` modes and graceful fallback; `HRSScorer._normalize()` degenerate-distribution guard; `--use-local`/`--use-hf`/`--use-both` CLI flags; 7 new pipeline tests (`d0ef776`)
+- [x] **Clinical notes parser — HF source switch** — `_parse_clinical_note()` regex parser extracts age, gender, BMI, 13 condition flags, ICU, SpO2 from 19,756 discharge notes; synthesises wearable telemetry from severity; `ayush0205/clinical_data_rf` replaces previous tabular HF dataset (`818f5fd`)
+- [x] **MLflow run auto-naming** — `_build_run_name()` derives descriptive names from data sources; retroactively renamed 3 existing runs for clarity in MLflow UI (`2caac54`)
 
 ## 🔧 Next Steps (Post-Capstone)
 
