@@ -1,56 +1,92 @@
 """
-Aegis AI — Model training pipeline.
+Aegis AI - Model training pipeline.
 
 Run: python -m ml_engine.training.train [OPTIONS]
 
 Options:
   --use-local         Use only local CSV dataset
-  --use-hf            Use only Hugging Face dataset  
+  --use-hf            Use only Hugging Face dataset
   --use-both          Use both local CSV and HF dataset (default - recommended)
   --no-hf             Alias for --use-local (skip HF dataset)
 """
-import sys
-import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-
-import pandas as pd
-import numpy as np
-import xgboost as xgb
-import optuna
-import mlflow
-import mlflow.xgboost
-import joblib
-from pathlib import Path
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from dotenv import load_dotenv
-import os
 import argparse
+import os
+import sys
+from pathlib import Path
 from typing import Dict, Tuple
 
-from ml_engine.features import engineer_features, get_feature_matrix, TARGET_LOG
-from ml_engine.scorer   import HRSScorer
+import joblib
+import mlflow
+import mlflow.xgboost
+import numpy as np
+import optuna
+import pandas as pd
+import xgboost as xgb
+from dotenv import load_dotenv
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import cross_val_score, train_test_split
+
+from ml_engine.features import engineer_features, get_feature_matrix
+from ml_engine.scorer import HRSScorer
 
 load_dotenv()
 
-DATA_PATH    = Path("data/output/training_dataset.csv")
-ARTIFACTS    = Path("ml_engine/artifacts")
+DATA_PATH = Path("data/output/training_dataset.csv")
+ARTIFACTS = Path("ml_engine/artifacts")
 ARTIFACTS.mkdir(exist_ok=True)
 
 MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
 HF_DATASET_NAME = os.environ.get(
     "AEGIS_HF_DATASET",
-    "ayush0205/clinical_data_rf",
+    "gcc-insurance-intelligence-lab-dev/gcc-insurance-underwriting-risk",
 )
 DEFAULT_DATA_MODE = "both"
 N_OPTUNA_TRIALS = 5 if os.environ.get("AEGIS_CI_FAST") == "1" else 30
-RANDOM_STATE    = 42
+RANDOM_STATE = 42
+
+UNDERWRITING_HF_COLUMNS = {
+    "applicant_age",
+    "gender",
+    "occupation_risk",
+    "health_score",
+    "bmi",
+    "smoker",
+    "previous_claims_count",
+    "coverage_amount",
+    "premium_calculated",
+}
+
+INSURANCE_CHARGE_HF_COLUMNS = {
+    "age",
+    "bmi",
+    "children",
+    "sex",
+    "smoker",
+    "region",
+    "prediction",
+}
+
+COMPANY_PROFILE_HF_COLUMNS = {
+    "name",
+    "industry",
+    "followers_count",
+    "associated_members_count",
+    "founded_on",
+}
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 
+def configure_stdout():
+    """Prefer UTF-8 stdout in CLI runs without breaking test capture."""
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+
 def configure_mlflow():
-    """Configure MLflow lazily so importing this module stays side-effect free."""
+    """Configure MLflow lazily so imports stay side-effect free."""
     mlflow.set_tracking_uri(MLFLOW_URI)
     mlflow.set_experiment("aegis-underwriting")
 
@@ -61,11 +97,291 @@ def load_local_dataset():
     return pd.read_csv(DATA_PATH)
 
 
+def infer_hf_schema(df: pd.DataFrame) -> str:
+    """Classify the HF dataset so we can route it through the right mapper."""
+    columns = set(df.columns)
+    if UNDERWRITING_HF_COLUMNS.issubset(columns):
+        return "underwriting_tabular"
+    if INSURANCE_CHARGE_HF_COLUMNS.issubset(columns):
+        return "insurance_charges"
+    if COMPANY_PROFILE_HF_COLUMNS.issubset(columns):
+        return "company_profiles"
+    if "text" in columns:
+        return "clinical_notes"
+    raise RuntimeError(
+        "Unsupported Hugging Face dataset schema. "
+        f"Columns found: {sorted(df.columns.tolist())}"
+    )
+
+
+def map_underwriting_hf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Map structured underwriting rows into the Aegis feature schema."""
+    rng = np.random.default_rng(RANDOM_STATE)
+
+    df_mapped = pd.DataFrame()
+    df_mapped["age"] = df["applicant_age"].astype(float)
+    df_mapped["gender"] = df["gender"].astype(str)
+    df_mapped["bmi"] = df["bmi"].astype(float)
+    df_mapped["smoker"] = df["smoker"].astype(int)
+
+    health_normalized = (df["health_score"].astype(float) / 100.0).clip(0.0, 1.0)
+    claims_count = df["previous_claims_count"].clip(lower=0).astype(float)
+    occupation_risk = (
+        df["occupation_risk"].map({"Low": 0.0, "Medium": 1.0, "High": 2.0}).fillna(1.0)
+    )
+
+    df_mapped["diabetic"] = (
+        (occupation_risk >= 1.0) & (health_normalized < 0.58)
+    ).astype(int)
+    df_mapped["hypertension"] = (
+        (occupation_risk >= 1.0) | (df_mapped["age"] >= 50)
+    ).astype(int)
+    df_mapped["chronic_count"] = (
+        df_mapped["diabetic"] + df_mapped["hypertension"] + (claims_count >= 3).astype(int)
+    ).clip(0, 4)
+
+    df_mapped["avg_daily_steps"] = np.clip(
+        health_normalized * 9500 + 1200 + rng.normal(0, 450, len(df)),
+        1500,
+        15000,
+    )
+    df_mapped["step_volatility"] = np.clip(
+        (1.0 - health_normalized) * 1400 + 150 + rng.normal(0, 120, len(df)),
+        50,
+        3000,
+    )
+    df_mapped["avg_resting_hr"] = np.clip(
+        60 + (1.0 - health_normalized) * 24 + rng.normal(0, 2.5, len(df)),
+        45,
+        105,
+    )
+    df_mapped["hr_trend"] = np.clip(
+        (claims_count / max(claims_count.max(), 1.0)) * 2.5 + rng.normal(0, 0.8, len(df)) - 1.0,
+        -5,
+        5,
+    )
+    df_mapped["avg_active_mins"] = np.clip(
+        health_normalized * 55 + 8 + rng.normal(0, 7, len(df)),
+        0,
+        90,
+    )
+    df_mapped["avg_sleep_hours"] = np.clip(
+        6.0 + health_normalized * 1.8 + rng.normal(0, 0.4, len(df)),
+        4.0,
+        9.5,
+    )
+    df_mapped["avg_spo2"] = np.clip(
+        95.5 + health_normalized * 2.5 + rng.normal(0, 0.35, len(df)),
+        90.0,
+        100.0,
+    )
+
+    df_mapped["visit_count"] = claims_count.clip(0, 10)
+    df_mapped["hospitalized_count"] = (
+        (claims_count >= 4) | ((occupation_risk >= 1.0) & (health_normalized < 0.42))
+    ).astype(int)
+
+    low_health = health_normalized < 0.55
+    df_mapped["lab_heart_flag"] = (
+        low_health & ((occupation_risk >= 1.0) | (df_mapped["age"] >= 55))
+    ).astype(int)
+    df_mapped["lab_diabetes_flag"] = df_mapped["diabetic"]
+    df_mapped["lab_kidney_flag"] = (
+        low_health & ((df_mapped["bmi"] > 29) | (claims_count >= 3))
+    ).astype(int)
+    df_mapped["lab_liver_flag"] = (
+        low_health & ((df_mapped["smoker"] == 1) | (df_mapped["bmi"] > 31))
+    ).astype(int)
+    df_mapped["lab_inflammation_flag"] = (
+        (occupation_risk >= 1.0) & (health_normalized < 0.50)
+    ).astype(int)
+    df_mapped["lab_iron_flag"] = (rng.random(len(df)) > 0.82).astype(int)
+    df_mapped["lab_thyroid_flag"] = (
+        (rng.random(len(df)) > 0.88) | ((df_mapped["gender"] == "F") & (df_mapped["age"] > 45))
+    ).astype(int)
+    df_mapped["lab_bone_flag"] = (df_mapped["age"] > 58).astype(int)
+    df_mapped["lab_vitamin_flag"] = (
+        (rng.random(len(df)) > 0.72) | (df_mapped["avg_daily_steps"] < 3500)
+    ).astype(int)
+
+    coverage_rate = df["premium_calculated"].astype(float) / df["coverage_amount"].replace(0, np.nan).astype(float)
+    coverage_rate = coverage_rate.fillna(coverage_rate.median())
+    premium_signal = (coverage_rate / coverage_rate.median()).clip(0.5, 3.0)
+
+    proxy_loss_ratio = (
+        0.18
+        + (1.0 - health_normalized) * 0.95
+        + occupation_risk * 0.18
+        + claims_count * 0.11
+        + df_mapped["smoker"] * 0.10
+        + np.clip(df_mapped["bmi"] - 27, 0, 12) * 0.025
+        + (premium_signal - 1.0) * 0.35
+    )
+    df_mapped["loss_ratio"] = np.clip(
+        proxy_loss_ratio * rng.lognormal(mean=0, sigma=0.18, size=len(df)),
+        0.10,
+        6.0,
+    )
+    return df_mapped
+
+
+def map_insurance_charge_hf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Map tabular insurance-charge rows into the Aegis feature schema."""
+    rng = np.random.default_rng(RANDOM_STATE)
+
+    df_mapped = pd.DataFrame()
+    df_mapped["age"] = df["age"].astype(float)
+    df_mapped["gender"] = (
+        df["sex"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .map({"male": "M", "m": "M", "female": "F", "f": "F"})
+        .fillna("M")
+    )
+    df_mapped["bmi"] = df["bmi"].astype(float)
+    df_mapped["smoker"] = (
+        df["smoker"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .isin({"yes", "true", "1", "y"})
+        .astype(int)
+    )
+
+    children = df["children"].fillna(0).clip(lower=0).astype(float)
+    region = df["region"].astype(str).str.strip().str.lower()
+    region_risk = region.map(
+        {
+            "southeast": 1.00,
+            "southwest": 0.82,
+            "northeast": 0.64,
+            "northwest": 0.56,
+        }
+    ).fillna(0.70)
+
+    bmi_risk = np.clip((df_mapped["bmi"] - 25.0) / 15.0, 0.0, 1.5)
+    age_risk = np.clip((df_mapped["age"] - 18.0) / 50.0, 0.0, 1.4)
+    lifestyle_risk = np.clip(
+        df_mapped["smoker"] * 0.55 + bmi_risk * 0.30 + age_risk * 0.20,
+        0.0,
+        1.6,
+    )
+
+    df_mapped["diabetic"] = (
+        (df_mapped["bmi"] >= 31.0)
+        | ((df_mapped["age"] >= 52.0) & (df_mapped["smoker"] == 1))
+    ).astype(int)
+    df_mapped["hypertension"] = (
+        (df_mapped["age"] >= 45.0)
+        | (df_mapped["bmi"] >= 30.0)
+        | (df_mapped["smoker"] == 1)
+    ).astype(int)
+    df_mapped["chronic_count"] = (
+        df_mapped["diabetic"]
+        + df_mapped["hypertension"]
+        + (df_mapped["bmi"] >= 35.0).astype(int)
+    ).clip(0, 4)
+
+    df_mapped["avg_daily_steps"] = np.clip(
+        10000 - lifestyle_risk * 3800 - children * 180 + rng.normal(0, 550, len(df)),
+        1500,
+        15000,
+    )
+    df_mapped["step_volatility"] = np.clip(
+        240 + lifestyle_risk * 950 + region_risk * 140 + np.abs(rng.normal(0, 140, len(df))),
+        50,
+        3000,
+    )
+    df_mapped["avg_resting_hr"] = np.clip(
+        58 + lifestyle_risk * 22 + region_risk * 1.5 + rng.normal(0, 3, len(df)),
+        45,
+        110,
+    )
+    df_mapped["hr_trend"] = np.clip(
+        lifestyle_risk * 2.6 - 0.8 + rng.normal(0, 0.75, len(df)),
+        -5,
+        5,
+    )
+    df_mapped["avg_active_mins"] = np.clip(
+        62 - lifestyle_risk * 24 - children * 1.8 + rng.normal(0, 6, len(df)),
+        0,
+        90,
+    )
+    df_mapped["avg_sleep_hours"] = np.clip(
+        7.6 - df_mapped["smoker"] * 0.35 - bmi_risk * 0.65 + rng.normal(0, 0.35, len(df)),
+        4.0,
+        9.5,
+    )
+    df_mapped["avg_spo2"] = np.clip(
+        98.4 - df_mapped["smoker"] * 1.2 - bmi_risk * 0.7 + rng.normal(0, 0.25, len(df)),
+        90.0,
+        100.0,
+    )
+
+    df_mapped["visit_count"] = np.clip(
+        1.0
+        + age_risk * 2.2
+        + bmi_risk * 1.7
+        + df_mapped["smoker"] * 1.1
+        + children * 0.2
+        + rng.normal(0, 0.55, len(df)),
+        0,
+        10,
+    ).round()
+    df_mapped["hospitalized_count"] = (
+        (df_mapped["smoker"] == 1)
+        & ((df_mapped["bmi"] >= 34.0) | (df_mapped["age"] >= 58.0))
+    ).astype(int)
+
+    df_mapped["lab_heart_flag"] = (
+        (df_mapped["age"] >= 55.0)
+        | ((df_mapped["smoker"] == 1) & (df_mapped["bmi"] >= 30.0))
+    ).astype(int)
+    df_mapped["lab_diabetes_flag"] = df_mapped["diabetic"]
+    df_mapped["lab_kidney_flag"] = (
+        (df_mapped["bmi"] >= 33.0) | (df_mapped["chronic_count"] >= 2)
+    ).astype(int)
+    df_mapped["lab_liver_flag"] = (
+        (df_mapped["smoker"] == 1) | (df_mapped["bmi"] >= 32.0)
+    ).astype(int)
+    df_mapped["lab_inflammation_flag"] = (
+        (df_mapped["smoker"] == 1) | (children >= 4)
+    ).astype(int)
+    df_mapped["lab_iron_flag"] = ((children >= 3) & (df_mapped["gender"] == "F")).astype(int)
+    df_mapped["lab_thyroid_flag"] = (
+        (df_mapped["gender"] == "F") & (df_mapped["age"] >= 45.0)
+    ).astype(int)
+    df_mapped["lab_bone_flag"] = (df_mapped["age"] >= 60.0).astype(int)
+    df_mapped["lab_vitamin_flag"] = (
+        (df_mapped["avg_daily_steps"] < 4200) | (region == "northeast")
+    ).astype(int)
+
+    charges = df["prediction"].astype(float).clip(lower=0.0)
+    positive_charges = charges[charges > 0]
+    charge_scale = float(positive_charges.median()) if not positive_charges.empty else 1.0
+    charge_signal = (charges / max(charge_scale, 1.0)).clip(0.20, 5.0)
+
+    proxy_loss_ratio = (
+        0.10
+        + charge_signal * 0.62
+        + age_risk * 0.18
+        + bmi_risk * 0.18
+        + df_mapped["smoker"] * 0.32
+        + children * 0.02
+    )
+    df_mapped["loss_ratio"] = np.clip(
+        proxy_loss_ratio * rng.lognormal(mean=0.0, sigma=0.10, size=len(df)),
+        0.10,
+        6.0,
+    )
+    return df_mapped
+
+
 def _parse_clinical_note(text: str) -> dict:
     """Extract structured fields from one clinical discharge note."""
     import re
 
-    # Strip the instruction wrapper
     idx = text.find("### Instruction:")
     end = text.find("### Response:")
     if idx > -1:
@@ -74,7 +390,6 @@ def _parse_clinical_note(text: str) -> dict:
     def flag(*patterns) -> int:
         return int(any(re.search(p, text, re.IGNORECASE) for p in patterns))
 
-    # ── Demographics ─────────────────────────────────────────────
     age = 45.0
     for pat in (
         r"(\d{1,3})[- ]year[s]?[- ]old",
@@ -82,116 +397,147 @@ def _parse_clinical_note(text: str) -> dict:
         r"\bage[d]?\s+(\d{1,3})\b",
         r"\b(\d{1,3})[- ]yo\b",
     ):
-        m = re.search(pat, text, re.IGNORECASE)
-        if m:
-            val = int(m.group(1))
-            if 0 < val < 120:
-                age = float(val)
+        match = re.search(pat, text, re.IGNORECASE)
+        if match:
+            value = int(match.group(1))
+            if 0 < value < 120:
+                age = float(value)
                 break
 
     female_hits = len(re.findall(r"\b(female|woman|women|she\b|her\b)", text, re.IGNORECASE))
-    male_hits   = len(re.findall(r"\b(male|man\b|men\b|he\b|his\b)", text, re.IGNORECASE))
+    male_hits = len(re.findall(r"\b(male|man\b|men\b|he\b|his\b)", text, re.IGNORECASE))
     gender = "F" if female_hits > male_hits else "M"
 
-    # BMI — extract if stated, otherwise default
     bmi = 26.0
-    m = re.search(r"\bBMI\s*(?:of\s*|=\s*|:\s*)?(\d{1,2}(?:\.\d)?)\b", text, re.IGNORECASE)
-    if m:
-        val = float(m.group(1))
-        if 10 < val < 70:
-            bmi = val
+    match = re.search(r"\bBMI\s*(?:of\s*|=\s*|:\s*)?(\d{1,2}(?:\.\d)?)\b", text, re.IGNORECASE)
+    if match:
+        value = float(match.group(1))
+        if 10 < value < 70:
+            bmi = value
 
-    # ── Conditions ───────────────────────────────────────────────
-    smoker      = flag(r"\bsmok(?:er|ing|ed)\b", r"\bcurrent smoker\b", r"\btobacco\b")
-    diabetic    = flag(r"\bdiabet(?:es|ic|ics)\b", r"\bDM\b", r"\binsulin[- ]dependent\b", r"\bT2DM\b", r"\bT1DM\b")
-    hypertension= flag(r"\bhypertension\b", r"\bhigh blood pressure\b", r"\bHTN\b")
-    cancer      = flag(r"\bcancer\b", r"\bmalignant\b", r"\bcarcinoma\b", r"\blymphoma\b", r"\bleukemia\b", r"\bneoplasm\b", r"\btumou?r\b")
-    heart_dis   = flag(r"\bcardiac\b", r"\bheart failure\b", r"\bmyocardial infarction\b", r"\bcoronary\b", r"\batrial fibr", r"\bangina\b")
-    renal       = flag(r"\brenal failure\b", r"\bkidney failure\b", r"\bCKD\b", r"\bdialysis\b", r"\bnephrop", r"\bcreatinine elevated\b")
-    liver_dis   = flag(r"\bliver failure\b", r"\bhepat(?:itis|ic encephalopathy|orenal)\b", r"\bcirrhosis\b", r"\belevated.*(?:AST|ALT|LFT)\b", r"\bbilirubin\b")
+    smoker = flag(r"\bsmok(?:er|ing|ed)\b", r"\bcurrent smoker\b", r"\btobacco\b")
+    diabetic = flag(r"\bdiabet(?:es|ic|ics)\b", r"\bDM\b", r"\binsulin[- ]dependent\b", r"\bT2DM\b", r"\bT1DM\b")
+    hypertension = flag(r"\bhypertension\b", r"\bhigh blood pressure\b", r"\bHTN\b")
+    cancer = flag(r"\bcancer\b", r"\bmalignant\b", r"\bcarcinoma\b", r"\blymphoma\b", r"\bleukemia\b", r"\bneoplasm\b", r"\btumou?r\b")
+    heart_dis = flag(r"\bcardiac\b", r"\bheart failure\b", r"\bmyocardial infarction\b", r"\bcoronary\b", r"\batrial fibr", r"\bangina\b")
+    renal = flag(r"\brenal failure\b", r"\bkidney failure\b", r"\bCKD\b", r"\bdialysis\b", r"\bnephrop", r"\bcreatinine elevated\b")
+    liver_dis = flag(r"\bliver failure\b", r"\bhepat(?:itis|ic encephalopathy|orenal)\b", r"\bcirrhosis\b", r"\belevated.*(?:AST|ALT|LFT)\b", r"\bbilirubin\b")
     respiratory = flag(r"\bCOPD\b", r"\basthma\b", r"\bARDS\b", r"\bpneumonia\b", r"\brespiratory failure\b", r"\bmechanical ventilation\b")
-    sepsis      = flag(r"\bsepsis\b", r"\bseptic shock\b", r"\bbacteremia\b")
-    stroke      = flag(r"\bstroke\b", r"\bcerebral infarct\b", r"\bTIA\b", r"\bischemic.*brain\b")
-    mental      = flag(r"\bdepression\b", r"\banxiety disorder\b", r"\bschizophrenia\b", r"\bbipolar\b", r"\bpsychiat")
-    osteo       = flag(r"\bosteoporosis\b", r"\bosteopenia\b", r"\bone fracture\b", r"\bfragility fracture\b")
-    anemia      = flag(r"\banemia\b", r"\banaemia\b", r"\biron deficiency\b", r"\bhemoglobin\b.*\blow\b")
+    sepsis = flag(r"\bsepsis\b", r"\bseptic shock\b", r"\bbacteremia\b")
+    stroke = flag(r"\bstroke\b", r"\bcerebral infarct\b", r"\bTIA\b", r"\bischemic.*brain\b")
+    mental = flag(r"\bdepression\b", r"\banxiety disorder\b", r"\bschizophrenia\b", r"\bbipolar\b", r"\bpsychiat")
+    osteo = flag(r"\bosteoporosis\b", r"\bosteopenia\b", r"\bone fracture\b", r"\bfragility fracture\b")
+    anemia = flag(r"\banemia\b", r"\banaemia\b", r"\biron deficiency\b", r"\bhemoglobin\b.*\blow\b")
     thyroid_dis = flag(r"\bhypothyroid\b", r"\bhyperthyroid\b", r"\bthyroid\b")
     vitamin_def = flag(r"\bvitamin D deficiency\b", r"\bvitamin B12\b", r"\bvitamin deficiency\b")
 
-    chronic_conditions = [diabetic, hypertension, cancer, heart_dis, renal, liver_dis,
-                          respiratory, sepsis, stroke, mental, osteo, anemia, thyroid_dis]
+    chronic_conditions = [
+        diabetic,
+        hypertension,
+        cancer,
+        heart_dis,
+        renal,
+        liver_dis,
+        respiratory,
+        sepsis,
+        stroke,
+        mental,
+        osteo,
+        anemia,
+        thyroid_dis,
+    ]
     chronic_count = sum(chronic_conditions)
 
-    # ── Clinical events ──────────────────────────────────────────
-    icu          = flag(r"\bICU\b", r"\bintensive care unit\b", r"\bcritical care\b")
-    ventilated   = flag(r"\bmechanical ventilation\b", r"\bintubat", r"\bventilat")
-    hospitalized_count = 1 + icu  # all records are hospitalisations; ICU adds complexity
-    visit_count  = min(2 + chronic_count + icu * 2, 10)
+    icu = flag(r"\bICU\b", r"\bintensive care unit\b", r"\bcritical care\b")
+    ventilated = flag(r"\bmechanical ventilation\b", r"\bintubat", r"\bventilat")
+    hospitalized_count = 1 + icu
+    visit_count = min(2 + chronic_count + icu * 2, 10)
 
-    # ── SpO2 ─────────────────────────────────────────────────────
     avg_spo2 = 97.0
     for pat in (
         r"(?:oxygen saturation|SpO2|O2 sat)[^0-9]*(\d{2,3})%",
         r"(\d{2,3})%\s*to\s*(\d{2,3})%",
     ):
-        m = re.search(pat, text, re.IGNORECASE)
-        if m:
-            # If two values (before→after), take the later one
-            val = float(m.group(2) if m.lastindex and m.lastindex >= 2 else m.group(1))
-            if 70 <= val <= 100:
-                avg_spo2 = val
+        match = re.search(pat, text, re.IGNORECASE)
+        if match:
+            value = float(match.group(2) if match.lastindex and match.lastindex >= 2 else match.group(1))
+            if 70 <= value <= 100:
+                avg_spo2 = value
                 break
 
-    # ── Target: loss_ratio ───────────────────────────────────────
-    # Built from clinical severity so the model can learn meaningful signal.
-    age_risk        = max(age - 18, 0) / 80 * 0.4          # 0.0 – 0.40
-    condition_risk  = chronic_count * 0.08                   # 0.08 per condition
-    serious_risk    = (cancer * 0.30 + icu * 0.20 + renal * 0.18
-                       + heart_dis * 0.15 + sepsis * 0.15 + ventilated * 0.15
-                       + stroke * 0.12 + liver_dis * 0.10 + respiratory * 0.08)
-    lifestyle_risk  = smoker * 0.10 + (max(bmi - 30, 0) / 10) * 0.10
+    age_risk = max(age - 18, 0) / 80 * 0.4
+    condition_risk = chronic_count * 0.08
+    serious_risk = (
+        cancer * 0.30
+        + icu * 0.20
+        + renal * 0.18
+        + heart_dis * 0.15
+        + sepsis * 0.15
+        + ventilated * 0.15
+        + stroke * 0.12
+        + liver_dis * 0.10
+        + respiratory * 0.08
+    )
+    lifestyle_risk = smoker * 0.10 + (max(bmi - 30, 0) / 10) * 0.10
     loss_ratio = 0.20 + age_risk + condition_risk + serious_risk + lifestyle_risk
 
     return {
-        "age":               age,
-        "gender":            gender,
-        "bmi":               bmi,
-        "smoker":            smoker,
-        "diabetic":          diabetic,
-        "hypertension":      hypertension,
-        "chronic_count":     float(chronic_count),
-        "avg_daily_steps":   None,   # synthesised below
-        "step_volatility":   None,
-        "avg_resting_hr":    None,
-        "hr_trend":          None,
-        "avg_active_mins":   None,
-        "avg_sleep_hours":   None,
-        "avg_spo2":          avg_spo2,
-        "visit_count":       float(visit_count),
-        "hospitalized_count":float(hospitalized_count),
-        "lab_heart_flag":    int(heart_dis),
+        "age": age,
+        "gender": gender,
+        "bmi": bmi,
+        "smoker": smoker,
+        "diabetic": diabetic,
+        "hypertension": hypertension,
+        "chronic_count": float(chronic_count),
+        "avg_daily_steps": None,
+        "step_volatility": None,
+        "avg_resting_hr": None,
+        "hr_trend": None,
+        "avg_active_mins": None,
+        "avg_sleep_hours": None,
+        "avg_spo2": avg_spo2,
+        "visit_count": float(visit_count),
+        "hospitalized_count": float(hospitalized_count),
+        "lab_heart_flag": int(heart_dis),
         "lab_diabetes_flag": int(diabetic),
-        "lab_kidney_flag":   int(renal),
-        "lab_liver_flag":    int(liver_dis),
+        "lab_kidney_flag": int(renal),
+        "lab_liver_flag": int(liver_dis),
         "lab_inflammation_flag": int(sepsis or respiratory),
-        "lab_iron_flag":     int(anemia),
-        "lab_thyroid_flag":  int(thyroid_dis),
-        "lab_bone_flag":     int(osteo or age > 60),
-        "lab_vitamin_flag":  int(vitamin_def),
-        "loss_ratio":        loss_ratio,
-        "_severity":         age_risk + condition_risk + serious_risk,  # used for telemetry synthesis
+        "lab_iron_flag": int(anemia),
+        "lab_thyroid_flag": int(thyroid_dis),
+        "lab_bone_flag": int(osteo or age > 60),
+        "lab_vitamin_flag": int(vitamin_def),
+        "loss_ratio": loss_ratio,
+        "_severity": age_risk + condition_risk + serious_risk,
     }
 
 
-def load_from_huggingface(dataset_name: str = HF_DATASET_NAME):
-    """Parse clinical discharge notes from HF Hub into the Aegis feature schema.
+def map_clinical_notes_hf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Parse clinical-note HF rows and synthesize missing telemetry."""
+    rng = np.random.default_rng(RANDOM_STATE)
+    records = [_parse_clinical_note(row["text"]) for _, row in df.iterrows()]
+    mapped = pd.DataFrame(records)
 
-    The dataset (`ayush0205/clinical_data_rf`) contains free-text hospital
-    course / discharge notes.  Each note is parsed with regex to extract age,
-    gender, BMI, conditions, clinical events, and lab abnormalities.
-    Wearable telemetry (steps, HR, sleep) is synthesised from extracted clinical
-    severity so the model receives coherent, correlated features.
-    """
+    severity = np.clip(mapped["_severity"].values, 0, 1.2)
+    health = np.clip(1.0 - severity / 1.2, 0.0, 1.0)
+    noise = lambda scale, size=len(mapped): rng.normal(0, scale, size)
+
+    mapped["avg_daily_steps"] = np.clip(health * 9000 + 1000 + noise(600), 1000, 15000)
+    mapped["step_volatility"] = np.clip((1 - health) * 1400 + 100 + noise(150), 50, 3000)
+    mapped["avg_resting_hr"] = np.clip(65 + (1 - health) * 22 + noise(3), 45, 110)
+    mapped["hr_trend"] = (rng.random(len(mapped)) - 0.5) * 6
+    mapped["avg_active_mins"] = np.clip(health * 55 + 5 + noise(8), 0, 90)
+    mapped["avg_sleep_hours"] = np.clip(6.0 + health * 2.0 + noise(0.5), 3, 10)
+    mapped["avg_spo2"] = np.clip(mapped["avg_spo2"] + noise(0.3), 80, 100)
+    mapped.drop(columns=["_severity"], inplace=True)
+
+    lr_noise = rng.lognormal(0, 0.25, len(mapped))
+    mapped["loss_ratio"] = np.clip(mapped["loss_ratio"] * lr_noise, 0.10, 6.0)
+    return mapped
+
+
+def load_from_huggingface(dataset_name: str = HF_DATASET_NAME):
+    """Map a supported Hugging Face dataset into the Aegis feature schema."""
     print(f"Loading dataset from Hugging Face ({dataset_name})...")
     try:
         from datasets import load_dataset
@@ -201,40 +547,30 @@ def load_from_huggingface(dataset_name: str = HF_DATASET_NAME):
     ds = load_dataset(dataset_name)
     split = list(ds.keys())[0]
     raw = ds[split].to_pandas()
-    n = len(raw)
-    print(f"  Loaded {n:,} clinical notes from split '{split}'")
+    schema = infer_hf_schema(raw)
 
-    print("  Parsing notes…")
-    records = [_parse_clinical_note(row["text"]) for _, row in raw.iterrows()]
-    df = pd.DataFrame(records)
+    print(f"  Loaded {len(raw):,} rows from split '{split}' as {schema}")
+    if schema == "underwriting_tabular":
+        print("  Mapping structured underwriting rows...")
+        df = map_underwriting_hf_dataframe(raw)
+    elif schema == "insurance_charges":
+        print("  Mapping insurance-charge rows...")
+        df = map_insurance_charge_hf_dataframe(raw)
+    elif schema == "company_profiles":
+        raise RuntimeError(
+            "This dataset contains company profile metadata, not employee health or claim targets. "
+            "It cannot be used to train the current underwriting risk model."
+        )
+    else:
+        print("  Parsing clinical notes...")
+        df = map_clinical_notes_hf_dataframe(raw)
 
-    # ── Synthesise wearable telemetry from severity ───────────────────────────
-    # severity ≈ 0 (healthy) → 1+ (very ill)  |  cap at 1 for normalisation
-    rng = np.random.default_rng(RANDOM_STATE)
-    sev = np.clip(df["_severity"].values, 0, 1.2)
-    health = np.clip(1.0 - sev / 1.2, 0.0, 1.0)   # 1 = healthy, 0 = critical
-
-    noise = lambda scale, size=n: rng.normal(0, scale, size)
-    df["avg_daily_steps"]  = np.clip(health * 9000 + 1000 + noise(600),  1000, 15000)
-    df["step_volatility"]  = np.clip((1 - health) * 1400 + 100 + noise(150), 50, 3000)
-    df["avg_resting_hr"]   = np.clip(65 + (1 - health) * 22 + noise(3),  45, 110)
-    df["hr_trend"]         = (rng.random(n) - 0.5) * 6
-    df["avg_active_mins"]  = np.clip(health * 55 + 5 + noise(8),          0,  90)
-    df["avg_sleep_hours"]  = np.clip(6.0 + health * 2.0 + noise(0.5),     3,  10)
-
-    # SpO2 already extracted per-note; blend with synthesised baseline where missing
-    df["avg_spo2"] = np.clip(df["avg_spo2"] + noise(0.3), 80, 100)
-
-    df.drop(columns=["_severity"], inplace=True)
-
-    # Add log-normal noise to loss_ratio for realistic variance
-    lr_noise = rng.lognormal(0, 0.25, n)
-    df["loss_ratio"] = np.clip(df["loss_ratio"] * lr_noise, 0.10, 6.0)
-
-    print(f"  loss_ratio  mean={df['loss_ratio'].mean():.3f}  "
-          f"std={df['loss_ratio'].std():.3f}  "
-          f"p5={df['loss_ratio'].quantile(0.05):.3f}  "
-          f"p95={df['loss_ratio'].quantile(0.95):.3f}")
+    print(
+        f"  loss_ratio  mean={df['loss_ratio'].mean():.3f}  "
+        f"std={df['loss_ratio'].std():.3f}  "
+        f"p5={df['loss_ratio'].quantile(0.05):.3f}  "
+        f"p95={df['loss_ratio'].quantile(0.95):.3f}"
+    )
     return df
 
 
@@ -293,7 +629,6 @@ def load_and_prepare(
     X, y, feature_names = get_feature_matrix(df)
     print(f"  {X.shape[1]} features prepared: {feature_names}")
 
-    # Stratified split on loss_ratio quartiles so test set is representative
     y_strata = pd.qcut(y, q=4, labels=False, duplicates="drop")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y_strata
@@ -305,32 +640,35 @@ def load_and_prepare(
 
 
 def objective(trial, X_train, y_train):
-    """Optuna objective — minimize MAE via 3-fold CV."""
+    """Optuna objective - minimize MAE via 3-fold CV."""
     params = {
-        "n_estimators":      trial.suggest_int("n_estimators", 100, 500),
-        "max_depth":         trial.suggest_int("max_depth", 3, 10),
-        "learning_rate":     trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
-        "subsample":         trial.suggest_float("subsample", 0.6, 1.0),
-        "colsample_bytree":  trial.suggest_float("colsample_bytree", 0.6, 1.0),
-        "min_child_weight":  trial.suggest_int("min_child_weight", 1, 10),
-        "gamma":             trial.suggest_float("gamma", 0, 5),
-        "reg_alpha":         trial.suggest_float("reg_alpha", 0, 5),
-        "reg_lambda":        trial.suggest_float("reg_lambda", 0, 5),
-        "random_state":      RANDOM_STATE,
-        "verbosity":         0,
-        "tree_method":       "hist",
+        "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+        "max_depth": trial.suggest_int("max_depth", 3, 10),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
+        "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
+        "gamma": trial.suggest_float("gamma", 0, 5),
+        "reg_alpha": trial.suggest_float("reg_alpha", 0, 5),
+        "reg_lambda": trial.suggest_float("reg_lambda", 0, 5),
+        "random_state": RANDOM_STATE,
+        "verbosity": 0,
+        "tree_method": "hist",
     }
     model = xgb.XGBRegressor(**params)
     scores = cross_val_score(
-        model, X_train, y_train,
-        cv=3, scoring="neg_mean_absolute_error", n_jobs=-1
+        model,
+        X_train,
+        y_train,
+        cv=3,
+        scoring="neg_mean_absolute_error",
+        n_jobs=-1,
     )
     return -scores.mean()
 
 
 def _build_run_name(dataset_mode: str, hf_dataset_name: str) -> str:
     """Derive a meaningful MLflow run name from the data sources used."""
-    # Shorten   "owner/repo-name-with-dashes"  →  "repo_name"
     hf_slug = hf_dataset_name.split("/")[-1].replace("-", "_").replace(".", "_")
     if dataset_mode == "local":
         return "xgb_local_csv"
@@ -361,12 +699,16 @@ def tune_and_train(
 
     print("\n[2/3] Training final model with best params...")
     best_params = study.best_params.copy()
-    # Use a large n_estimators — early stopping will find the optimal number
     best_params["n_estimators"] = 2000
-    best_params.update({"random_state": RANDOM_STATE, "verbosity": 0, "tree_method": "hist",
-                        "early_stopping_rounds": 50})
+    best_params.update(
+        {
+            "random_state": RANDOM_STATE,
+            "verbosity": 0,
+            "tree_method": "hist",
+            "early_stopping_rounds": 50,
+        }
+    )
 
-    # 10% of training data held out for early stopping validation
     val_size = int(len(X_train) * 0.10)
     X_tr, X_val = X_train[:-val_size], X_train[-val_size:]
     y_tr, y_val = y_train[:-val_size], y_train[-val_size:]
@@ -390,22 +732,21 @@ def tune_and_train(
         mlflow.log_param("best_iteration", model.best_iteration)
 
         train_preds = model.predict(X_train)
-        test_preds  = model.predict(X_test)
-
+        test_preds = model.predict(X_test)
         metrics = {
-            "train_mae":  mean_absolute_error(y_train, train_preds),
-            "test_mae":   mean_absolute_error(y_test, test_preds),
+            "train_mae": mean_absolute_error(y_train, train_preds),
+            "test_mae": mean_absolute_error(y_test, test_preds),
             "train_rmse": np.sqrt(mean_squared_error(y_train, train_preds)),
-            "test_rmse":  np.sqrt(mean_squared_error(y_test, test_preds)),
-            "train_r2":   r2_score(y_train, train_preds),
-            "test_r2":    r2_score(y_test, test_preds),
+            "test_rmse": np.sqrt(mean_squared_error(y_test, test_preds)),
+            "train_r2": r2_score(y_train, train_preds),
+            "test_r2": r2_score(y_test, test_preds),
         }
-        for name, val in metrics.items():
-            mlflow.log_metric(name, val)
+        for name, value in metrics.items():
+            mlflow.log_metric(name, value)
 
         print("\n  Metrics:")
-        for k, v in metrics.items():
-            print(f"    {k:12s} {v:.4f}")
+        for key, value in metrics.items():
+            print(f"    {key:12s} {value:.4f}")
 
         print("\n[3/3] Calibrating HRS scorer...")
         scorer = HRSScorer()
@@ -413,17 +754,17 @@ def tune_and_train(
         mlflow.log_metric("hrs_p05", scorer.p05)
         mlflow.log_metric("hrs_p95", scorer.p95)
 
-        model_path  = ARTIFACTS / "xgb_model.pkl"
+        model_path = ARTIFACTS / "xgb_model.pkl"
         scorer_path = ARTIFACTS / "hrs_scorer.pkl"
-        feats_path  = ARTIFACTS / "feature_names.pkl"
+        feats_path = ARTIFACTS / "feature_names.pkl"
 
-        joblib.dump(model,  model_path)
+        joblib.dump(model, model_path)
         joblib.dump(scorer.to_dict(), scorer_path)
-        joblib.dump(feature_names,     feats_path)
+        joblib.dump(feature_names, feats_path)
 
-        mlflow.log_artifact(str(model_path),  artifact_path="model")
+        mlflow.log_artifact(str(model_path), artifact_path="model")
         mlflow.log_artifact(str(scorer_path), artifact_path="model")
-        mlflow.log_artifact(str(feats_path),  artifact_path="model")
+        mlflow.log_artifact(str(feats_path), artifact_path="model")
 
         print(f"\n  Saved: {model_path}")
         print(f"  Saved: {scorer_path}")
@@ -437,13 +778,13 @@ def sanity_check(model, scorer, X_test, y_test, feature_names):
     print("\n[Sanity check on 5 test predictions]")
     preds_log = model.predict(X_test[:5])
     preds_actual = np.expm1(preds_log)
-    actual_log   = y_test[:5]
-    actual       = np.expm1(actual_log)
-    hrs_scores   = scorer.score_batch(preds_log)
+    actual_log = y_test[:5]
+    actual = np.expm1(actual_log)
+    hrs_scores = scorer.score_batch(preds_log)
 
     print(f"  {'Pred LR':>10s} {'Actual LR':>10s} {'HRS':>6s} {'Band':>10s}")
-    for p, a, h in zip(preds_actual, actual, hrs_scores):
-        print(f"  {p:10.3f} {a:10.3f} {h:6.1f} {scorer.risk_band(h):>10s}")
+    for pred_lr, actual_lr, hrs in zip(preds_actual, actual, hrs_scores):
+        print(f"  {pred_lr:10.3f} {actual_lr:10.3f} {hrs:6.1f} {scorer.risk_band(hrs):>10s}")
 
 
 def build_arg_parser():
@@ -452,34 +793,34 @@ def build_arg_parser():
     group.add_argument(
         "--use-local",
         action="store_true",
-        help="Load data from the local CSV only"
+        help="Load data from the local CSV only",
     )
     group.add_argument(
         "--use-hf",
         dest="use_hf",
         action="store_true",
-        help=f"Load data from Hugging Face ({HF_DATASET_NAME}) only"
+        help=f"Load data from Hugging Face ({HF_DATASET_NAME}) only",
     )
     group.add_argument(
         "--use-hf-dataset",
         dest="use_hf",
         action="store_true",
-        help="Alias for --use-hf"
+        help="Alias for --use-hf",
     )
     group.add_argument(
         "--use-both",
         action="store_true",
-        help="Combine local CSV and Hugging Face rows into one training run"
+        help="Combine local CSV and Hugging Face rows into one training run",
     )
     group.add_argument(
         "--no-hf",
         action="store_true",
-        help="Alias for --use-local"
+        help="Alias for --use-local",
     )
     parser.add_argument(
         "--hf-dataset",
         default=HF_DATASET_NAME,
-        help="Hugging Face dataset ID to load for HF-based training"
+        help="Hugging Face dataset ID to load for HF-based training",
     )
     return parser
 
@@ -495,6 +836,7 @@ def resolve_dataset_mode(args) -> str:
 
 
 def main(argv=None):
+    configure_stdout()
     parser = build_arg_parser()
     args = parser.parse_args(argv)
     dataset_mode = resolve_dataset_mode(args)

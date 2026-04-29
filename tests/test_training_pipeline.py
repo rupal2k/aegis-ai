@@ -4,8 +4,6 @@ import pytest
 from ml_engine.training import train
 
 
-# ── Clinical notes parser ────────────────────────────────────────────────────
-
 def test_parse_clinical_note_extracts_age_and_gender():
     text = (
         "### Instruction: Hospital Course: A 67-year-old male presented with chest pain. "
@@ -25,7 +23,7 @@ def test_parse_clinical_note_detects_conditions():
     assert result["diabetic"] == 1
     assert result["hypertension"] == 1
     assert result["smoker"] == 1
-    assert result["hospitalized_count"] >= 2   # regular + ICU
+    assert result["hospitalized_count"] >= 2
 
 
 def test_parse_clinical_note_loss_ratio_increases_with_severity():
@@ -37,18 +35,112 @@ def test_parse_clinical_note_loss_ratio_increases_with_severity():
         "### Instruction: A 75-year-old female with cancer, renal failure, and sepsis "
         "was admitted to the ICU and required mechanical ventilation. ### Response: ..."
     )
-    mild   = train._parse_clinical_note(mild_text)
+    mild = train._parse_clinical_note(mild_text)
     severe = train._parse_clinical_note(severe_text)
     assert severe["loss_ratio"] > mild["loss_ratio"]
 
 
 def test_parse_clinical_note_defaults_when_age_absent():
-    text = "### Instruction: Patient admitted. ### Response: ..."
-    result = train._parse_clinical_note(text)
+    result = train._parse_clinical_note("### Instruction: Patient admitted. ### Response: ...")
     assert 0 < result["age"] < 120
 
 
-# ── Dataset loading / combining ──────────────────────────────────────────────
+def test_infer_hf_schema_detects_underwriting_tabular():
+    df = pd.DataFrame(
+        {
+            "applicant_age": [38],
+            "gender": ["M"],
+            "occupation_risk": ["High"],
+            "health_score": [43.6],
+            "bmi": [22.4],
+            "smoker": [False],
+            "previous_claims_count": [1],
+            "coverage_amount": [250000],
+            "premium_calculated": [1948.96],
+        }
+    )
+    assert train.infer_hf_schema(df) == "underwriting_tabular"
+
+
+def test_infer_hf_schema_detects_insurance_charges():
+    df = pd.DataFrame(
+        {
+            "age": [33],
+            "bmi": [33.44],
+            "children": [5],
+            "sex": ["male"],
+            "smoker": ["no"],
+            "region": ["southeast"],
+            "prediction": [9271.2921],
+        }
+    )
+    assert train.infer_hf_schema(df) == "insurance_charges"
+
+
+def test_infer_hf_schema_detects_clinical_notes():
+    df = pd.DataFrame({"text": ["note"], "summary": ["summary"]})
+    assert train.infer_hf_schema(df) == "clinical_notes"
+
+
+def test_infer_hf_schema_detects_company_profiles():
+    df = pd.DataFrame(
+        {
+            "name": ["Bow Plumbing Group"],
+            "industry": ["Plastics"],
+            "followers_count": [964],
+            "associated_members_count": [66],
+            "founded_on": ['{"year": 1939}'],
+        }
+    )
+    assert train.infer_hf_schema(df) == "company_profiles"
+
+
+def test_map_underwriting_hf_dataframe_returns_aegis_fields():
+    df = pd.DataFrame(
+        {
+            "applicant_age": [38, 53],
+            "gender": ["M", "F"],
+            "occupation_risk": ["High", "Medium"],
+            "health_score": [43.6, 62.3],
+            "bmi": [22.4, 31.2],
+            "smoker": [False, True],
+            "previous_claims_count": [1, 4],
+            "coverage_amount": [250000, 100000],
+            "premium_calculated": [1948.96, 6116.35],
+        }
+    )
+
+    mapped = train.map_underwriting_hf_dataframe(df)
+
+    assert len(mapped) == 2
+    assert {"age", "avg_daily_steps", "visit_count", "lab_heart_flag", "loss_ratio"} <= set(mapped.columns)
+    assert mapped["smoker"].tolist() == [0, 1]
+    assert mapped["visit_count"].tolist() == [1.0, 4.0]
+    assert mapped["loss_ratio"].gt(0).all()
+
+
+def test_map_insurance_charge_hf_dataframe_returns_aegis_fields():
+    df = pd.DataFrame(
+        {
+            "age": [33, 58],
+            "bmi": [33.44, 25.177],
+            "children": [5, 0],
+            "sex": ["male", "male"],
+            "smoker": ["no", "no"],
+            "region": ["southeast", "northeast"],
+            "prediction": [9271.29, 11441.76],
+        }
+    )
+
+    mapped = train.map_insurance_charge_hf_dataframe(df)
+
+    assert len(mapped) == 2
+    assert {"age", "avg_daily_steps", "visit_count", "lab_heart_flag", "loss_ratio"} <= set(mapped.columns)
+    assert mapped["gender"].tolist() == ["M", "M"]
+    assert mapped["smoker"].tolist() == [0, 0]
+    assert mapped["loss_ratio"].gt(0).all()
+    assert mapped["visit_count"].between(0, 10).all()
+
 
 def test_resolve_dataset_mode_defaults_to_both():
     args = train.build_arg_parser().parse_args([])
