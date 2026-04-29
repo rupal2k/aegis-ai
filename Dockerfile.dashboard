@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.docker.txt
 COPY dashboard/ ./dashboard/
 COPY ml_engine/ ./ml_engine/
 COPY ingestion/ ./ingestion/
+COPY data/ ./data/
 
 ENV PYTHONUNBUFFERED=1
 ENV STREAMLIT_SERVER_PORT=8501
