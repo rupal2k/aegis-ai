@@ -1,6 +1,6 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
 **Last Updated**: 2026-04-29
 
@@ -132,6 +132,8 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **MLflow run auto-naming** — `_build_run_name()` derives descriptive names from data sources; retroactively renamed 3 existing runs for clarity in MLflow UI (`2caac54`)
 
 - [x] **Health insurance HF adapter + guarded retrain** - added schema support for `bubuuunel/healthylife-insurance-charge-log`, explicitly rejects company-profile HF datasets like `devadigax/linkedin-company-profile`, retrained with local 5,237 + HF 225 = 5,462 rows, MLflow run `b10e7565acbd451e92556509b52dfa6d`, full pytest `75 passed, 5 skipped`
+- [x] **UI/UX design system improvements** — Workstyle Breakdown grid (Account Review tab), risk filter pills (Upload tab), Plotly chart text fix (template clear + explicit axis overrides), expanded CSS guard-rail (metric labels, expander, subheaders), Primary-on-light logo in sidebar + login (`f61f3d8`)
+- [x] **ML pipeline hardening & artifacts update** — `_parse_clinical_note()` regex parser, `load_from_huggingface()` rewrite, `HRSScorer._normalize()` degenerate guard, CLI flags, `load_training_dataframe()` with graceful fallback, updated model artifacts (`f4b7b00`)
 
 ## 🔧 Next Steps (Post-Capstone)
 

@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-04-29
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅
 
 ---
 
@@ -935,6 +935,37 @@ Added a dedicated Hugging Face adapter for `bubuuunel/healthylife-insurance-char
 - `python -m pytest tests -q` -> 75 passed, 5 skipped
 
 ---
+
+### UI/UX Design System Improvements (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `f61f3d8`
+
+Comprehensive UI/UX pass aligned to the Aegis AI design system. Added a Workstyle Breakdown grid to the Account Review tab showing Desk/Field/Manual categories with avg loss ratio risk scores, employee counts, and mini progress bars. Added risk filter pills (All/High/Moderate/Low) to the Upload tab employee table with session state persistence. Fixed all Plotly chart text — CSS guard-rail cannot reach Plotly iframes, so the fix clears the default Plotly template and applies explicit `update_xaxes`/`update_yaxes` calls. Expanded the CSS guard-rail to cover metric labels, expander headers, subheaders, and span elements. Updated both sidebar and login logos to the Primary-on-light variant from the design system (inner shield accent layer, updated ECG pulse, corner brackets, 68×80 viewBox).
+
+#### Files changed
+- `dashboard/app.py` — CSS guard-rail expanded; sidebar + login logo updated to Primary-on-light design
+- `dashboard/currency.py` — replaced `st.caption()` with styled markdown (dark #333333)
+- `dashboard/design_helpers.py` — `apply_chart_theme()` clears Plotly template; `page_header`/`section_header` colors hardened
+- `dashboard/underwriter_view.py` — `_render_workstyle_breakdown()` added; gauge template cleared
+- `dashboard/upload_view.py` — risk filter pills + filtered table; gauge template cleared
+
+---
+
+### ML Pipeline Hardening & Artifacts Update (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `f4b7b00`
+
+Consolidated and hardened the ML training pipeline with the full clinical notes parser, HF dataset integration, and scorer hardening into a single clean commit. The `_parse_clinical_note()` regex parser extracts 15+ structured features from free-text discharge notes; `load_from_huggingface()` synthesises coherent wearable telemetry from severity scores; `HRSScorer._normalize()` guards against degenerate distributions. CLI flags (`--use-local`/`--use-hf`/`--use-both`) and `load_training_dataframe()` with graceful fallback complete the pipeline. Updated model artifacts from the latest retrain run.
+
+#### Files changed
+- `ml_engine/training/train.py` — full pipeline rewrite: note parser, HF loader, scorer hardening, CLI flags, run naming
+- `tests/test_training_pipeline.py` — parser + pipeline unit tests
+- `ml_engine/artifacts/hrs_scorer.pkl` — updated scorer artifact
+- `ml_engine/artifacts/xgb_model.pkl` — updated model artifact (retrained)
+
+---
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -964,8 +995,10 @@ Added a dedicated Hugging Face adapter for `bubuuunel/healthylife-insurance-char
 | Post-capstone | ✅ HF dataset integration + scorer hardening | ~1h | 23/23 ✅ | 1 |
 | Post-capstone | ✅ Clinical notes parser — HF source switch | ~1h | 23/23 ✅ | 1 |
 | Post-capstone | ✅ MLflow run auto-naming | ~0.2h | 23/23 ✅ | 1 |
+| Post-capstone | ✅ UI/UX design system improvements — workstyle grid, filter pills, chart text fix, primary logo | ~2h | — | 1 |
+| Post-capstone | ✅ ML pipeline hardening — clinical notes parser, HF integration, scorer guard, artifacts | ~1h | — | 1 |
 
-**Total Effort to Date**: ~39.7 hours  
-**Total Commits**: 40  
+**Total Effort to Date**: ~42.7 hours  
+**Total Commits**: 42  
 **Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 
