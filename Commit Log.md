@@ -77,3 +77,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | 24e96dd | sm update
 - 2026-04-24 | 2cd85f0 | sm update
 - 2026-04-26 | 6730057 | fix: post-commit hook — dedup guard + vault-commit skip + explicit repo context
+- 2026-04-29 | d0ef776 | feat(ml): add Hugging Face dataset support + harden scorer
