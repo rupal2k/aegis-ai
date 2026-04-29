@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
-**Last Updated**: 2026-04-29  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅
+**Last Updated**: 2026-04-29
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅
 
 ---
 
@@ -907,6 +907,34 @@ All three existing MLflow runs carried the hardcoded name `final_xgb_with_optuna
 
 ---
 
+### Insurance Charge HF Adapter + Combined Retrain (2026-04-29)
+
+**Status**: Complete  
+**MLflow Run**: `b10e7565acbd451e92556509b52dfa6d`
+
+Added a dedicated Hugging Face adapter for `bubuuunel/healthylife-insurance-charge-log` while keeping the existing GCC underwriting mapper, clinical-note parser, and local CSV pipeline intact. The loader now classifies HF datasets by schema and explicitly rejects company-profile datasets such as `devadigax/linkedin-company-profile` for underwriting training because they do not contain employee health features or a usable claim target.
+
+#### Training run
+- Local rows: 5,237
+- HF rows: 225 (`healthylife-insurance-charge-log`)
+- Combined rows: 5,462
+- Dataset mode: `both`
+
+#### Metrics
+- `train_mae`: 0.3199
+- `test_mae`: 0.3981
+- `train_rmse`: 0.4271
+- `test_rmse`: 0.5392
+- `train_r2`: 0.8000
+- `test_r2`: 0.6915
+
+#### Verification
+- `python -m pytest tests\test_training_pipeline.py -q` -> 17 passed
+- `python -m pytest tests\test_ml_engine.py -q` -> 12 passed
+- `python -m pytest tests\test_predict_api.py -q` -> 8 passed, 2 skipped
+- `python -m pytest tests -q` -> 75 passed, 5 skipped
+
+---
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -939,5 +967,5 @@ All three existing MLflow runs carried the hardcoded name `final_xgb_with_optuna
 
 **Total Effort to Date**: ~39.7 hours  
 **Total Commits**: 40  
-**Total Tests**: 23/23 ✅ (ML engine); 88 functional + security suite unchanged
+**Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 

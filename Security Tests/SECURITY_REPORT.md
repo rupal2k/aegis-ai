@@ -187,3 +187,7 @@ Previously resolved: `python-jose==3.3.0` was pinned and had 4 CVEs (CVE-2024-33
 | `nginx/nginx.conf` | TLS, HSTS, server header override |
 | `scripts/entrypoint.sh` | `--no-server-header` flag on uvicorn startup |
 | `tests/security_tests.py` | 27 automated security regression tests |
+
+---
+
+**See also:** [[Security Tests/TEST_REPORT]] | [[Phase Progress]] | [[INDEX]]

@@ -1,6 +1,6 @@
 # ML Engine Architecture — Aegis AI
 
-**Last Updated**: 2026-04-18  
+**Last Updated**: 2026-04-29
 **Phase**: 2 ✅  
 **Source Files**: `ml_engine/training/train.py`, `ml_engine/features.py`, `ml_engine/scorer.py`, `ml_engine/explainer.py`, `ml_engine/__init__.py`
 
@@ -492,6 +492,16 @@ XGBoost requires features in the exact same order as training. Storing the featu
 
 ---
 
+## Hugging Face Dataset Adapters (2026-04-29)
+
+`ml_engine/training/train.py` now supports multiple HF schema families while keeping one underwriting training pipeline:
+- `underwriting_tabular` - structured applicant-risk datasets such as the GCC underwriting rows
+- `insurance_charges` - `bubuuunel/healthylife-insurance-charge-log`, mapped from `age` / `bmi` / `sex` / `smoker` / `prediction` into Aegis-compatible telemetry, clinical proxy flags, and a proxy `loss_ratio`
+- `clinical_notes` - free-text discharge notes parsed into structured medical flags before feature engineering
+
+Datasets that only contain company metadata, such as `devadigax/linkedin-company-profile`, are detected as `company_profiles` and rejected for underwriting training. That guard prevents the trainer from silently treating business profile fields as medical risk signal.
+
+---
 ## Summary: Complete ML Inference Pipeline
 
 ```

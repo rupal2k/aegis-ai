@@ -1,6 +1,6 @@
-{
+﻿{
   "collapse-filter": true,
-  "search": "",
+  "search": "-path:\"export/\" -path:\".obsidian/\"",
   "showTags": false,
   "showAttachments": false,
   "hideUnresolved": false,
@@ -67,6 +67,6 @@
   "repelStrength": 10,
   "linkStrength": 1,
   "linkDistance": 250,
-  "scale": 0.10374774377245238,
+  "scale": 0.14545256245183497,
   "close": true
 }

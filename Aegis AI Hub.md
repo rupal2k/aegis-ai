@@ -1,6 +1,6 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ | **Deployed**: Docker + GitHub Actions CI  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
 **Last Updated**: 2026-04-29
 
@@ -88,7 +88,7 @@ All 10 bugs resolved ✅ — full root causes, code snippets, and prevention rul
 
 | Metric | Value |
 |--------|-------|
-| **Test Coverage** | 23/23 ✅ ML engine; 88 functional + security suite |
+| **Latest test run** | 75 passed, 5 skipped (`python -m pytest tests -q`) |
 | **API Endpoints** | 13 live (incl. `/auth/token` login) |
 | **Dashboard Tabs** | 7 (4 underwriter + 3 HR manager) |
 | **Currencies** | 10 (INR, USD, EUR, GBP, AED, SGD, AUD, JPY, CAD, CHF) |
@@ -130,6 +130,8 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **HF dataset integration + scorer hardening** — `load_from_huggingface()` with HF Hub support; `load_training_dataframe()` with `local`/`hf`/`both` modes and graceful fallback; `HRSScorer._normalize()` degenerate-distribution guard; `--use-local`/`--use-hf`/`--use-both` CLI flags; 7 new pipeline tests (`d0ef776`)
 - [x] **Clinical notes parser — HF source switch** — `_parse_clinical_note()` regex parser extracts age, gender, BMI, 13 condition flags, ICU, SpO2 from 19,756 discharge notes; synthesises wearable telemetry from severity; `ayush0205/clinical_data_rf` replaces previous tabular HF dataset (`818f5fd`)
 - [x] **MLflow run auto-naming** — `_build_run_name()` derives descriptive names from data sources; retroactively renamed 3 existing runs for clarity in MLflow UI (`2caac54`)
+
+- [x] **Health insurance HF adapter + guarded retrain** - added schema support for `bubuuunel/healthylife-insurance-charge-log`, explicitly rejects company-profile HF datasets like `devadigax/linkedin-company-profile`, retrained with local 5,237 + HF 225 = 5,462 rows, MLflow run `b10e7565acbd451e92556509b52dfa6d`, full pytest `75 passed, 5 skipped`
 
 ## 🔧 Next Steps (Post-Capstone)
 
