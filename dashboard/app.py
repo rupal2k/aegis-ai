@@ -492,35 +492,66 @@ code {
     font-size: 12.5px !important;
 }
 
-/* ── Captions — slightly darker than default ─────────── */
-[data-testid="stCaptionContainer"], .stCaption {
+/* ── DARK-TEXT GUARD-RAIL ─────────────────────────────────────────────────────
+   Every visible text element on the light theme (#E3E3DC bg) must be #333 or
+   darker. Rules use !important throughout — Streamlit injects its own !important
+   defaults and this block must win over them. */
+
+/* Caption / small text */
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p,
+[data-testid="stCaptionContainer"] span,
+.stCaption, .stCaption p {
     color: #222222 !important;
     font-size: 12.5px !important;
     line-height: 1.55 !important;
 }
 
-/* ── DARK-TEXT GUARD-RAIL ──────────────────────────────
-   Project rule: any user-facing text on the light theme must be #333 or
-   darker. This block defensively darkens a curated list of Streamlit
-   primitives plus Plotly tick labels so visible text never washes out,
-   even when a 3rd-party widget defaults to pale grey. */
+/* Metric — label, value, delta */
+[data-testid="stMetricLabel"],
+[data-testid="stMetricLabel"] p,
+[data-testid="stMetricLabel"] div,
+[data-testid="stMetricLabel"] label {
+    color: #333333 !important;
+    font-size: 11px !important;
+}
+[data-testid="stMetricValue"],
+[data-testid="stMetricValue"] div {
+    color: #111111 !important;
+}
+[data-testid="stMetricDelta"],
+[data-testid="stMetricDelta"] div {
+    color: #222222 !important;
+}
 
-/* Sidebar text — every label, paragraph, mono digit */
+/* Expander toggle label */
+[data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary span,
+[data-testid="stExpander"] details summary {
+    color: #111111 !important;
+}
+
+/* Subheader */
+[data-testid="stHeadingWithActionElements"] *,
+.stSubheader, .stSubheader * {
+    color: #111111 !important;
+}
+
+/* Sidebar — every text element */
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] div,
 [data-testid="stSidebar"] [data-testid="stWidgetLabel"],
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] li,
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
-    color: #111111 !important;
-}
-[data-testid="stSidebar"] .stCaption,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span,
 [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
 [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
     color: #222222 !important;
 }
 
-/* Plotly tick / legend / annotation text — dark by default */
+/* Plotly tick / legend / annotation text */
 .js-plotly-plot .plotly .xtick text,
 .js-plotly-plot .plotly .ytick text,
 .js-plotly-plot .plotly .legendtext,
@@ -539,18 +570,20 @@ code {
     color: #111111 !important;
 }
 
-/* Tab labels — non-active state */
+/* Tab labels */
 [data-testid="stTabs"] button {
     color: #222222 !important;
 }
 [data-testid="stTabs"] button[aria-selected="true"] {
     color: #111111 !important;
+    font-weight: 600 !important;
 }
 
-/* Markdown body — paragraphs and list items */
+/* Markdown body */
 [data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] li {
-    color: #222222;
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] span {
+    color: #222222 !important;
 }
 [data-testid="stMarkdownContainer"] strong,
 [data-testid="stMarkdownContainer"] b,
@@ -561,7 +594,7 @@ code {
     color: #111111 !important;
 }
 
-/* Selectbox value — make sure picked options stay readable */
+/* Selectbox */
 [data-baseweb="select"] [role="combobox"] *,
 [data-baseweb="select"] div[aria-selected],
 [data-baseweb="select"] span {
@@ -743,23 +776,22 @@ def main():
             st.markdown("""
 <div style="max-width:400px;">
 
-  <!-- Logo — canonical squared shield + ECG pulse + corner brackets
-       Source: .design-package/.../Aegis AI Logo.html · variant 01 "Primary on light" -->
+  <!-- Logo — Primary on light (design system: Aegis AI Logo - Standalone.html, variant 01) -->
   <div style="display:flex;align-items:center;gap:14px;margin-bottom:30px;">
-    <svg width="56" height="63" viewBox="0 0 80 94" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g transform="translate(0,4)">
-        <path d="M 40,4 L 72,4 Q 80,4 80,12 L 80,46 C 80,68 60,82 40,90 C 20,82 0,68 0,46 L 0,12 Q 0,4 8,4 Z" fill="#111111"/>
-        <path d="M 40,14 L 66,14 Q 72,14 72,20 L 72,44 C 72,62 56,73 40,79 C 24,73 8,62 8,44 L 8,20 Q 8,14 14,14 Z" fill="none" stroke="#C4FF00" stroke-width="1.5" opacity="0.25"/>
-        <polyline points="10,46 20,46 25,32 30,60 35,42 40,50 46,46 70,46" stroke="#C4FF00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M 8,4 L 0,4 L 0,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <path d="M 72,4 L 80,4 L 80,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <svg width="56" height="64" viewBox="0 0 68 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(0, 4)">
+        <path d="M 34,4 L 62,4 Q 68,4 68,10 L 68,40 C 68,58 51,70 34,76 C 17,70 0,58 0,40 L 0,10 Q 0,4 6,4 Z" fill="#111111"/>
+        <path d="M 34,12 L 56,12 Q 60,12 60,16 L 60,38 C 60,52 46,62 34,67 C 22,62 8,52 8,38 L 8,16 Q 8,12 12,12 Z" fill="none" stroke="#C4FF00" stroke-width="1.5" opacity="0.3"/>
+        <polyline points="10,40 18,40 22,28 26,52 30,36 34,44 38,40 58,40" stroke="#C4FF00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M 6,4 L 0,4 L 0,10" stroke="#C4FF00" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M 62,4 L 68,4 L 68,10" stroke="#C4FF00" stroke-width="1.5" fill="none" stroke-linecap="round"/>
       </g>
     </svg>
     <div>
       <div style="font-size:26px;font-weight:700;
                   font-family:'NType82','Space Grotesk',system-ui,sans-serif;
-                  color:#111;letter-spacing:-0.025em;line-height:1;text-transform:uppercase;">AEGIS&nbsp;AI</div>
-      <div style="font-size:10px;color:#222;letter-spacing:0.20em;text-transform:uppercase;
+                  color:#111111;letter-spacing:-0.025em;line-height:1;text-transform:uppercase;">AEGIS&nbsp;AI</div>
+      <div style="font-size:10px;color:#333333;letter-spacing:0.20em;text-transform:uppercase;
                   font-family:'Inter',system-ui,sans-serif;font-weight:500;margin-top:5px;">
         UNDERWRITING&nbsp;INTELLIGENCE</div>
     </div>
@@ -837,18 +869,20 @@ def main():
         st.markdown("""
 <div style="display:flex;align-items:center;gap:10px;padding:4px 0 16px;
             border-bottom:1px solid rgba(0,0,0,0.07);margin-bottom:12px;">
-    <svg width="32" height="36" viewBox="0 0 80 94" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(0,4)">
-            <path d="M 40,4 L 72,4 Q 80,4 80,12 L 80,46 C 80,68 60,82 40,90 C 20,82 0,68 0,46 L 0,12 Q 0,4 8,4 Z" fill="#111111"/>
-            <polyline points="10,46 20,46 25,32 30,60 35,42 40,50 46,46 70,46" stroke="#C4FF00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M 8,4 L 0,4 L 0,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M 72,4 L 80,4 L 80,12" stroke="#C4FF00" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Primary — on light mark (design system: Aegis AI Logo - Standalone.html, variant 01) -->
+    <svg width="34" height="40" viewBox="0 0 68 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(0, 4)">
+            <path d="M 34,4 L 62,4 Q 68,4 68,10 L 68,40 C 68,58 51,70 34,76 C 17,70 0,58 0,40 L 0,10 Q 0,4 6,4 Z" fill="#111111"/>
+            <path d="M 34,12 L 56,12 Q 60,12 60,16 L 60,38 C 60,52 46,62 34,67 C 22,62 8,52 8,38 L 8,16 Q 8,12 12,12 Z" fill="none" stroke="#C4FF00" stroke-width="1.5" opacity="0.3"/>
+            <polyline points="10,40 18,40 22,28 26,52 30,36 34,44 38,40 58,40" stroke="#C4FF00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M 6,4 L 0,4 L 0,10" stroke="#C4FF00" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M 62,4 L 68,4 L 68,10" stroke="#C4FF00" stroke-width="1.5" fill="none" stroke-linecap="round"/>
         </g>
     </svg>
     <div>
         <div style="font-size:15px;font-weight:700;font-family:'NType82','Space Grotesk',system-ui,sans-serif;
-                    color:#111;line-height:1.05;letter-spacing:-0.02em;text-transform:uppercase;">AEGIS&nbsp;AI</div>
-        <div style="font-size:9px;color:#222;letter-spacing:0.18em;text-transform:uppercase;
+                    color:#111111;line-height:1.05;letter-spacing:-0.02em;text-transform:uppercase;">AEGIS&nbsp;AI</div>
+        <div style="font-size:9px;color:#333333;letter-spacing:0.18em;text-transform:uppercase;
                     font-family:'Inter',system-ui,sans-serif;font-weight:500;margin-top:3px;">
             UNDERWRITING&nbsp;INTELLIGENCE</div>
     </div>

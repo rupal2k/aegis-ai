@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 
 from dashboard.api_client import (
     list_companies, get_company_prediction, calculate_premium,
+    get_company_employees,
 )
 from dashboard.pdf_report import generate_underwriting_report
 from dashboard.currency import fmt, fmt_crore, active_code, CURRENCIES
@@ -125,6 +126,70 @@ _DECISION_BORDER = {
     "High":     "#C42020",
     "Critical": "#8B0000",
 }
+
+
+def _render_workstyle_breakdown(company_id: str) -> None:
+    """3-column workstyle grid: Desk / Field / Manual with risk score + progress bar."""
+    employees = get_company_employees(company_id)
+    if not employees:
+        return
+
+    df_emp = pd.DataFrame(employees)
+    required_cols = {"job_category", "loss_ratio"}
+    if not required_cols.issubset(df_emp.columns):
+        return
+
+    categories = [
+        ("Desk",   "desk"),
+        ("Field",  "field"),
+        ("Manual", "manual"),
+    ]
+
+    def _risk_color(score: float) -> str:
+        if score >= 0.70:
+            return "#C42020"
+        if score >= 0.50:
+            return "#B06000"
+        return "#5A8A00"
+
+    cards_html = ""
+    for label, key in categories:
+        subset = df_emp[df_emp["job_category"] == key]
+        if subset.empty:
+            continue
+        avg_lr  = float(subset["loss_ratio"].mean())
+        count   = len(subset)
+        score   = min(avg_lr, 1.0)
+        pct     = round(score * 100)
+        color   = _risk_color(score)
+        cards_html += (
+            f'<div style="flex:1;background:#F5F5EF;border-radius:8px;padding:12px 14px;">'
+            f'<div style="font-size:12px;font-weight:600;color:#111111;'
+            f'font-family:\'Inter\',system-ui,sans-serif;">{label}</div>'
+            f'<div style="font-size:20px;font-weight:700;color:{color};'
+            f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;margin:4px 0 2px;">'
+            f'{score:.2f}</div>'
+            f'<div style="font-size:10px;color:#333333;font-family:\'Inter\',system-ui,sans-serif;">'
+            f'{count} employees</div>'
+            f'<div style="height:3px;background:rgba(0,0,0,0.08);border-radius:2px;margin-top:8px;">'
+            f'<div style="height:100%;width:{pct}%;background:{color};'
+            f'opacity:0.7;border-radius:2px;"></div>'
+            f'</div>'
+            f'</div>'
+        )
+
+    if not cards_html:
+        return
+
+    st.markdown(
+        f'<div style="margin-top:18px;">'
+        f'<div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.12em;'
+        f'margin-bottom:10px;font-weight:600;font-family:Inter,system-ui,sans-serif;">'
+        f'Workstyle Breakdown</div>'
+        f'<div style="display:flex;gap:10px;">{cards_html}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def _render_risk_drivers(drivers: list) -> None:
@@ -524,7 +589,7 @@ def render():
                 value=pred["mean_hrs"],
                 number={"font": {"color": FONT_CLR, "size": 40}},
                 gauge={
-                    "axis":    {"range": [0, 100], "tickcolor": "#999999"},
+                    "axis":    {"range": [0, 100], "tickcolor": "#333333", "tickfont": {"color": "#333333"}},
                     "bar":     {"color": ACCENT},
                     "bgcolor": PLOT_BG,
                     "steps": [
@@ -537,7 +602,10 @@ def render():
                 title={"text": "Health Risk Score", "font": {"color": FONT_CLR, "size": 14}},
             ))
             gauge.update_layout(
-                height=260, margin=dict(l=20, r=20, t=40, b=10), paper_bgcolor=PLOT_BG,
+                template={},
+                height=260, margin=dict(l=20, r=20, t=40, b=10),
+                paper_bgcolor=PLOT_BG, plot_bgcolor=PLOT_BG,
+                font=dict(color=FONT_CLR, size=12),
             )
             st.plotly_chart(gauge, use_container_width=True)
 
@@ -579,6 +647,9 @@ def render():
                 f'{mini_cards}</div></div>',
                 unsafe_allow_html=True,
             )
+
+            # Workstyle breakdown
+            _render_workstyle_breakdown(row["company_id"])
 
         st.divider()
 

@@ -216,7 +216,7 @@ def _render_results(res: dict) -> None:
             value=res["mean_hrs"],
             number={"font": {"color": FONT_CLR, "size": 36}},
             gauge={
-                "axis":    {"range": [0, 100], "tickcolor": "#999999"},
+                "axis":    {"range": [0, 100], "tickcolor": "#333333", "tickfont": {"color": "#333333"}},
                 "bar":     {"color": ACCENT},
                 "bgcolor": PLOT_BG,
                 "steps": [
@@ -229,9 +229,11 @@ def _render_results(res: dict) -> None:
             title={"text": "Mean HRS", "font": {"color": FONT_CLR, "size": 13}},
         ))
         gauge.update_layout(
+            template={},
             height=230,
             margin=dict(l=10, r=10, t=30, b=10),
-            paper_bgcolor=PLOT_BG,
+            paper_bgcolor=PLOT_BG, plot_bgcolor=PLOT_BG,
+            font=dict(color=FONT_CLR, size=12),
         )
         st.plotly_chart(gauge, use_container_width=True)
 
@@ -242,10 +244,47 @@ def _render_results(res: dict) -> None:
     )
 
     st.subheader("Employee risk scores")
-    display_df = res["df"][[
+
+    # Filter pills
+    _PILL_COLORS = {
+        "All":      ("#111111", "#E3E3DC"),
+        "High":     ("#FFFFFF", "#C42020"),
+        "Moderate": ("#FFFFFF", "#B06000"),
+        "Low":      ("#FFFFFF", "#5A8A00"),
+    }
+    filter_opts = list(_PILL_COLORS.keys())
+    if "upload_risk_filter" not in st.session_state:
+        st.session_state["upload_risk_filter"] = "All"
+
+    cols = st.columns(len(filter_opts))
+    for col, opt in zip(cols, filter_opts):
+        txt_c, bg_c = _PILL_COLORS[opt]
+        active = st.session_state["upload_risk_filter"] == opt
+        border = f"2px solid {bg_c}" if active else "2px solid transparent"
+        opacity = "1" if active else "0.45"
+        with col:
+            st.markdown(
+                f'<div style="text-align:center;padding:5px 0 6px;">'
+                f'<span style="display:inline-block;padding:4px 14px;border-radius:20px;'
+                f'background:{bg_c};color:{txt_c};font-size:11px;font-weight:600;'
+                f'letter-spacing:0.06em;border:{border};opacity:{opacity};'
+                f'font-family:Inter,system-ui,sans-serif;">{opt.upper()}</span></div>',
+                unsafe_allow_html=True,
+            )
+            if st.button(opt, key=f"pill_{opt}", use_container_width=True,
+                         help=f"Show {opt} risk employees"):
+                st.session_state["upload_risk_filter"] = opt
+                st.rerun()
+
+    active_filter = st.session_state["upload_risk_filter"]
+    raw_df = res["df"][[
         "employee_id", "age", "gender", "bmi", "smoker",
         "diabetic", "hypertension", "job_category", "hrs", "risk_band",
-    ]].rename(columns={
+    ]]
+    if active_filter != "All":
+        raw_df = raw_df[raw_df["risk_band"] == active_filter]
+
+    display_df = raw_df.rename(columns={
         "employee_id": "ID",
         "age":         "Age",
         "gender":      "Gender",
@@ -258,16 +297,19 @@ def _render_results(res: dict) -> None:
         "risk_band":   "Band",
     }).sort_values("HRS", ascending=False)
 
-    st.dataframe(
-        display_df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "HRS": st.column_config.ProgressColumn(
-                "HRS", min_value=0, max_value=100, format="%.1f",
-                help="Individual Health Risk Score — 0 (healthiest) to 100 (critical risk)"),
-        },
-    )
+    if display_df.empty:
+        st.info(f"No {active_filter.lower()} risk employees in this dataset.")
+    else:
+        st.dataframe(
+            display_df,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "HRS": st.column_config.ProgressColumn(
+                    "HRS", min_value=0, max_value=100, format="%.1f",
+                    help="Individual Health Risk Score — 0 (healthiest) to 100 (critical risk)"),
+            },
+        )
 
     pred_for_pdf = {
         "company_name":      res["company_name"],

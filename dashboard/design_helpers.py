@@ -36,16 +36,16 @@ def page_header(eyebrow: str, title: str, subtitle: str | None = None) -> None:
     The eyebrow line establishes context; the title is the page identity.
     """
     sub = (
-        f'<div style="font-size:13px;color:{NM["text_secondary"]};margin-top:6px;'
+        f'<div style="font-size:13px;color:#222222;margin-top:6px;'
         f'font-family:Inter,system-ui,sans-serif;line-height:1.55;">{subtitle}</div>'
         if subtitle else ""
     )
     st.markdown(
         f'<div style="margin:4px 0 6px;">'
-        f'<div style="font-size:10px;color:{NM["text_tertiary"]};text-transform:uppercase;'
+        f'<div style="font-size:10px;color:#333333;text-transform:uppercase;'
         f'letter-spacing:0.14em;font-weight:600;margin-bottom:6px;'
         f'font-family:Inter,system-ui,sans-serif;">{eyebrow}</div>'
-        f'<div style="font-size:28px;font-weight:700;color:{NM["text_primary"]};line-height:1.15;'
+        f'<div style="font-size:28px;font-weight:700;color:#111111;line-height:1.15;'
         f'font-family:NType82,\'Space Grotesk\',system-ui,sans-serif;letter-spacing:-0.03em;">'
         f'{title}</div>'
         f'{sub}'
@@ -57,16 +57,16 @@ def page_header(eyebrow: str, title: str, subtitle: str | None = None) -> None:
 def section_header(eyebrow: str, title: str, subtitle: str | None = None) -> None:
     """Render a consistent sub-section header (one level under page_header)."""
     sub = (
-        f'<div style="font-size:12px;color:{NM["text_secondary"]};margin-top:4px;'
+        f'<div style="font-size:12px;color:#222222;margin-top:4px;'
         f'font-family:Inter,system-ui,sans-serif;line-height:1.5;">{subtitle}</div>'
         if subtitle else ""
     )
     st.markdown(
         f'<div style="margin:4px 0 10px;">'
-        f'<div style="font-size:10px;color:{NM["text_tertiary"]};text-transform:uppercase;'
+        f'<div style="font-size:10px;color:#333333;text-transform:uppercase;'
         f'letter-spacing:0.12em;font-weight:600;margin-bottom:4px;'
         f'font-family:Inter,system-ui,sans-serif;">{eyebrow}</div>'
-        f'<div style="font-size:18px;font-weight:700;color:{NM["text_primary"]};'
+        f'<div style="font-size:18px;font-weight:700;color:#111111;'
         f'font-family:NType82,\'Space Grotesk\',system-ui,sans-serif;letter-spacing:-0.02em;'
         f'line-height:1.25;">{title}</div>'
         f'{sub}'
@@ -92,6 +92,10 @@ def apply_chart_theme(
     colors, gridlines, fonts, and margins stay consistent. Returns the fig so
     it can be chained: `st.plotly_chart(apply_chart_theme(fig), ...)`.
     """
+    # Strip the Plotly default template first so its color defaults can't bleed
+    # through — Plotly charts render inside an iframe and CSS overrides don't reach.
+    fig.update_layout(template={})
+
     layout = dict(
         plot_bgcolor=NM["bg_card"],
         paper_bgcolor=NM["bg_card"],
@@ -101,7 +105,9 @@ def apply_chart_theme(
             gridcolor=NM["grid"],
             zeroline=False,
             tickfont=dict(color=NM["text_primary"], size=12, family=NM["font_body"]),
+            tickcolor=NM["text_primary"],
             color=NM["text_primary"],
+            linecolor=NM["border_strong"],
             title_font=dict(color=NM["text_secondary"], size=12),
             title_standoff=10,
         ),
@@ -110,7 +116,9 @@ def apply_chart_theme(
             zeroline=False,
             automargin=True,
             tickfont=dict(color=NM["text_primary"], size=12, family=NM["font_body"]),
+            tickcolor=NM["text_primary"],
             color=NM["text_primary"],
+            linecolor=NM["border_strong"],
             title_font=dict(color=NM["text_secondary"], size=12),
         ),
     )
@@ -144,6 +152,21 @@ def apply_chart_theme(
         layout["legend"] = legend
 
     fig.update_layout(**layout)
+
+    # Explicit per-axis overrides — these take precedence over both template and
+    # update_layout when Plotly resolves the final render tree.
+    _tick_font = dict(color=NM["text_primary"], size=12, family=NM["font_body"])
+    _title_font = dict(color=NM["text_secondary"], size=12)
+    fig.update_xaxes(
+        tickfont=_tick_font, tickcolor=NM["text_primary"],
+        color=NM["text_primary"], title_font=_title_font,
+    )
+    fig.update_yaxes(
+        tickfont=_tick_font, tickcolor=NM["text_primary"],
+        color=NM["text_primary"], title_font=_title_font,
+        automargin=True,
+    )
+
     return fig
 
 

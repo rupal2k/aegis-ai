@@ -65,5 +65,9 @@ def sidebar_selector() -> str:
         key="currency_selector",
     )
     st.session_state["currency"] = chosen
-    st.caption("Rates are approximate mid-market.")
+    st.markdown(
+        '<div style="font-size:11px;color:#333333;margin-top:2px;'
+        'font-family:Inter,system-ui,sans-serif;">Rates are approximate mid-market.</div>',
+        unsafe_allow_html=True,
+    )
     return chosen
