@@ -95,3 +95,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-30 | ee26e94 | feat(deploy): add render.yaml + fix PORT env var for Render deployment
 - 2026-04-30 | a12c31c | fix(deploy): chmod +x entrypoint.sh — fixes exit 128 on Render
 - 2026-04-30 | 593843b | feat(deploy): add Dockerfile for Hugging Face Spaces (port 7860, UID 1000)
+- 2026-04-30 | 160158f | chore: HF Spaces deploy snapshot
