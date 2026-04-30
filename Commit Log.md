@@ -97,3 +97,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-30 | 593843b | feat(deploy): add Dockerfile for Hugging Face Spaces (port 7860, UID 1000)
 - 2026-04-30 | 160158f | chore: HF Spaces deploy snapshot
 - 2026-04-30 | b20b3a8 | chore: add .hfignore to exclude design-package fonts from HF Spaces
+- 2026-04-30 | f8b97e5 | fix(auth): raise timeout to 45s + distinguish cold-start vs bad password
