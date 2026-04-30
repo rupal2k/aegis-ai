@@ -1,8 +1,8 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ | **Deployed**: Neon + Render + Hugging Face Spaces ✅  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
-**Last Updated**: 2026-04-29
+**Last Updated**: 2026-04-30
 
 ---
 
@@ -134,12 +134,19 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **Health insurance HF adapter + guarded retrain** - added schema support for `bubuuunel/healthylife-insurance-charge-log`, explicitly rejects company-profile HF datasets like `devadigax/linkedin-company-profile`, retrained with local 5,237 + HF 225 = 5,462 rows, MLflow run `b10e7565acbd451e92556509b52dfa6d`, full pytest `75 passed, 5 skipped`
 - [x] **UI/UX design system improvements** — Workstyle Breakdown grid (Account Review tab), risk filter pills (Upload tab), Plotly chart text fix (template clear + explicit axis overrides), expanded CSS guard-rail (metric labels, expander, subheaders), Primary-on-light logo in sidebar + login (`f61f3d8`)
 - [x] **ML pipeline hardening & artifacts update** — `_parse_clinical_note()` regex parser, `load_from_huggingface()` rewrite, `HRSScorer._normalize()` degenerate guard, CLI flags, `load_training_dataframe()` with graceful fallback, updated model artifacts (`f4b7b00`)
+- [x] **Dashboard Docker fix** — added `COPY data/ ./data/` to `Dockerfile.dashboard`; fixes `ModuleNotFoundError: No module named 'data'` on container startup (`7210b0e`)
+- [x] **Design system lock (CLAUDE.md)** — 133-line `CLAUDE.md` at repo root permanently encodes color scale, banned pale greys, mandatory Plotly pattern, CSS `!important` rules, helper functions, logo variant, and Docker rebuild triggers (`7f94da0`)
+- [x] **Primary button text visibility fix** — added explicit child CSS selectors for `stBaseButton-primary *`; bumped MODEL ACTIVE card caption from `#AAAAAA` to `#CCCCCC` (`dc7d37a`)
+- [x] **Training snapshot schema fix** — 11 `lab_*` columns added to `training_snapshots` in `schema.sql`; Neon PostgreSQL table dropped and reseeded (`cf12d8b`)
+- [x] **Render deployment** — `render.yaml` Blueprint + `${PORT:-8000}` in `entrypoint.sh` + executable bit fix; FastAPI live at `https://aegis-ai-wss8.onrender.com` (`ee26e94`, `a12c31c`)
+- [x] **Hugging Face Spaces deployment** — root `Dockerfile` (port 7860, UID 1000); Streamlit dashboard live at `https://huggingface.co/spaces/Rupa2k/aegis-ai` (`593843b`)
+- [x] **Auth cold-start timeout fix** — raised login timeout to 45s, added distinct "Server is starting up" message, hardened blank `AEGIS_API_URL` env var fallback (`f8b97e5`)
 
 ## 🔧 Next Steps (Post-Capstone)
 
 - [ ] **Fix ingest RBAC gap** — add `require_company_access` to `/ingest/wearable`, `/ingest/clinical`, `/ingest/company` (hr_admin can currently inject data for other companies)
 - [ ] OAuth 2.0 / SAML authentication (replace file-based user store)
-- [ ] Deploy to cloud — see [[Aegis AI - Free Deployment Plan]] (Neon + Render + Hugging Face Spaces)
+- [x] Deploy to cloud — Neon (DB) + Render (API) + Hugging Face Spaces (dashboard) ✅ fully live 2026-04-30
 - [ ] Live FX API integration (replace static rates)
 - [ ] Real-time pipeline (Kafka streaming HRS updates)
 - [ ] Model drift monitoring + auto-retrain triggers

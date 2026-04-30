@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-04-29
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅
 
 ---
 
@@ -990,6 +990,97 @@ Trained the underwriting model on `bubuuunel/healthylife-insurance-charge-log` u
 - `python -m pytest tests\test_predict_api.py -q` -> 8 passed, 2 skipped
 
 ---
+### Dashboard Docker Fix (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `7210b0e`
+
+The `data/` directory was missing from `Dockerfile.dashboard`, causing a `ModuleNotFoundError: No module named 'data'` on container startup. Added `COPY data/ ./data/` to the dashboard image so the data module is available at runtime.
+
+#### Files changed
+- `Dockerfile.dashboard` — added `COPY data/ ./data/`
+
+---
+### Design System Lock (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `7f94da0`
+
+Created `CLAUDE.md` at the repo root to permanently encode the Aegis AI design contract. Covers the full NM color scale, banned pale greys, mandatory Plotly `apply_chart_theme()` pattern with `template={}` clear, Streamlit CSS `!important` rules, required helper functions, logo variant usage, and Docker rebuild triggers. Auto-loaded by Claude Code at every session start.
+
+#### Files changed
+- `CLAUDE.md` — 133-line design + code rules document
+
+---
+### Button Text Visibility Fix (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `dc7d37a`
+
+Primary button labels were invisible in Streamlit 1.56.0 because child `<p>` and `<span>` elements had their own injected colour overriding the parent button's CSS. Added explicit child selectors (`[data-testid="stBaseButton-primary"] *`) with `color: #C4FF00 !important`. Also bumped the MODEL ACTIVE card caption from `#AAAAAA` to `#CCCCCC` for legibility on the dark card background.
+
+#### Files changed
+- `dashboard/app.py` — primary button child CSS selectors + MODEL ACTIVE caption colour
+
+---
+### Training Snapshot Schema Fix (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `cf12d8b`
+
+Added 11 missing `lab_*` columns to the `training_snapshots` table in `schema.sql` to match the clinical notes parser output. Columns include `lab_heart_flag`, `lab_inflammation_flag`, `lab_diabetes_flag`, `lab_kidney_flag`, `lab_liver_flag`, `lab_iron_flag`, `lab_thyroid_flag`, `lab_bone_flag`, `lab_vitamin_flag`, `lab_domain_count`, and `lab_risk_score`. Neon PostgreSQL table was dropped and re-seeded.
+
+#### Files changed
+- `data/schema.sql` — 11 new `lab_*` columns + `lab_risk_score DECIMAL(5,3)`
+
+---
+### Render Deployment Setup (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `ee26e94`
+
+Added `render.yaml` Blueprint config for one-click Render deployment of the FastAPI backend. Fixed `entrypoint.sh` to use `${PORT:-8000}` so Render can inject its dynamic port. The API is now live at `https://aegis-ai-wss8.onrender.com`.
+
+#### Files changed
+- `render.yaml` — Render Blueprint: Docker runtime, free plan, health check, env var stubs
+- `scripts/entrypoint.sh` — `${PORT:-8000}` replaces hardcoded `8000`
+
+---
+### Render Entrypoint Fix (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `a12c31c`
+
+`scripts/entrypoint.sh` had git mode `100644` (not executable) causing exit code 128 on Render's Linux container. Fixed with `git update-index --chmod=+x` and a belt-and-suspenders `RUN chmod +x` in `Dockerfile.api`.
+
+#### Files changed
+- `Dockerfile.api` — `RUN chmod +x /app/scripts/entrypoint.sh` + split `chown` RUN
+- `scripts/entrypoint.sh` — file mode changed to `100755`
+
+---
+### Hugging Face Spaces Deployment (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `593843b`
+
+Added root-level `Dockerfile` for HF Spaces Docker SDK deployment. Runs on port 7860, uses UID 1000 non-root user as required by HF. Copies dashboard, ml_engine, ingestion, and data modules. Dashboard is live at `https://huggingface.co/spaces/Rupa2k/aegis-ai` and connects to the Render API via `AEGIS_API_URL` secret.
+
+#### Files changed
+- `Dockerfile` — HF Spaces image: port 7860, UID 1000, Streamlit entry point
+
+---
+### Auth Cold-Start Timeout Fix (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `f8b97e5`
+
+Render free tier sleeps after 15 minutes of inactivity and takes up to 45 seconds to cold-start. The original 10-second login timeout caused all first-load logins to silently fail with "Incorrect email or password". Raised timeout to 45s and added a distinct "Server is starting up" message to differentiate cold-start timeout from actual bad credentials. Also hardened `API_BASE` to strip whitespace and fall back to localhost if the env var is blank.
+
+#### Files changed
+- `dashboard/auth.py` — 45s timeout, `TimeoutException` handling, blank env var guard
+- `dashboard/api_client.py` — blank env var guard
+
+---
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -1021,8 +1112,15 @@ Trained the underwriting model on `bubuuunel/healthylife-insurance-charge-log` u
 | Post-capstone | ✅ MLflow run auto-naming | ~0.2h | 23/23 ✅ | 1 |
 | Post-capstone | ✅ UI/UX design system improvements — workstyle grid, filter pills, chart text fix, primary logo | ~2h | — | 1 |
 | Post-capstone | ✅ ML pipeline hardening — clinical notes parser, HF integration, scorer guard, artifacts | ~1h | — | 1 |
+| Post-capstone | ✅ Dashboard Docker fix — add data/ to image, fix ModuleNotFoundError | ~0.1h | — | 1 |
+| Post-capstone | ✅ Design system lock — CLAUDE.md with full color/Plotly/CSS rules | ~0.5h | — | 1 |
+| Post-capstone | ✅ Button text visibility fix — stBaseButton-primary child CSS selectors | ~0.3h | — | 1 |
+| Post-capstone | ✅ Training snapshot schema fix — 11 lab_* columns added, Neon reseeded | ~0.3h | — | 1 |
+| Post-capstone | ✅ Render deployment — render.yaml + PORT env var fix, API live | ~1h | — | 2 |
+| Post-capstone | ✅ HF Spaces deployment — root Dockerfile, port 7860, dashboard live | ~1h | — | 1 |
+| Post-capstone | ✅ Auth cold-start fix — 45s timeout + blank env var guard | ~0.5h | — | 1 |
 
-**Total Effort to Date**: ~42.7 hours  
-**Total Commits**: 42  
+**Total Effort to Date**: ~47.9 hours  
+**Total Commits**: 51  
 **Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 
