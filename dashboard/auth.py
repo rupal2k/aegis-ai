@@ -46,8 +46,8 @@ def login_form():
         # Preserve email so failed logins don't clear the field
         st.session_state["_login_email"] = _email
 
-        with st.spinner("Signing in…"):
-            token_data = _fetch_token(_email.lower(), pwd)
+        with st.spinner("Signing in… (first request may take up to 30s)"):
+            token_data, timed_out = _fetch_token(_email.lower(), pwd)
 
         if token_data:
             st.session_state["token"]       = token_data["access_token"]
@@ -55,6 +55,8 @@ def login_form():
             st.session_state["last_active"] = time.time()
             st.session_state.pop("_login_email", None)
             st.rerun()
+        elif timed_out:
+            st.warning("Server is starting up — please try again in a few seconds.")
         else:
             st.error("Incorrect email or password — please try again.")
 
@@ -88,18 +90,20 @@ def get_auth_headers() -> dict:
 
 # ── internals ────────────────────────────────────────────────────────────────
 
-def _fetch_token(email: str, password: str) -> dict | None:
+def _fetch_token(email: str, password: str) -> tuple[dict | None, bool]:
     try:
         r = httpx.post(
             f"{API_BASE}/auth/token",
             data={"username": email, "password": password},
-            timeout=10.0,
+            timeout=45.0,
         )
         if r.status_code == 200:
-            return r.json()
+            return r.json(), False
+    except httpx.TimeoutException:
+        return None, True
     except httpx.RequestError:
         pass
-    return None
+    return None, False
 
 
 def _decode_token_claims(token: str) -> dict:
