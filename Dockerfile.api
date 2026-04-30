@@ -18,7 +18,8 @@ COPY data/ ./data/
 COPY scripts/ ./scripts/
 COPY config/ ./config/
 
-# Change ownership of files to appuser
+# Ensure entrypoint is executable and set ownership
+RUN chmod +x /app/scripts/entrypoint.sh
 RUN chown -R appuser:appuser /app
 
 # Switch to non-root user
