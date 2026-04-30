@@ -93,3 +93,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-29 | dc7d37a | fix(ui): force #C4FF00 text on primary button children + MODEL ACTIVE card
 - 2026-04-30 | cf12d8b | fix(schema): add lab_* columns to training_snapshots — sync with clinical notes parser
 - 2026-04-30 | ee26e94 | feat(deploy): add render.yaml + fix PORT env var for Render deployment
+- 2026-04-30 | a12c31c | fix(deploy): chmod +x entrypoint.sh — fixes exit 128 on Render
