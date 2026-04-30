@@ -79,8 +79,19 @@ CREATE TABLE IF NOT EXISTS training_snapshots (
     premium_share       DECIMAL(12,2),
     loss_ratio          DECIMAL(8,4),
     high_risk           SMALLINT,
-    chronic_count       SMALLINT,
-    computed_at         TIMESTAMPTZ DEFAULT NOW()
+    chronic_count           SMALLINT,
+    lab_heart_flag          SMALLINT     DEFAULT 0,
+    lab_inflammation_flag   SMALLINT     DEFAULT 0,
+    lab_diabetes_flag       SMALLINT     DEFAULT 0,
+    lab_kidney_flag         SMALLINT     DEFAULT 0,
+    lab_liver_flag          SMALLINT     DEFAULT 0,
+    lab_iron_flag           SMALLINT     DEFAULT 0,
+    lab_thyroid_flag        SMALLINT     DEFAULT 0,
+    lab_bone_flag           SMALLINT     DEFAULT 0,
+    lab_vitamin_flag        SMALLINT     DEFAULT 0,
+    lab_domain_count        SMALLINT     DEFAULT 0,
+    lab_risk_score          DECIMAL(5,3) DEFAULT 0,
+    computed_at             TIMESTAMPTZ  DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_snapshots_company ON training_snapshots(company_id);
