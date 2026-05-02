@@ -18,15 +18,15 @@ from dashboard.design_helpers import (
 )
 
 COLOR_MAP = {
-    "Low":      "#5A8A00",
-    "Moderate": "#B06000",
-    "High":     "#C42020",
-    "Critical": "#8B0000",
+    "Low":      "#22c55e",
+    "Moderate": "#eab308",
+    "High":     "#f97316",
+    "Critical": "#ef4444",
 }
-PLOT_BG  = "#FFFFFF"
-GRID_CLR = "rgba(0,0,0,0.06)"
-FONT_CLR = "#111111"
-ACCENT   = "#9BC800"
+PLOT_BG  = "#111c30"
+GRID_CLR = "rgba(255,255,255,0.05)"
+FONT_CLR = "#94a3b8"
+ACCENT   = "#84cc16"
 
 
 def _chart_defaults():
@@ -149,7 +149,7 @@ def render():
                 annotations=[dict(
                     text=f"<b>{pred['mean_hrs']:.1f}</b><br><span style='font-size:10px'>HRS</span>",
                     x=0.5, y=0.5, font_size=18, showarrow=False,
-                    font=dict(color="#111111", family="LetteraMonoLL, Space Mono, monospace"),
+                    font=dict(color="#f0f4f8", family="LetteraMonoLL, Space Mono, monospace"),
                 )],
             )
             fig.update_traces(textinfo="percent+label", textfont_size=12, textposition="outside")
@@ -189,7 +189,7 @@ def render():
                 emp_df, x="age", y="loss_ratio", color="chronic_count",
                 labels={"age": "Age", "loss_ratio": "Loss ratio",
                         "chronic_count": "Chronic conditions"},
-                color_continuous_scale=["#5A8A00", "#B06000", "#C42020"],
+                color_continuous_scale=["#22c55e", "#eab308", "#ef4444"],
             )
             apply_chart_theme(scatter, height=340, x_title="Age", y_title="Loss ratio")
             scatter.update_traces(marker=dict(size=6, opacity=0.75))
@@ -253,7 +253,7 @@ def render():
                     title=action,
                     body=impact,
                     stat=fmt(est),
-                    stat_color="#5A7A00",
+                    stat_color="#84cc16",
                     mono_footer="EST. ANNUAL SAVINGS",
                     variant="accent" if rank == 1 else "default",
                 ))
@@ -313,20 +313,20 @@ def render():
             x=["Current premium", "Wellness savings", "Projected premium"],
             y=[cur_y, -sav_y, proj_y],
             measure=["absolute", "relative", "total"],
-            decreasing={"marker": {"color": "#22C55E"}},
-            totals={"marker": {"color": "#9BC800"}},
-            increasing={"marker": {"color": "#374151"}},
+            decreasing={"marker": {"color": "#22c55e"}},
+            totals={"marker": {"color": "#84cc16"}},
+            increasing={"marker": {"color": "#475569"}},
             connector={"line": {"color": GRID_CLR, "width": 1, "dash": "dot"}},
             textposition="outside",
             text=[f"{sym}{cur_y:,.0f}", f"-{sym}{sav_y:,.0f}", f"{sym}{proj_y:,.0f}"],
-            textfont={"family": "LetteraMonoLL, Space Mono, monospace", "size": 12, "color": "#111111"},
+            textfont={"family": "LetteraMonoLL, Space Mono, monospace", "size": 12, "color": "#94a3b8"},
         ))
         apply_chart_theme(wf, height=340, show_legend=False)
         wf.update_layout(
             title=dict(text=f"Premium savings breakdown ({code})",
-                       font=dict(color="#111111", size=14)),
+                       font=dict(color="#94a3b8", size=14)),
             yaxis=dict(gridcolor=GRID_CLR, tickprefix=sym, showgrid=True,
-                       tickfont=dict(color="#111111", family="Inter, system-ui, sans-serif")),
+                       tickfont=dict(color="#64748b", family="Inter, system-ui, sans-serif")),
         )
         st.plotly_chart(wf, use_container_width=True)
 

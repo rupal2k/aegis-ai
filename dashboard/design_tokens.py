@@ -1,75 +1,72 @@
 """
-Aegis AI — Design system tokens (NullMask).
+Aegis AI — Design system tokens (NullMask) — Particle Dark edition.
 
 Exports `DESIGN_TOKENS_CSS` — a `<style>` block that defines `--nm-*` CSS custom
 properties for colors, typography, spacing, radii, and shadows. Inject this
 BEFORE any other dashboard CSS so new modules can reference `var(--nm-*)`.
 
-Source: design package at .design-package/project/colors_and_type.css
-        (Aegis AI Design System — April 2026)
+Source: design package + Aegis AI Dashboard.html (dark/Particle Dark variant, May 2026)
 
-This module is purely additive. It does NOT override existing inline colors in
-already-built views. Existing hardcoded values continue to work unchanged.
+Theme: Deep navy dark with lime-green accent (#84cc16) and traffic-light risk colors.
 """
 
 DESIGN_TOKENS_CSS = """
 <style>
 :root {
-    /* ── Backgrounds ─────────────────────────────── */
-    --nm-bg-page:        #E3E3DC;
-    --nm-bg-base:        #EAEAE4;
-    --nm-bg-raised:      #F2F2EC;
-    --nm-bg-card:        #FFFFFF;
-    --nm-bg-card-hover:  #F8F8F4;
-    --nm-bg-inverse:     #111111;
+    /* ── Backgrounds (dark navy) ─────────────────────── */
+    --nm-bg-page:        #070b14;
+    --nm-bg-base:        #0d1424;
+    --nm-bg-raised:      #111c30;
+    --nm-bg-card:        #111c30;
+    --nm-bg-card-hover:  #162036;
+    --nm-bg-inverse:     #FFFFFF;
 
-    /* ── Brand accent (chartreuse) ───────────────── */
-    --nm-accent:         #C4FF00;
-    --nm-accent-bright:  #D4FF33;
-    --nm-accent-dim:     #9BC800;
-    --nm-accent-ghost:   rgba(196,255,0,0.14);
-    --nm-accent-border:  rgba(150,200,0,0.40);
-    --nm-accent-text:    #5A7A00;
+    /* ── Brand accent (lime green — dark-mode optimised) */
+    --nm-accent:         #84cc16;
+    --nm-accent-bright:  #a3e635;
+    --nm-accent-dim:     #65a30d;
+    --nm-accent-ghost:   rgba(132,204,22,0.12);
+    --nm-accent-border:  rgba(132,204,22,0.25);
+    --nm-accent-text:    #84cc16;
 
-    /* ── Text ─────────────────────────────────────
-       Project rule (feedback_text_colors): user-facing text on the light
-       theme MUST be dark. The token scale is now strict-dark:
-         --nm-text-primary   (#111) — headings, key values
-         --nm-text-secondary (#222) — body copy, muted-but-readable
-         --nm-text-tertiary  (#333) — eyebrow labels, captions
-       --nm-text-muted (#999) is reserved for DARK/INVERSE surfaces only. */
-    --nm-text-primary:   #111111;
-    --nm-text-secondary: #222222;
-    --nm-text-tertiary:  #333333;
-    --nm-text-muted:     #999999;
-    --nm-text-inverse:   #FFFFFF;
-    --nm-text-accent:    #5A7A00;
+    /* ── Text (light on dark) ────────────────────────── */
+    --nm-text-primary:   #f0f4f8;
+    --nm-text-secondary: #94a3b8;
+    --nm-text-tertiary:  #64748b;
+    --nm-text-muted:     #475569;
+    --nm-text-inverse:   #111111;
+    --nm-text-accent:    #84cc16;
 
-    /* ── Borders ─────────────────────────────────── */
-    --nm-border-subtle:  rgba(0,0,0,0.05);
-    --nm-border-default: rgba(0,0,0,0.08);
-    --nm-border-strong:  rgba(0,0,0,0.16);
-    --nm-border-accent:  rgba(150,200,0,0.40);
+    /* ── Borders (subtle on dark) ────────────────────── */
+    --nm-border-subtle:  rgba(255,255,255,0.04);
+    --nm-border-default: rgba(255,255,255,0.07);
+    --nm-border-strong:  rgba(255,255,255,0.14);
+    --nm-border-accent:  rgba(132,204,22,0.25);
 
-    /* ── Semantic ────────────────────────────────── */
-    --nm-success:        #5A8A00;
-    --nm-warning:        #B06000;
-    --nm-error:          #C42020;
-    --nm-error-dark:     #8B0000;
-    --nm-info:           #0060B0;
+    /* ── Traffic-light risk semantic ─────────────────── */
+    --nm-risk-low:       #22c55e;
+    --nm-risk-moderate:  #eab308;
+    --nm-risk-high:      #f97316;
+    --nm-risk-critical:  #ef4444;
 
-    /* ── Shadows / elevation ─────────────────────── */
-    --nm-shadow-sm:      0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
-    --nm-shadow-md:      0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
-    --nm-shadow-lg:      0 8px 28px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.06);
-    --nm-shadow-accent:  0 4px 20px rgba(196,255,0,0.30);
+    /* ── General semantic ────────────────────────────── */
+    --nm-success:        #22c55e;
+    --nm-warning:        #eab308;
+    --nm-error:          #ef4444;
+    --nm-info:           #60a5fa;
 
-    /* ── Type families ───────────────────────────── */
+    /* ── Shadows / elevation ─────────────────────────── */
+    --nm-shadow-sm:      0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
+    --nm-shadow-md:      0 4px 12px rgba(0,0,0,0.40), 0 2px 4px rgba(0,0,0,0.20);
+    --nm-shadow-lg:      0 8px 28px rgba(0,0,0,0.50), 0 3px 8px rgba(0,0,0,0.20);
+    --nm-shadow-accent:  0 4px 20px rgba(132,204,22,0.25);
+
+    /* ── Type families ───────────────────────────────── */
     --nm-font-display:   'NType82', 'Space Grotesk', system-ui, sans-serif;
     --nm-font-body:      'Inter', system-ui, sans-serif;
     --nm-font-mono:      'LetteraMonoLL', 'Space Mono', monospace;
 
-    /* ── Type scale ──────────────────────────────── */
+    /* ── Type scale ──────────────────────────────────── */
     --nm-text-2xs:       0.625rem;
     --nm-text-xs:        0.75rem;
     --nm-text-sm:        0.875rem;
@@ -83,25 +80,25 @@ DESIGN_TOKENS_CSS = """
     --nm-text-6xl:       3.75rem;
     --nm-text-7xl:       4.5rem;
 
-    /* ── Weights ─────────────────────────────────── */
+    /* ── Weights ─────────────────────────────────────── */
     --nm-weight-light:   300;
     --nm-weight-regular: 400;
     --nm-weight-medium:  500;
     --nm-weight-bold:    700;
 
-    /* ── Line heights ────────────────────────────── */
+    /* ── Line heights ────────────────────────────────── */
     --nm-leading-tight:  0.95;
     --nm-leading-snug:   1.1;
     --nm-leading-normal: 1.5;
     --nm-leading-relaxed:1.75;
 
-    /* ── Tracking ────────────────────────────────── */
+    /* ── Tracking ────────────────────────────────────── */
     --nm-tracking-tight: -0.03em;
     --nm-tracking-snug:  -0.015em;
     --nm-tracking-wide:  0.05em;
     --nm-tracking-caps:  0.12em;
 
-    /* ── Spacing (8px grid) ──────────────────────── */
+    /* ── Spacing (8px grid) ──────────────────────────── */
     --nm-space-1:   0.25rem;
     --nm-space-2:   0.5rem;
     --nm-space-3:   0.75rem;
@@ -113,57 +110,86 @@ DESIGN_TOKENS_CSS = """
     --nm-space-12:  3rem;
     --nm-space-16:  4rem;
 
-    /* ── Radii ───────────────────────────────────── */
+    /* ── Radii ───────────────────────────────────────── */
     --nm-radius-sm:   4px;
     --nm-radius-md:   8px;
     --nm-radius-lg:   12px;
     --nm-radius-xl:   16px;
     --nm-radius-pill: 9999px;
 }
+
+/* ── Micro-interaction keyframes ─────────────────────── */
+@keyframes nm-fadeIn  { from { opacity:0; transform:translateY(8px); }  to { opacity:1; transform:translateY(0); } }
+@keyframes nm-slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+@keyframes nm-countUp { from { opacity:0; transform:scale(0.85); }       to { opacity:1; transform:scale(1); } }
+@keyframes nm-pulseRing {
+  0%,100% { box-shadow: 0 0 0 0 rgba(132,204,22,0.40); }
+  50%      { box-shadow: 0 0 0 6px rgba(132,204,22,0); }
+}
+@keyframes nm-criticalPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.40); }
+  50%      { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+}
+@keyframes nm-gaugeSweep {
+  from { stroke-dashoffset: 339; }
+  to   { stroke-dashoffset: var(--gauge-offset); }
+}
 </style>
 """
 
 
-# Python-side convenience constants for plotly / matplotlib that can't read CSS vars.
-# Keep these in sync with the CSS above.
+# Python-side convenience constants for Plotly / Matplotlib (can't read CSS vars).
+# Synced with the CSS above — dark palette edition.
 NM = {
-    "bg_page":        "#E3E3DC",
-    "bg_base":        "#EAEAE4",
-    "bg_raised":      "#F2F2EC",
-    "bg_card":        "#FFFFFF",
-    "bg_inverse":     "#111111",
+    # Backgrounds
+    "bg_page":        "#070b14",
+    "bg_base":        "#0d1424",
+    "bg_raised":      "#111c30",
+    "bg_card":        "#111c30",
+    "bg_card_hover":  "#162036",
+    "bg_inverse":     "#FFFFFF",
 
-    "accent":         "#C4FF00",
-    "accent_bright":  "#D4FF33",
-    "accent_dim":     "#9BC800",
-    "accent_text":    "#5A7A00",
-    "accent_ghost":   "rgba(196,255,0,0.14)",
-    "accent_border":  "rgba(150,200,0,0.40)",
+    # Accent — lime green
+    "accent":         "#84cc16",
+    "accent_bright":  "#a3e635",
+    "accent_dim":     "#65a30d",
+    "accent_text":    "#84cc16",
+    "accent_ghost":   "rgba(132,204,22,0.12)",
+    "accent_border":  "rgba(132,204,22,0.25)",
 
-    "text_primary":   "#111111",
-    "text_secondary": "#222222",
-    "text_tertiary":  "#333333",
-    "text_inverse":   "#FFFFFF",
+    # Text — light on dark
+    "text_primary":   "#f0f4f8",
+    "text_secondary": "#94a3b8",
+    "text_tertiary":  "#64748b",
+    "text_inverse":   "#111111",
 
-    "border_default": "rgba(0,0,0,0.08)",
-    "border_strong":  "rgba(0,0,0,0.16)",
-    "grid":           "rgba(0,0,0,0.06)",
+    # Borders
+    "border_default": "rgba(255,255,255,0.07)",
+    "border_strong":  "rgba(255,255,255,0.14)",
+    "grid":           "rgba(255,255,255,0.05)",
 
-    "success":        "#5A8A00",
-    "warning":        "#B06000",
-    "error":          "#C42020",
-    "error_dark":     "#8B0000",
-    "info":           "#0060B0",
+    # Traffic-light risk colors
+    "risk_low":       "#22c55e",
+    "risk_moderate":  "#eab308",
+    "risk_high":      "#f97316",
+    "risk_critical":  "#ef4444",
 
+    # Semantic
+    "success":        "#22c55e",
+    "warning":        "#eab308",
+    "error":          "#ef4444",
+    "info":           "#60a5fa",
+
+    # Typography
     "font_display":   "NType82, 'Space Grotesk', system-ui, sans-serif",
     "font_body":      "Inter, system-ui, sans-serif",
     "font_mono":      "LetteraMonoLL, 'Space Mono', monospace",
 }
 
-# Risk-band → color mapping (canonical for all charts)
+# Risk-band → traffic-light color mapping (canonical for all charts + badges)
 RISK_BAND_COLORS = {
-    "Low":      "#5A8A00",
-    "Moderate": "#B06000",
-    "High":     "#C42020",
-    "Critical": "#8B0000",
+    "Low":      "#22c55e",
+    "Moderate": "#eab308",
+    "High":     "#f97316",
+    "Critical": "#ef4444",
 }

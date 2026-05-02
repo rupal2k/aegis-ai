@@ -17,16 +17,16 @@ from dashboard.design_helpers import (
 )
 from dashboard.data_normalizer import detect_format, to_feature_records
 
-PLOT_BG  = "#FFFFFF"
-GRID_CLR = "rgba(0,0,0,0.06)"
-FONT_CLR = "#111111"
-ACCENT   = "#9BC800"
+PLOT_BG  = "#111c30"
+GRID_CLR = "rgba(255,255,255,0.05)"
+FONT_CLR = "#94a3b8"
+ACCENT   = "#84cc16"
 
 COLOR_MAP = {
-    "Low":      "#5A8A00",
-    "Moderate": "#B06000",
-    "High":     "#C42020",
-    "Critical": "#8B0000",
+    "Low":      "#22c55e",
+    "Moderate": "#eab308",
+    "High":     "#f97316",
+    "Critical": "#ef4444",
 }
 
 FORMAT_LABELS = {
@@ -247,10 +247,10 @@ def _render_results(res: dict) -> None:
 
     # Filter pills
     _PILL_COLORS = {
-        "All":      ("#111111", "#E3E3DC"),
-        "High":     ("#FFFFFF", "#C42020"),
-        "Moderate": ("#FFFFFF", "#B06000"),
-        "Low":      ("#FFFFFF", "#5A8A00"),
+        "All":      ("#94a3b8", "#162036"),
+        "High":     ("#0d1424", "#f97316"),
+        "Moderate": ("#0d1424", "#eab308"),
+        "Low":      ("#0d1424", "#22c55e"),
     }
     filter_opts = list(_PILL_COLORS.keys())
     if "upload_risk_filter" not in st.session_state:

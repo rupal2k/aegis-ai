@@ -20,22 +20,22 @@ from dashboard.design_helpers import (
 )
 
 COLOR_MAP = {
-    "Low":      "#5A8A00",
-    "Moderate": "#B06000",
-    "High":     "#C42020",
-    "Critical": "#8B0000",
+    "Low":      "#22c55e",
+    "Moderate": "#eab308",
+    "High":     "#f97316",
+    "Critical": "#ef4444",
 }
-PLOT_BG  = "#FFFFFF"
-GRID_CLR = "rgba(0,0,0,0.06)"
-FONT_CLR = "#111111"
-ACCENT   = "#9BC800"
+PLOT_BG  = "#111c30"
+GRID_CLR = "rgba(255,255,255,0.05)"
+FONT_CLR = "#94a3b8"
+ACCENT   = "#84cc16"
 
 # Severity badge config: (label, text color, border color, bg color)
 _ALERT_BADGE = {
-    "high": ("CRITICAL",  "#8B0000", "rgba(139,0,0,0.25)",    "rgba(139,0,0,0.05)"),
-    "med":  ("HIGH RISK", "#B06000", "rgba(176,96,0,0.25)",   "rgba(176,96,0,0.05)"),
-    "info": ("WATCH",     "#0060B0", "rgba(0,96,176,0.25)",   "rgba(0,96,176,0.05)"),
-    "ok":   ("FAVORABLE", "#5A8A00", "rgba(90,138,0,0.25)",   "rgba(90,138,0,0.05)"),
+    "high": ("CRITICAL",  "#ef4444", "rgba(239,68,68,0.30)",    "rgba(239,68,68,0.08)"),
+    "med":  ("HIGH RISK", "#f97316", "rgba(249,115,22,0.30)",   "rgba(249,115,22,0.08)"),
+    "info": ("WATCH",     "#60a5fa", "rgba(96,165,250,0.30)",   "rgba(96,165,250,0.08)"),
+    "ok":   ("FAVORABLE", "#22c55e", "rgba(34,197,94,0.30)",    "rgba(34,197,94,0.08)"),
 }
 
 
@@ -65,7 +65,7 @@ def _render_alerts(df):
         return
 
     st.markdown(
-        '<div style="font-size:11px;color:#222;text-transform:uppercase;letter-spacing:0.10em;'
+        '<div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.10em;'
         'font-weight:600;margin-bottom:10px;">Portfolio alerts</div>',
         unsafe_allow_html=True,
     )
@@ -80,10 +80,10 @@ def _render_alerts(df):
                 st.markdown(
                     f'<div style="background:{bg};border:1px solid {border};border-left:3px solid {color};'
                     f'border-radius:8px;padding:12px 14px;margin-bottom:2px;">'
-                    f'<span style="background:{color};color:#fff;font-size:9px;font-weight:700;'
+                    f'<span style="background:{color};color:#0d1424;font-size:9px;font-weight:700;'
                     f'letter-spacing:0.08em;text-transform:uppercase;padding:2px 8px;border-radius:20px;">'
                     f'{badge_label}</span>'
-                    f'<div style="font-size:12px;color:#222;line-height:1.45;margin-top:8px;">{text}</div>'
+                    f'<div style="font-size:12px;color:#f0f4f8;line-height:1.45;margin-top:8px;">{text}</div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -108,23 +108,23 @@ def _chart_defaults():
         margin=dict(l=0, r=20, t=24, b=40),
         legend=dict(
             orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
-            font=dict(color="#111111", size=12, family="Inter, system-ui, sans-serif"),
+            font=dict(color="#94a3b8", size=12, family="Inter, system-ui, sans-serif"),
             title=dict(
                 text="Risk band",
-                font=dict(color="#111111", size=11, family="Inter, system-ui, sans-serif"),
+                font=dict(color="#94a3b8", size=11, family="Inter, system-ui, sans-serif"),
             ),
-            bgcolor="rgba(255,255,255,0.85)",
-            bordercolor="rgba(0,0,0,0.10)",
+            bgcolor="rgba(13,20,36,0.85)",
+            bordercolor="rgba(255,255,255,0.10)",
             borderwidth=1,
         ),
     )
 
 
 _DECISION_BORDER = {
-    "Low":      "#5A8A00",
-    "Moderate": "#B06000",
-    "High":     "#C42020",
-    "Critical": "#8B0000",
+    "Low":      "#22c55e",
+    "Moderate": "#eab308",
+    "High":     "#f97316",
+    "Critical": "#ef4444",
 }
 
 
@@ -146,11 +146,13 @@ def _render_workstyle_breakdown(company_id: str) -> None:
     ]
 
     def _risk_color(score: float) -> str:
-        if score >= 0.70:
-            return "#C42020"
-        if score >= 0.50:
-            return "#B06000"
-        return "#5A8A00"
+        if score >= 0.80:
+            return "#ef4444"
+        if score >= 0.60:
+            return "#f97316"
+        if score >= 0.30:
+            return "#eab308"
+        return "#22c55e"
 
     cards_html = ""
     for label, key in categories:
@@ -163,17 +165,17 @@ def _render_workstyle_breakdown(company_id: str) -> None:
         pct     = round(score * 100)
         color   = _risk_color(score)
         cards_html += (
-            f'<div style="flex:1;background:#F5F5EF;border-radius:8px;padding:12px 14px;">'
-            f'<div style="font-size:12px;font-weight:600;color:#111111;'
+            f'<div style="flex:1;background:#162036;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 14px;">'
+            f'<div style="font-size:12px;font-weight:600;color:#f0f4f8;'
             f'font-family:\'Inter\',system-ui,sans-serif;">{label}</div>'
             f'<div style="font-size:20px;font-weight:700;color:{color};'
             f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;margin:4px 0 2px;">'
             f'{score:.2f}</div>'
-            f'<div style="font-size:10px;color:#333333;font-family:\'Inter\',system-ui,sans-serif;">'
+            f'<div style="font-size:10px;color:#94a3b8;font-family:\'Inter\',system-ui,sans-serif;">'
             f'{count} employees</div>'
-            f'<div style="height:3px;background:rgba(0,0,0,0.08);border-radius:2px;margin-top:8px;">'
+            f'<div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:8px;">'
             f'<div style="height:100%;width:{pct}%;background:{color};'
-            f'opacity:0.7;border-radius:2px;"></div>'
+            f'opacity:0.8;border-radius:2px;"></div>'
             f'</div>'
             f'</div>'
         )
@@ -183,7 +185,7 @@ def _render_workstyle_breakdown(company_id: str) -> None:
 
     st.markdown(
         f'<div style="margin-top:18px;">'
-        f'<div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.12em;'
+        f'<div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.12em;'
         f'margin-bottom:10px;font-weight:600;font-family:Inter,system-ui,sans-serif;">'
         f'Workstyle Breakdown</div>'
         f'<div style="display:flex;gap:10px;">{cards_html}</div>'
@@ -204,19 +206,19 @@ def _render_risk_drivers(drivers: list) -> None:
         rows_html += (
             f'<div style="margin-bottom:14px;">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">'
-            f'<span style="font-size:12px;color:#222;font-family:\'Inter\',system-ui,sans-serif;">'
-            f'<span style="font-size:10px;color:#222222;margin-right:6px;">{i:02d}</span>{d["feature"]}</span>'
-            f'<span style="font-size:12px;font-weight:600;color:#111;'
+            f'<span style="font-size:12px;color:#94a3b8;font-family:\'Inter\',system-ui,sans-serif;">'
+            f'<span style="font-size:10px;color:#64748b;margin-right:6px;">{i:02d}</span>{d["feature"]}</span>'
+            f'<span style="font-size:12px;font-weight:600;color:#f0f4f8;'
             f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{d["importance"]:.3f}</span>'
             f'</div>'
-            f'<div style="height:6px;background:rgba(0,0,0,0.06);border-radius:3px;">'
+            f'<div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;">'
             f'<div style="height:100%;width:{pct}%;'
-            f'background:linear-gradient(90deg,#9BC800,#C4FF00);border-radius:3px;"></div>'
+            f'background:linear-gradient(90deg,#65a30d,#84cc16);border-radius:3px;"></div>'
             f'</div>'
             f'</div>'
         )
     st.markdown(
-        f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:12px;'
+        f'<div style="background:#111c30;border:1px solid rgba(255,255,255,0.07);border-radius:12px;'
         f'padding:20px 22px;">{rows_html}</div>',
         unsafe_allow_html=True,
     )
@@ -224,31 +226,31 @@ def _render_risk_drivers(drivers: list) -> None:
 
 def _render_decision_card(prem: dict, base_premium: float, risk_band: str) -> None:
     """Branded underwriting decision card with risk-band accent border."""
-    border_color = _DECISION_BORDER.get(risk_band, "#9BC800")
+    border_color = _DECISION_BORDER.get(risk_band, "#84cc16")
     rec = prem.get("recommendation", "N/A")
     adj = fmt(prem["adjusted_premium"])
     adj_pct = prem["adjustment_pct"]
     base_fmt = fmt(base_premium)
     sign = "▲" if adj_pct > 0 else ("▼" if adj_pct < 0 else "—")
-    sign_color = "#EF4444" if adj_pct > 0 else ("#22C55E" if adj_pct < 0 else "#222222")
+    sign_color = "#ef4444" if adj_pct > 0 else ("#22c55e" if adj_pct < 0 else "#94a3b8")
     st.markdown(
-        f'<div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);'
+        f'<div style="background:#111c30;border:1px solid rgba(255,255,255,0.07);'
         f'border-left:4px solid {border_color};border-radius:10px;padding:20px 24px;margin-bottom:16px;">'
-        f'<div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.12em;'
+        f'<div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.12em;'
         f'font-weight:600;margin-bottom:10px;">Underwriting Decision</div>'
-        f'<div style="font-size:14px;color:#111;font-weight:600;'
+        f'<div style="font-size:14px;color:#f0f4f8;font-weight:600;'
         f'font-family:\'NType82\',\'Space Grotesk\',system-ui,sans-serif;margin-bottom:14px;'
         f'line-height:1.4;">{rec}</div>'
         f'<div style="display:flex;gap:32px;">'
-        f'<div><div style="font-size:10px;color:#222222;margin-bottom:2px;">Adjusted premium</div>'
-        f'<div style="font-size:18px;font-weight:700;color:#111;'
+        f'<div><div style="font-size:10px;color:#64748b;margin-bottom:2px;">Adjusted premium</div>'
+        f'<div style="font-size:18px;font-weight:700;color:#f0f4f8;'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{adj}</div></div>'
-        f'<div><div style="font-size:10px;color:#222222;margin-bottom:2px;">vs base premium</div>'
+        f'<div><div style="font-size:10px;color:#64748b;margin-bottom:2px;">vs base premium</div>'
         f'<div style="font-size:18px;font-weight:700;color:{sign_color};'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">'
         f'{sign} {abs(adj_pct):.2f}%</div></div>'
-        f'<div><div style="font-size:10px;color:#222222;margin-bottom:2px;">Base premium</div>'
-        f'<div style="font-size:16px;font-weight:500;color:#222;'
+        f'<div><div style="font-size:10px;color:#64748b;margin-bottom:2px;">Base premium</div>'
+        f'<div style="font-size:16px;font-weight:500;color:#94a3b8;'
         f'font-family:\'LetteraMonoLL\',\'Space Mono\',monospace;">{base_fmt}</div></div>'
         f'</div>'
         f'</div>',
@@ -350,9 +352,9 @@ def render():
             variant="accent",
             badge=f"{spotlight['risk_band'].upper()} RISK · TOP OF BOOK",
             stat=f"{spotlight['mean_hrs']:.1f}",
-            stat_color={"Critical": "#8B0000", "High": "#C42020",
-                        "Moderate": "#B06000", "Low": "#5A8A00"}.get(
-                            spotlight["risk_band"], "#5A7A00"),
+            stat_color={"Critical": "#ef4444", "High": "#f97316",
+                        "Moderate": "#eab308", "Low": "#22c55e"}.get(
+                            spotlight["risk_band"], "#84cc16"),
             title=spotlight["company_name"],
             body=(f"{int(spotlight['employees']):,} employees · {spotlight['industry']} · "
                   f"premium adjustment {spotlight['adjustment_pct']:+.2f}%"),
@@ -402,9 +404,9 @@ def render():
             x_title="Health Risk Score (HRS)",
         )
         fig.add_vline(
-            x=50, line_width=1.5, line_dash="dot", line_color="rgba(0,0,0,0.30)",
+            x=50, line_width=1.5, line_dash="dot", line_color="rgba(255,255,255,0.20)",
             annotation_text="Benchmark 50", annotation_position="top right",
-            annotation_font=dict(size=11, color="#333333"),
+            annotation_font=dict(size=11, color="#64748b"),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -453,8 +455,8 @@ def render():
             active_parts.append(f'Search: "{search_val.strip()}"')
         active_parts.append(f"Currency: {code}")
         pill_style = (
-            "background:rgba(0,0,0,0.06);padding:2px 10px;"
-            "border-radius:20px;font-size:11px;color:#222;"
+            "background:rgba(255,255,255,0.06);padding:2px 10px;"
+            "border-radius:20px;font-size:11px;color:#94a3b8;"
         )
         pills_html = " &nbsp;·&nbsp; ".join(
             f'<span style="{pill_style}">{p}</span>' for p in active_parts
@@ -527,10 +529,10 @@ def render():
                 sel_name = display_df.iloc[sel_idx]["Company"]
 
                 st.markdown(
-                    f'<div style="background:#F5F5EF;border:1px solid rgba(0,0,0,0.08);'
+                    f'<div style="background:#162036;border:1px solid rgba(255,255,255,0.08);'
                     f'border-radius:8px;padding:10px 16px;margin-top:4px;">'
-                    f'<span style="font-size:12px;font-weight:600;color:#111;">{sel_name}</span>'
-                    f'<span style="font-size:12px;color:#333333;margin-left:8px;">— row selected</span>'
+                    f'<span style="font-size:12px;font-weight:600;color:#f0f4f8;">{sel_name}</span>'
+                    f'<span style="font-size:12px;color:#94a3b8;margin-left:8px;">— row selected</span>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -587,19 +589,19 @@ def render():
             gauge = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=pred["mean_hrs"],
-                number={"font": {"color": FONT_CLR, "size": 40}},
+                number={"font": {"color": "#f0f4f8", "size": 40}},
                 gauge={
-                    "axis":    {"range": [0, 100], "tickcolor": "#333333", "tickfont": {"color": "#333333"}},
+                    "axis":    {"range": [0, 100], "tickcolor": "#475569", "tickfont": {"color": "#64748b"}},
                     "bar":     {"color": ACCENT},
-                    "bgcolor": PLOT_BG,
+                    "bgcolor": "#0d1424",
                     "steps": [
-                        {"range": [0,  30],  "color": "rgba(34,197,94,0.10)"},
-                        {"range": [30, 60],  "color": "rgba(245,158,11,0.10)"},
-                        {"range": [60, 80],  "color": "rgba(239,68,68,0.10)"},
-                        {"range": [80, 100], "color": "rgba(153,27,27,0.15)"},
+                        {"range": [0,  30],  "color": "rgba(34,197,94,0.12)"},
+                        {"range": [30, 60],  "color": "rgba(234,179,8,0.10)"},
+                        {"range": [60, 80],  "color": "rgba(249,115,22,0.10)"},
+                        {"range": [80, 100], "color": "rgba(239,68,68,0.14)"},
                     ],
                 },
-                title={"text": "Health Risk Score", "font": {"color": FONT_CLR, "size": 14}},
+                title={"text": "Health Risk Score", "font": {"color": "#94a3b8", "size": 14}},
             ))
             gauge.update_layout(
                 template={},
@@ -640,7 +642,7 @@ def render():
             )
             st.markdown(
                 f'<div style="margin-top:10px;">'
-                f'<div style="font-size:10px;color:#333333;text-transform:uppercase;letter-spacing:0.12em;'
+                f'<div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.12em;'
                 f'margin-bottom:10px;font-weight:600;font-family:Inter,system-ui,sans-serif;">'
                 f'Risk Band Breakdown</div>'
                 f'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">'
@@ -697,9 +699,9 @@ def render():
         hist.add_vrect(x0=80, x1=100, fillcolor="rgba(153,27,27,0.09)",  layer="below", line_width=0)
         for x, label in [(30, "Moderate"), (60, "High"), (80, "Critical")]:
             hist.add_vline(
-                x=x, line_width=1, line_dash="dot", line_color="rgba(0,0,0,0.20)",
+                x=x, line_width=1, line_dash="dot", line_color="rgba(255,255,255,0.15)",
                 annotation_text=label, annotation_position="top left",
-                annotation_font=dict(size=10, color="#222222"),
+                annotation_font=dict(size=10, color="#64748b"),
             )
         st.plotly_chart(hist, use_container_width=True)
 
