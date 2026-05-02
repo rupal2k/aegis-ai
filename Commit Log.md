@@ -99,3 +99,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-30 | b20b3a8 | chore: add .hfignore to exclude design-package fonts from HF Spaces
 - 2026-04-30 | f8b97e5 | fix(auth): raise timeout to 45s + distinguish cold-start vs bad password
 - 2026-05-02 | 370cc0d | feat(ui): implement Particle Dark design theme across dashboard
+- 2026-05-02 | f07a550 | fix(docker): replace curl with Python in dashboard HEALTHCHECK
