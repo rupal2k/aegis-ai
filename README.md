@@ -1,3 +1,12 @@
+---
+title: Aegis AI
+emoji: 🛡️
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # Aegis AI — Dynamic Group Insurance Underwriting Platform
 
 ![CI](https://github.com/rupal2k/aegis-ai/workflows/CI/badge.svg)
