@@ -100,3 +100,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-30 | f8b97e5 | fix(auth): raise timeout to 45s + distinguish cold-start vs bad password
 - 2026-05-02 | 370cc0d | feat(ui): implement Particle Dark design theme across dashboard
 - 2026-05-02 | f07a550 | fix(docker): replace curl with Python in dashboard HEALTHCHECK
+- 2026-05-02 | 7bd65ac | chore: add HF Spaces YAML front matter to README
