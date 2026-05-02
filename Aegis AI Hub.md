@@ -1,6 +1,6 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ | **Deployed**: Neon + Render + Hugging Face Spaces ✅  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ | **Deployed**: Neon + Render + Hugging Face Spaces ✅  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
 **Last Updated**: 2026-05-02
 
@@ -142,6 +142,7 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **Hugging Face Spaces deployment** — root `Dockerfile` (port 7860, UID 1000); Streamlit dashboard live at `https://huggingface.co/spaces/Rupa2k/aegis-ai` (`593843b`)
 - [x] **Auth cold-start timeout fix** — raised login timeout to 45s, added distinct "Server is starting up" message, hardened blank `AEGIS_API_URL` env var fallback (`f8b97e5`)
 - [x] **Particle Dark design theme** — full dark-navy dashboard (Particle Dark edition): `design_tokens.py` rewritten (`#070b14`/`#111c30`/`#84cc16`), animated SVG arc gauge, traffic-light risk colors, six CSS micro-animation keyframes, all 7 dashboard modules migrated (`370cc0d`)
+- [x] **Dashboard healthcheck fix** — `Dockerfile.dashboard` HEALTHCHECK now uses Python urllib instead of curl (not present in slim image); all containers now show `healthy` (`f07a550`)
 
 ## 🔧 Next Steps (Post-Capstone)
 

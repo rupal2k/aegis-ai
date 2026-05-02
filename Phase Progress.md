@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-05-02
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅
 
 ---
 
@@ -1098,6 +1098,17 @@ Full replacement of the light NullMask palette with the **Particle Dark** design
 - `dashboard/currency.py` — sidebar caption `#333333` → `#64748b`
 
 ---
+### Dashboard Healthcheck Fix (2026-05-02)
+
+**Status**: ✅ Complete  
+**Commit**: `f07a550`
+
+`Dockerfile.dashboard` used `curl` in its `HEALTHCHECK` directive, but `curl` is not installed in the `python:3.11-slim` base image. The health probe always failed, leaving the `aegis-dashboard` container permanently `unhealthy` despite the app being fully functional. Replaced with a Python stdlib `urllib.request` call which requires no extra packages. Also extended `start-period` from 10s to 30s to account for Streamlit's startup time.
+
+#### Files changed
+- `Dockerfile.dashboard` — `HEALTHCHECK` directive: `curl` → `python -c "import urllib.request; ..."`, `--timeout=5s` → `10s`, `--start-period=10s` → `30s`
+
+---
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -1137,8 +1148,9 @@ Full replacement of the light NullMask palette with the **Particle Dark** design
 | Post-capstone | ✅ HF Spaces deployment — root Dockerfile, port 7860, dashboard live | ~1h | — | 1 |
 | Post-capstone | ✅ Auth cold-start fix — 45s timeout + blank env var guard | ~0.5h | — | 1 |
 | Post-capstone | ✅ Particle Dark design theme — dark-navy palette, traffic-light risk, micro-animations, animated SVG gauge, all 7 dashboard files migrated | ~3h | — | 1 |
+| Post-capstone | ✅ Dashboard healthcheck fix — replace curl with Python urllib in Dockerfile.dashboard HEALTHCHECK | ~0.1h | — | 1 |
 
-**Total Effort to Date**: ~50.9 hours  
-**Total Commits**: 52  
+**Total Effort to Date**: ~51.0 hours  
+**Total Commits**: 53  
 **Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 
