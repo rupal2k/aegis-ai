@@ -39,3 +39,33 @@ Rewrote `Aegis AI - Presentation.md` with NullMask light design system:
 - Deleted temp `aegis_presentation_print.html` and empty `aegis_ai_presentation.pdf` from Desktop
 - Docker prune: no dangling images or volumes
 
+---
+
+## 2026-05-02 — Particle Dark design theme
+
+Applied the **Particle Dark** design template fetched from the Aegis AI Dashboard prototype. Full dark-navy theme across all 7 dashboard files in a single session.
+
+### What changed (commit `370cc0d`)
+
+**`design_tokens.py`** — complete rewrite to dark palette:
+- Page background `#070b14`, card/raised `#111c30`, page base `#0d1424`
+- Lime green accent `#84cc16` (replacing chartreuse `#C4FF00`)
+- Traffic-light risk system: Low `#22c55e` / Moderate `#eab308` / High `#f97316` / Critical `#ef4444`
+- Six CSS keyframes: `nm-fadeIn`, `nm-slideIn`, `nm-countUp`, `nm-pulseRing`, `nm-criticalPulse`, `nm-gaugeSweep`
+
+**`design_helpers.py`** — new components added:
+- `hrs_gauge_html()` — animated 270° SVG arc gauge with unique per-instance keyframe IDs (avoids animation collision when multiple gauges appear on one page)
+- `hrs_badge_html()` — traffic-light pulsing dot badge
+- `metric_card_dark()` — dark card with 2px gradient top border and `nm-countUp` animation
+- `shap_waterfall_html()` — bidirectional SHAP bars (green left/orange-red right with centre axis)
+
+**`app.py`** — full dark CSS guard-rail, login + sidebar HTML migrated, Model Active card with `nm-pulseRing` dot
+
+**All 5 view files** (`underwriter_view.py`, `hr_view.py`, `upload_view.py`, `currency.py`) — `COLOR_MAP`, `PLOT_BG`, `FONT_CLR`, `ACCENT` constants updated; all inline HTML migrated to dark backgrounds and light text.
+
+### Docker & Git
+- Docker dashboard image rebuilt from scratch
+- Container restarted (`aegis-dashboard`)
+- Pushed to GitHub `origin/main`
+- Vault synced and pushed to `origin/vault`
+

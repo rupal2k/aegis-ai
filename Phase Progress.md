@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
-**Last Updated**: 2026-04-29
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅
+**Last Updated**: 2026-05-02
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅
 
 ---
 
@@ -1081,6 +1081,23 @@ Render free tier sleeps after 15 minutes of inactivity and takes up to 45 second
 - `dashboard/api_client.py` — blank env var guard
 
 ---
+### Particle Dark Design Theme (2026-05-02)
+
+**Status**: ✅ Complete  
+**Commit**: `370cc0d`
+
+Full replacement of the light NullMask palette with the **Particle Dark** design template — a deep-navy dark theme sourced from the Aegis AI Dashboard Particle Dark prototype. `design_tokens.py` was rewritten with the new dark palette (`#070b14` page, `#111c30` cards, `#84cc16` lime accent) and six CSS micro-animation keyframes. `design_helpers.py` gained `hrs_gauge_html()` (animated 270° SVG arc gauge with unique per-instance animation IDs), `hrs_badge_html()` (traffic-light pulsing badge), `metric_card_dark()`, and `shap_waterfall_html()`. All five dashboard modules were migrated to dark backgrounds and light text with the traffic-light risk system (Low `#22c55e` / Moderate `#eab308` / High `#f97316` / Critical `#ef4444`).
+
+#### Files changed
+- `dashboard/design_tokens.py` — full dark palette rewrite; `DESIGN_TOKENS_CSS` with `--nm-*` CSS vars; six keyframes
+- `dashboard/design_helpers.py` — `hrs_gauge_html()`, `hrs_badge_html()`, `metric_card_dark()`, `shap_waterfall_html()`; updated `apply_chart_theme()`, `risk_band_pill()`, `page_header()`, `card()`
+- `dashboard/app.py` — full dark CSS guard-rail; micro-animation keyframes; login + sidebar HTML migrated; Model Active card with `nm-pulseRing` dot and `#84cc16`
+- `dashboard/underwriter_view.py` — traffic-light `COLOR_MAP`; dark chart constants; workstyle breakdown, decision card, risk drivers, gauge all migrated; benchmark vlines, filter pills, row-selected card
+- `dashboard/hr_view.py` — traffic-light `COLOR_MAP`; dark chart constants; waterfall chart colors and text
+- `dashboard/upload_view.py` — traffic-light `COLOR_MAP`; dark chart constants; filter pill colors
+- `dashboard/currency.py` — sidebar caption `#333333` → `#64748b`
+
+---
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -1119,8 +1136,9 @@ Render free tier sleeps after 15 minutes of inactivity and takes up to 45 second
 | Post-capstone | ✅ Render deployment — render.yaml + PORT env var fix, API live | ~1h | — | 2 |
 | Post-capstone | ✅ HF Spaces deployment — root Dockerfile, port 7860, dashboard live | ~1h | — | 1 |
 | Post-capstone | ✅ Auth cold-start fix — 45s timeout + blank env var guard | ~0.5h | — | 1 |
+| Post-capstone | ✅ Particle Dark design theme — dark-navy palette, traffic-light risk, micro-animations, animated SVG gauge, all 7 dashboard files migrated | ~3h | — | 1 |
 
-**Total Effort to Date**: ~47.9 hours  
-**Total Commits**: 51  
+**Total Effort to Date**: ~50.9 hours  
+**Total Commits**: 52  
 **Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 
