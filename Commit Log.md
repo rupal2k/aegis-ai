@@ -101,3 +101,4 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-05-02 | 370cc0d | feat(ui): implement Particle Dark design theme across dashboard
 - 2026-05-02 | f07a550 | fix(docker): replace curl with Python in dashboard HEALTHCHECK
 - 2026-05-02 | 7bd65ac | chore: add HF Spaces YAML front matter to README
+- 2026-05-02 | 355d887 | feat: HF Spaces deploy — Particle Dark theme
