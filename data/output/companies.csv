@@ -1,0 +1,21 @@
+company_id,company_name,industry,city,employee_count,risk_profile,base_premium
+COMP_001,TechNova Solutions,IT/Software,Nagpur,182,0.26148358575852354,919100
+COMP_002,Bharat Steel Works,Manufacturing,Sambalpur,100,0.7360803150715285,973400
+COMP_003,QuickServe Retail,Retail,Kolhapur,201,0.5695328904540097,1183100
+COMP_004,MediPlus Hospitals,Healthcare,Bongaigaon,210,0.4707360699364569,568500
+COMP_005,GreenField Agriculture,Agriculture,Gudivada,388,0.45933853061835395,1042000
+COMP_006,UrbanLogix Transport,Logistics,Patna,240,0.5632381134975296,855500
+COMP_007,DataSpark Analytics,Analytics,Tiruchirappalli,393,0.1,1172800
+COMP_008,ClearView Finance,Finance,Muzaffarpur,554,0.4165258777677832,508200
+COMP_009,BuildRight Construction,Construction,Kishanganj,590,0.7200367755076635,497500
+COMP_010,EduNext Learning,Education,Bongaigaon,269,0.3680315214016579,1110100
+COMP_011,SafeNet Insurance,Insurance,Muzaffarnagar,323,0.31189320928323716,789000
+COMP_012,PrimeFood Industries,Food Processing,Giridih,100,0.6077645812796906,688800
+COMP_013,CloudBridge IT,IT/Software,Chennai,246,0.1581296268988935,1151300
+COMP_014,SwiftBank Services,Banking,Bhusawal,419,0.45835965280932867,1023500
+COMP_015,AeroTech Manufacturing,Manufacturing,Alwar,446,0.766419000040331,477500
+COMP_016,RetailMax Group,Retail,Thrissur,114,0.6606595410227318,1034900
+COMP_017,Pinnacle Pharma,Pharma,Kota,160,0.43757814384722327,707300
+COMP_018,HorizonEnergy,Energy,Nadiad,469,0.4645409445020285,661300
+COMP_019,MegaMart,Retail,Secunderabad,185,0.5176973997278073,1054500
+COMP_020,GlobalConnect BPO,BPO,Mahbubnagar,241,0.6546660094956037,829700
