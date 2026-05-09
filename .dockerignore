@@ -8,12 +8,9 @@ __pycache__/
 .env
 tests/
 *.md
-data/output/*
-!data/output/companies.csv
-!data/output/employees.csv
-!data/output/telemetry.csv
-!data/output/clinical_events.csv
-!data/output/training_dataset.csv
+# Exclude only real user upload data — committed synthetic CSVs are included
+data/output/real_user_training.csv
+data/output/upload_doc_*.csv
 mlflow.db
 mlruns/
 .vscode/
