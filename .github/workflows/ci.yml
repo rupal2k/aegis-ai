@@ -90,7 +90,7 @@ jobs:
       - name: Train model (abbreviated for CI)
         env:
           AEGIS_CI_FAST: "1"
-        run: python -m ml_engine.training.train
+        run: python -m ml_engine.training.train --no-hf
 
       - name: Run ML engine tests
         run: python -m pytest tests/test_ml_engine.py -v
