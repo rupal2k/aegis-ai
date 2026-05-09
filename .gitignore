@@ -29,4 +29,18 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Internal dev tools — never commit
 CLAUDE.md
+.claude/
+.codex-security-tools/
+
+# User data and credentials — never commit
+config/users.json
+
+# Security scan reports — reveal vulnerabilities, keep local only
+security_report.json
+security_test_results.txt
+SECURITY_TEST_SUMMARY.txt
+SECURITY_REPORT.md
+pip-audit-report-current.json
