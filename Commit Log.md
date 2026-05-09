@@ -17,6 +17,12 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | caa6e93 | feat: NullMask UI redesign + Swagger CSP fix
 - 2026-04-24 | ff04d4d | feat: NullMask design system — alerts, mini-cards, avatar, AI recommendations
 - 2026-04-24 | bd13c22 | fix: improve HR dashboard chart visuals — waterfall colors + donut center label
+- 2026-05-09 | 9b88d17 | fix: upgrade python-multipart to clear CVE-2026-42561, add env var fallback for user store
+- 2026-05-09 | c2832c4 | fix(ci): use hardcoded CI-only postgres credentials, remove secrets dependency for DB
+- 2026-05-09 | a3cb0ba | fix(render): remove COPY config/ from Dockerfile — users loaded via AEGIS_USERS_JSON env var
+- 2026-05-09 | 9784df5 | fix(ci): fix Set up environment step — remove !! from placeholder, use expressions not bash vars
+- 2026-05-09 | c24fb17 | fix(ci): move all env vars to job-level env block — eliminate Set up environment step
+- 2026-05-09 | 3449d6c | fix(ci): pass --no-hf to training step — skip HuggingFace download in CI
 - 2026-05-09 | b2bb8fa | security: remove CLAUDE.md from repo, add to .gitignore
 - 2026-05-09 | 55a33fb | security: remove sensitive and internal files from public repo
 - 2026-05-09 | 61ab39d | chore: remove unnecessary and sensitive files from public repo

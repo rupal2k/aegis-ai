@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-05-02
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅ + CI & Render Fixes ✅
 
 ---
 
@@ -1109,6 +1109,21 @@ Full replacement of the light NullMask palette with the **Particle Dark** design
 - `Dockerfile.dashboard` — `HEALTHCHECK` directive: `curl` → `python -c "import urllib.request; ..."`, `--timeout=5s` → `10s`, `--start-period=10s` → `30s`
 
 ---
+### CI & Render Deployment Fixes (2026-05-09)
+
+**Status**: ✅ Complete  
+**Commits**: `9b88d17`, `c2832c4`, `a3cb0ba`, `9784df5`, `c24fb17`, `3449d6c`
+
+Fixed a cascade of CI and Render deployment failures caused by the security cleanup removing `config/users.json` and `.env` from the repo. Upgraded `python-multipart` to clear CVE-2026-42561 (unblocked pip-audit). Rewired GitHub Actions to use hardcoded CI-only Postgres credentials, job-level env blocks (eliminating fragile shell escaping), and `--no-hf` training flag to skip HuggingFace downloads on CI runners. Removed `COPY config/` from `Dockerfile.api` (directory no longer in repo) and added `AEGIS_USERS_JSON` + `HASH_SALT` env var declarations to `render.yaml`.
+
+#### Files changed
+- `requirements.docker.txt` — `python-multipart` 0.0.26 → 0.0.27 (CVE-2026-42561)
+- `ingestion/auth/users.py` — env var fallback: reads `AEGIS_USERS_JSON` when `config/users.json` absent
+- `Dockerfile.api` — removed `COPY config/ ./config/` (dir untracked after security cleanup)
+- `render.yaml` — added `HASH_SALT` and `AEGIS_USERS_JSON` env var declarations
+- `.github/workflows/ci.yml` — hardcoded CI postgres, job-level env block, `--no-hf` training flag
+
+---
 ### Repo Security Audit & Cleanup (2026-05-09)
 
 **Status**: ✅ Complete  
@@ -1166,8 +1181,9 @@ Comprehensive audit of public GitHub repo to identify and remove sensitive/inter
 | Post-capstone | ✅ Particle Dark design theme — dark-navy palette, traffic-light risk, micro-animations, animated SVG gauge, all 7 dashboard files migrated | ~3h | — | 1 |
 | Post-capstone | ✅ Dashboard healthcheck fix — replace curl with Python urllib in Dockerfile.dashboard HEALTHCHECK | ~0.1h | — | 1 |
 | Post-capstone | ✅ Repo security audit & cleanup — removed CLAUDE.md, .env, config/users.json, .codex-security-tools/, security reports, ML artifacts, health CSVs, wrong-project files | ~0.5h | — | 3 |
+| Post-capstone | ✅ CI & Render deployment fixes — CVE fix, CI postgres, env block, --no-hf training, Dockerfile COPY fix, render.yaml env vars | ~1h | — | 6 |
 
-**Total Effort to Date**: ~51.5 hours  
-**Total Commits**: 56  
+**Total Effort to Date**: ~52.5 hours  
+**Total Commits**: 62  
 **Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 
