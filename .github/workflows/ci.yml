@@ -44,9 +44,9 @@ jobs:
     needs: security
 
     env:
-      DATABASE_URL: postgresql://aegis_ci:aegis_ci_pass@localhost:5432/aegis_test
-      HASH_SALT: ${{ secrets.HASH_SALT || 'ci_hash_salt_placeholder' }}
-      SECRET_KEY: ${{ secrets.SECRET_KEY || 'ci_secret_key_placeholder_32chars_x' }}
+      DATABASE_URL: postgresql://aegis_ci:${{ secrets.CI_DB_PASSWORD }}@localhost:5432/aegis_test
+      HASH_SALT: ${{ secrets.HASH_SALT }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
       AEGIS_USERS_JSON: ${{ secrets.AEGIS_USERS_JSON }}
       MLFLOW_TRACKING_URI: file:./mlruns
 
@@ -55,7 +55,7 @@ jobs:
         image: postgres:15-alpine
         env:
           POSTGRES_USER: aegis_ci
-          POSTGRES_PASSWORD: aegis_ci_pass
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
           POSTGRES_DB: aegis_test
         ports:
           - 5432:5432
