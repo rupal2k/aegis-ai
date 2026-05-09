@@ -17,6 +17,9 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-04-24 | caa6e93 | feat: NullMask UI redesign + Swagger CSP fix
 - 2026-04-24 | ff04d4d | feat: NullMask design system — alerts, mini-cards, avatar, AI recommendations
 - 2026-04-24 | bd13c22 | fix: improve HR dashboard chart visuals — waterfall colors + donut center label
+- 2026-05-09 | b2bb8fa | security: remove CLAUDE.md from repo, add to .gitignore
+- 2026-05-09 | 55a33fb | security: remove sensitive and internal files from public repo
+- 2026-05-09 | 61ab39d | chore: remove unnecessary and sensitive files from public repo
 - 2026-04-24 | 9b0ce1f | feat: add 4 NullMask isometric illustrations across dashboard pages
 - 2026-04-24 | 5dfbe76 | fix: render SVG illustrations via base64 data URI instead of raw inline SVG
 - 2026-04-24 | b6afd7c | fix: use correct Plotly Waterfall color API — decreasing/totals/increasing dicts
