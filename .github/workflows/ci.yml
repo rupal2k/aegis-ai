@@ -79,15 +79,11 @@ jobs:
           pip install -r requirements.docker.txt
 
       - name: Set up environment
-        env:
-          HASH_SALT: ${{ secrets.HASH_SALT }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          AEGIS_USERS_JSON: ${{ secrets.AEGIS_USERS_JSON }}
         run: |
           echo "DATABASE_URL=postgresql://aegis_ci:aegis_ci_pass@localhost:5432/aegis_test" >> $GITHUB_ENV
-          echo "HASH_SALT=${HASH_SALT:-ci_hash_salt_placeholder}" >> $GITHUB_ENV
-          echo "SECRET_KEY=${SECRET_KEY:-ci_secret_key_placeholder_32chars!!}" >> $GITHUB_ENV
-          echo "AEGIS_USERS_JSON=$AEGIS_USERS_JSON" >> $GITHUB_ENV
+          echo "HASH_SALT=${{ secrets.HASH_SALT || 'ci_hash_salt_placeholder' }}" >> $GITHUB_ENV
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY || 'ci_secret_key_placeholder_32chars_x' }}" >> $GITHUB_ENV
+          printf 'AEGIS_USERS_JSON=%s\n' '${{ secrets.AEGIS_USERS_JSON }}' >> $GITHUB_ENV
 
       - name: Generate synthetic data
         run: python data/generate.py
