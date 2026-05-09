@@ -48,6 +48,7 @@ jobs:
       HASH_SALT: ${{ secrets.HASH_SALT || 'ci_hash_salt_placeholder' }}
       SECRET_KEY: ${{ secrets.SECRET_KEY || 'ci_secret_key_placeholder_32chars_x' }}
       AEGIS_USERS_JSON: ${{ secrets.AEGIS_USERS_JSON }}
+      MLFLOW_TRACKING_URI: file:./mlruns
 
     services:
       postgres:
