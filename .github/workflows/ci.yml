@@ -77,10 +77,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           HASH_SALT: ${{ secrets.HASH_SALT }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          AEGIS_USERS_JSON: ${{ secrets.AEGIS_USERS_JSON }}
         run: |
           echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
           echo "HASH_SALT=$HASH_SALT" >> $GITHUB_ENV
           echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
+          echo "AEGIS_USERS_JSON=$AEGIS_USERS_JSON" >> $GITHUB_ENV
 
       - name: Generate synthetic data
         run: python data/generate.py
