@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
-**Last Updated**: 2026-04-22  
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅
+**Last Updated**: 2026-05-10
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅ + CI & Render Fixes ✅ + Production Cold-Start & Rate Limiter Fixes ✅ + Local-First ML Workflow ✅
 
 ---
 
@@ -261,10 +261,8 @@ Email: hr@bharatsteel.com      | Role: hr_admin    | Company: COMP_002 | Passwor
 | BUG-006: Dashboard connection refused | `localhost` doesn't resolve cross-container | Read `AEGIS_API_URL` env var |
 | BUG-007: Metric text invisible | Light theme config + no explicit color CSS | Full dark mode overhaul |
 
-### Dark Mode Implementation
-- `.streamlit/config.toml`: `base="dark"`, `backgroundColor="#0d0d0f"`
-- Explicit `[data-testid="stMetricValue"]` CSS — immune to theme inheritance issues
-- Chart colors updated: `PLOT_BG="#1c1c1e"`, `FONT_CLR="#f5f5f7"`, `ACCENT="#0a84ff"`
+### Theme Note
+Dark mode implemented in Phase 6 was later replaced by the NullMask light theme (see Post-Capstone section below).
 
 ### Key Technical Decisions
 - `requirements.docker.txt` created separately — original `requirements.txt` is UTF-16 encoded (spaces between every character), pip cannot parse it
@@ -303,15 +301,8 @@ dashboard starts (depends_on: api)
 | `test_normalizer.py` | 7 | SHA-256 hashing, clamping, wearable/clinical normalisation |
 | `test_predict_api.py` | 10 | Prediction endpoints, SHAP drivers, premium API |
 
-### Dark Mode Colour Palette
-| Token | Value | Usage |
-|-------|-------|-------|
-| Page background | `#0d0d0f` | `.stApp` |
-| Card / sidebar | `#1c1c1e` | Metric cards, sidebar |
-| Border | `#3a3a3c` | Card borders, dividers, grid lines |
-| Primary text | `#f5f5f7` | Headings, metric values |
-| Muted text | `#aeaeb2` | Labels, captions |
-| Accent | `#0a84ff` | iOS-style blue, charts, progress bars |
+### Current Colour Palette (NullMask — see Post-Capstone below)
+Dark mode palette was replaced. See NullMask UI Redesign section for current tokens.
 
 ---
 
@@ -487,6 +478,768 @@ tests/security_tests.py               — 25 security tests (all passing)
 
 ---
 
+### NullMask UI Redesign (2026-04-24)
+
+**Status**: ✅ Complete
+
+#### What Changed
+Reverted the Phase 6 dark mode and applied the **NullMask Design System** — a light warm-gray B2B aesthetic with Space Grotesk typography, chartreuse accent `#C4FF00`, and an ∅ SVG logo mark. The redesign makes the dashboard look production-ready without changing any backend behaviour.
+
+#### Design Tokens
+| Token | Value | Usage |
+|-------|-------|-------|
+| Page background | `#E3E3DC` | `.stApp` |
+| Card background | `#FFFFFF` | Metric cards |
+| Sidebar background | `#EAEAE4` | Sidebar panel |
+| Border | `rgba(0,0,0,0.07)` | Cards, dividers |
+| Primary text | `#111111` | Headings, metric values |
+| Muted text | `#999999` | Labels, captions |
+| Accent (UI) | `#C4FF00` | Tab underline, logo mark |
+| Accent (charts) | `#9BC800` | Bar charts, gauge bar |
+| Grid lines | `rgba(0,0,0,0.06)` | Plotly chart grids |
+
+#### Files Changed
+| File | Change |
+|------|--------|
+| `.streamlit/config.toml` | `base="light"`, `primaryColor="#C4FF00"`, `backgroundColor="#E3E3DC"`, `secondaryBackgroundColor="#EAEAE4"`, `textColor="#111111"` |
+| `dashboard/app.py` | Full CSS block rewrite with NullMask tokens; Google Fonts import (Space Grotesk, Inter, JetBrains Mono); ∅ SVG logo mark on login page + sidebar; dark "Model Active" badge with chartreuse pulse dot |
+| `dashboard/underwriter_view.py` | `PLOT_BG="#FFFFFF"`, `ACCENT="#9BC800"`, `FONT_CLR="#111111"`, `GRID_CLR="rgba(0,0,0,0.06)"`, light translucent gauge step colours |
+| `dashboard/hr_view.py` | Same colour constants; scatter scale `["#22C55E","#F59E0B","#EF4444"]`; waterfall `decreasing=#22C55E`, `increasing=#EF4444`, `totals=ACCENT` |
+| `dashboard/upload_view.py` | Same colour constants; gauge step colours updated to light translucent variants |
+| `dashboard/auth.py` | "Sign in to continue" text colour `#999999` |
+
+#### Key UI Elements Added
+- **Login page**: centred ∅ SVG logo (black 52×52px rounded square, chartreuse crosshair circle), Space Grotesk wordmark, subtitle in `#999`
+- **Sidebar header**: ∅ logo mark (32px), "Aegis AI" bold + "Underwriting Platform" caption
+- **Model status badge**: dark `#111` rounded box, green `#C4FF00` pulse dot, "Model Active" label, "XGBoost v2.1 · SHAP enabled"
+- **Metric cards**: white, 12px radius, 1px border, subtle drop shadow
+- **Tab active underline**: chartreuse `#C4FF00`
+- **Download buttons**: black fill `#111111`, white text
+
+#### Risk Colour Map (unchanged semantics, updated hues)
+| Band | Colour |
+|------|--------|
+| Low | `#22C55E` |
+| Moderate | `#F59E0B` |
+| High | `#EF4444` |
+| Critical | `#991B1B` |
+
+---
+
+### Swagger UI CSP Fix (2026-04-24)
+
+**Status**: ✅ Complete
+
+#### Problem
+`http://localhost:8000/docs` displayed a blank page. FastAPI's Swagger UI fetches its JavaScript and CSS from `cdn.jsdelivr.net`, but the security headers middleware enforced `script-src 'self'` on every route — including `/docs` — blocking all external scripts.
+
+#### Root Cause
+`ingestion/main.py` security middleware applied a single global CSP:
+```python
+"Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+```
+This blocked `cdn.jsdelivr.net` everywhere, including the Swagger and ReDoc routes.
+
+#### Fix
+Middleware now checks the request path and relaxes CSP only for doc routes in development mode:
+```python
+is_doc_path = request.url.path in ("/docs", "/redoc", "/openapi.json")
+if _ENV == "development" and is_doc_path:
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+        "img-src 'self' data:; worker-src blob:;"
+    )
+else:
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    )
+```
+Production docs remain disabled (`docs_url=None` when `ENV != "development"`), so the relaxed policy never applies in production.
+
+#### File Changed
+`ingestion/main.py` — `add_security_headers` middleware only.
+
+---
+
+### Local Dev Startup Commands (2026-04-24)
+
+Running all services outside Docker (hybrid mode — DB + MLflow in Docker, API + Dashboard native):
+
+```bash
+# 1. Start DB and MLflow in Docker
+docker compose up db mlflow -d
+
+# 2. Start API (native, with development docs enabled)
+DATABASE_URL=postgresql://aegis_user:aegis_pass@localhost:5432/aegis_db \
+ENV=development \
+python -m uvicorn ingestion.main:app --port 8000 --log-level warning
+
+# 3. Start Dashboard (separate terminal)
+streamlit run dashboard/app.py --server.port 8501
+```
+
+**Service URLs**:
+| Service | URL |
+|---------|-----|
+| Dashboard | http://localhost:8501 |
+| API | http://localhost:8000 |
+| Swagger UI | http://localhost:8000/docs |
+| MLflow | http://localhost:5000 |
+
+**Note**: `slowapi` must be installed locally (`pip install slowapi`) — it was previously only in `requirements.docker.txt`.
+
+---
+
+### NullMask Design System Implementation (2026-04-24)
+
+**Status**: ✅ Complete  
+**Source**: Design bundle from claude.ai/design → `nullmask-design-system/project/Aegis AI Dashboard.html`
+
+The design bundle contained the full NullMask system with a complete Aegis AI dashboard prototype (React + HTML). This session audited what was already implemented from the previous redesign and filled all remaining gaps.
+
+#### Design Audit Results
+
+| Design Element | Status Before | Action |
+|----------------|---------------|--------|
+| Color tokens (`#E3E3DC`, `#C4FF00`, `#9BC800`, `#111111`) | ✅ Already done | No change |
+| Space Grotesk / Inter / JetBrains Mono fonts | ✅ Already done | No change |
+| ∅ logo mark (SVG circle + slash, dark rounded square) | ✅ Already done | No change |
+| Model Active badge (dark bg, chartreuse pulse dot) | ✅ Already done | No change |
+| White metric cards (border, shadow, `12px` radius) | ✅ Already done | No change |
+| Tab active underline (`#C4FF00`) | ✅ Already done | No change |
+| SHAP factor horizontal bars | ✅ Already done | No change |
+| Risk gauge (Plotly gauge, ACCENT bar colour) | ✅ Already done | No change |
+| Wellness ROI waterfall chart | ✅ Already done | No change |
+| **User avatar with initials** (chartreuse ghost circle, sidebar) | ❌ Missing | ✅ Implemented |
+| **Alerts panel** (4-level severity dots, real portfolio data) | ❌ Missing | ✅ Implemented |
+| **Risk band mini-cards** (4-up grid, %, employee count, bar) | ❌ Missing | ✅ Implemented |
+| **AI Recommendations** (numbered list, savings in accent font) | ❌ Missing | ✅ Implemented |
+| **Glow shadow** CSS variant for accent metric cards | ❌ Missing | ✅ Implemented |
+| **Scrollbar** thin styling (4px, transparent bg) | ❌ Missing | ✅ Implemented |
+| Settings screen with toggle components | N/A (Streamlit constraint) | Not implemented |
+| Fixed TopBar header with avatar | N/A (Streamlit constraint) | Not implemented |
+
+#### What Was Implemented
+
+**`dashboard/app.py`** — Sidebar user avatar + CSS additions:
+- User initials extracted from name/email, rendered as 34px chartreuse ghost circle
+- Role label shown in uppercase caps (`UNDERWRITER` / `HR MANAGER`)
+- Added `nm-glow` CSS class (accent border + `0 0 24px rgba(196,255,0,0.10)` shadow)
+- Added thin scrollbar global styling
+
+**`dashboard/underwriter_view.py`** — Two additions:
+1. **`_render_alerts(df)`** function — generates 4 alert rows from live portfolio data:
+   - `high` (red): Critical risk companies → company names listed
+   - `med` (orange): Count of High-risk companies
+   - `info` (blue): Companies with >10% premium adjustment, avg HRS above benchmark
+   - `ok` (green): Count of Low-risk companies
+   - Rendered as white card with color dots, text, styled border
+2. **Risk band mini-cards** in tab2 (Company deep dive) — 4-column grid showing Low/Moderate/High/Critical with percentage, employee count, and mini progress bar using actual prediction data
+
+**`dashboard/hr_view.py`** — AI Recommendations section (tab2):
+- Replaced `st.container(border=True)` loop with full HTML numbered list
+- Each row: numbered badge (chartreuse ghost square), action title, impact text, estimated annual savings
+- Savings calculated as `(hrs_mid_improvement / 100) × adjusted_premium × 0.8`
+- Savings value shown in `#9BC800` JetBrains Mono (matching design's accent money figure)
+
+#### Design vs Streamlit Constraints
+Two elements from the design prototype cannot be ported to Streamlit:
+- **Settings screen with per-feature toggles** — Streamlit has `st.toggle()` but not in the design's grid layout with arbitrary content rows
+- **Fixed TopBar** — Streamlit's layout model doesn't support a fixed top bar outside the sidebar; page titles use `st.title()` instead
+
+---
+
+### HR Dashboard Chart Fixes (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `bd13c22`
+
+Fixes to `dashboard/hr_view.py` after visual review of the Wellness ROI tab:
+
+#### Waterfall chart (Wellness ROI simulator)
+- **Root cause**: Plotly waterfall uses `totals` colour for both `absolute` and `total` measures, so "Current premium" and "Projected premium" bars rendered identically in olive-green
+- **Fix**: Replaced `decreasing`/`totals` dicts with `marker_color` array — dark gray (`#374151`) for current, green (`#22C55E`) for savings, accent-olive (`#9BC800`) for projected
+- Added dotted connector line and outside text labels (JetBrains Mono) so values are readable without hovering
+- Removed redundant auto-generated Plotly legend (`showlegend=False`)
+
+#### Donut chart (Workforce overview — Risk band distribution)
+- **Fix**: Filter out zero-percentage bands before passing to `px.pie()` to eliminate empty slivers
+- Added mean HRS score as a centre annotation inside the donut hole (Space Grotesk, 18px)
+- Labels moved to `textposition="outside"` to avoid overlap at small slice sizes
+
+---
+
+### NullMask Isometric Illustrations (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commits**: `9b0ce1f` (add) · `5dfbe76` (fix rendering)  
+**Source**: Design bundle `nullmask-design-system/project/Design Elements.html` — 4 isometric SVG elements generated by the NullMask design assistant
+
+#### Illustrations added
+
+| # | Name | Placed on | Page / tab |
+|---|------|-----------|------------|
+| 01 | Privacy Vault | Login page | Right column alongside sign-in form |
+| 02 | Privacy Router | Underwriter Console | Portfolio overview tab — top-right header accent |
+| 03 | Privacy Shield | HR Manager | Workforce overview tab — top-right header accent |
+| 04 | Zero Node | Upload Dataset | Empty state before CSV is uploaded |
+
+#### Implementation approach
+
+**`dashboard/illustrations.py`** (new file):
+- Each SVG extracted from `Design Elements.html` via regex
+- Encoded as `data:image/svg+xml;base64,...` URI — the only reliable method for inline SVGs in Streamlit
+- Helper `_svg_img(uri, width, style="")` returns a complete `<img src="..." style="..."/>` tag for injection via `st.markdown(unsafe_allow_html=True)`
+
+**Why base64 data URI, not raw inline SVG**: Streamlit's markdown processor does not parse `<svg>` tags — the raw SVG markup was rendered verbatim as plain text. `<img src="data:image/svg+xml;base64,...">` is treated as a standard image element and renders correctly.
+
+**Login page restructure** (`app.py`):
+- Changed from 3-column centred layout `[1, 2, 1]` to 2-column `[1, 1]`
+- Left: logo + tagline + description + login form
+- Right: Privacy Vault illustration (max-width 380px)
+
+**Tab header pattern** (`underwriter_view.py`, `hr_view.py`):
+- `st.columns([3, 1])` — subheader in left col, illustration right-aligned at fixed width (160px / 130px) with `opacity:0.85`
+
+**Empty state** (`upload_view.py`):
+- `st.columns([1, 1])` — info message left, Zero Node illustration centred right at 220px
+
+#### Files changed
+- `dashboard/illustrations.py` — new module (4 constants + helper)
+- `dashboard/app.py` — login layout + Privacy Vault
+- `dashboard/underwriter_view.py` — Privacy Router in tab1 header
+- `dashboard/hr_view.py` — Privacy Shield in tab1 header
+- `dashboard/upload_view.py` — Zero Node in empty state
+
+---
+
+### Plotly Waterfall API Fix (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `b6afd7c`
+
+`go.Waterfall` does not accept `marker_color` as a top-level array (that's a `go.Bar` API). Replaced with per-category sub-objects: `decreasing` (savings bar, green), `totals` (projected premium, accent), `increasing` (current premium, dark gray).
+
+---
+
+### Brand Fonts + Compliance Illustrations (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `925c6ee`  
+**Source**: Design bundle `i6HuHm-Oohtk-Q0s2nLb-w` — fonts + `Compliance Design Elements.html`
+
+#### Font hierarchy
+
+| Role | Font | Where applied |
+|------|------|---------------|
+| Display / headings | **NType82** (400 + 700) | All `h1/h2/h3`, tabs, logo mark, inline HTML headings |
+| Body / labels | **Inter** | Captions, metric labels, body paragraphs, download buttons |
+| Metric values / numbers | **LetteraMonoLL** (400 + 500) | `stMetricValue`, `stMetricDelta`, waterfall text labels, donut annotation |
+
+NType82 and LetteraMonoLL are embedded as base64 `@font-face` data URIs in `BRAND_FONT_CSS` (exported from `illustrations.py`) and injected via `st.markdown(f"<style>{BRAND_FONT_CSS}</style>")` in `app.py`. Inter + Space Grotesk loaded from Google Fonts. JetBrains Mono removed throughout.
+
+#### Compliance illustrations
+
+| # | SVG | Placed on | Replaces |
+|---|-----|-----------|---------|
+| 01 | SOC 2 Compliance | Login page (right column) | Privacy Vault |
+| 02 | Group Insurance | Underwriter portfolio tab header | Privacy Router |
+| 03 | HIPAA Privacy | HR workforce tab header | Privacy Shield |
+| 04 | Employee Health | Upload empty state | Zero Node |
+
+SVGs extracted from `Compliance Design Elements.html`, base64-encoded as data URIs in `illustrations.py`.
+
+#### Files changed
+- `dashboard/illustrations.py` — 4 new compliance SVG constants; `BRAND_FONT_CSS` string with embedded fonts; old privacy SVGs removed
+- `dashboard/app.py` — font injection; CSS hierarchy updated; `SOC2_COMPLIANCE` on login
+- `dashboard/underwriter_view.py` — `GROUP_INSURANCE`; chart font → Inter
+- `dashboard/hr_view.py` — `HIPAA_PRIVACY`; chart/mono fonts → Inter / LetteraMonoLL
+- `dashboard/upload_view.py` — `EMPLOYEE_HEALTH`; chart font → Inter
+
+---
+
+### README Security Fix (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `0da4a1e`
+
+Removed the demo credentials table from `README.md` — the public-facing README previously listed plaintext login credentials (`underwriter@safenet.com / demo123`, `hr@technova.com / demo123`, `hr@bharatsteel.com / demo123`). Exposing credentials in a public GitHub README is a security risk even for demo accounts, as it invites credential stuffing and gives attackers a known valid username list.
+
+#### File changed
+- `README.md` — deleted 9 lines (Demo Credentials section)
+
+---
+
+### /startserver Claude Code Skill (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `dbf8b2c`
+
+Added `.claude/commands/startserver.md` — a project-level Claude Code slash command that automates full Aegis AI stack startup from scratch.
+
+#### What `/startserver` does
+
+1. Kill any stale native Streamlit process (`pkill -f "streamlit run"`)
+2. `docker compose down` — clean teardown of all containers
+3. `docker compose up -d` — start all 5 services (db, api, dashboard, mlflow, nginx)
+4. Wait + show container status table (names, health, ports)
+5. HTTP health checks — API `/health`, Dashboard `/healthz`, MLflow `/health`, nginx port 80
+6. PostgreSQL probe — `pg_isready` via `docker exec aegis-db`
+7. Module import test — all 9 `dashboard.*` modules (`OK` / `FAIL`)
+8. Syntax check — `py_compile` on all 10 `.py` files
+9. Final summary table — per-service ✅ / ❌ with `docker logs` diagnosis on failure
+
+#### File added
+- `.claude/commands/startserver.md` — 92-line skill definition
+
+---
+
+### Login Form Input Sizing Fix (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `4551f47`
+
+Streamlit's default `st.text_input` renders with oversized input height (~46px). Added CSS rules targeting `.stTextInput input` and `.stFormSubmitButton button` to cap height at 38px with matching `font-size: 14px` and padding — bringing the login form inputs and Sign In button to standard compact proportions.
+
+#### Files changed
+- `dashboard/app.py` — added compact input height CSS (22 lines)
+
+---
+
+### Remove NullMask Brand References (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `84597d2`
+
+Removed all 7 occurrences of "NullMask" from the codebase. The design tokens, fonts, and visual style are unchanged — only the third-party brand name was stripped. References replaced with "Aegis AI" or generic terms throughout module docstrings, function docstrings, inline comments, CSS comments, and the /loadcontext skill.
+
+#### Files changed
+- `dashboard/illustrations.py` — module docstring: "NullMask" → "Aegis AI"
+- `dashboard/underwriter_view.py` — function docstring + inline comment updated
+- `dashboard/app.py` — CSS comment updated; BaseWeb input-height CSS also included
+- `.claude/commands/loadcontext.md` — 3 guardrail references updated to "Aegis AI"
+
+---
+
+### /loadcontext Claude Code Skill (2026-04-24)
+
+**Status**: ✅ Complete  
+**Commit**: `17d9b68`
+
+Added `.claude/commands/loadcontext.md` — a session-start slash command that reads all 6 Claude memory files and 5 vault files, synthesises a structured context brief, and outputs hard guardrails covering architecture, security, NullMask design tokens, CSS rules, code conventions, and vault/git workflow. Includes a self-check checklist Claude runs silently before every file edit, and a guardrail violation handler that blocks deviating changes before they happen.
+
+#### Files changed
+- `.claude/commands/loadcontext.md` — new skill (105 lines)
+- `.claude/commands/gitmastersync.md` — updated with dedup fix, nginx rebuild, full Docker map, health check
+
+---
+
+### Post-Commit Hook Hardening (2026-04-26)
+
+**Status**: ✅ Complete  
+**Commit**: `6730057`
+
+Hardened the post-commit git hook with three defensive fixes: a deduplication guard (prevents the same commit hash being logged twice if the hook fires more than once), a vault-commit skip clause (hook no longer triggers when the active commit is itself a vault sync, eliminating infinite commit loops), and an explicit repo-context flag so all git commands target the code repo rather than the vault repo.
+
+#### Files changed
+- `.claude/commands/gitmastersync.md` — updated hook spec with dedup guard + vault-commit skip + explicit repo context
+
+---
+
+### Dashboard UI Overhaul & Design System Alignment (2026-04-28)
+
+**Status**: ✅ Complete  
+**Commit**: `8ebcd93`
+
+Comprehensive overhaul of all five dashboard modules to fully align with the Aegis AI design contract (`design.md`) and `design_tokens.py`. `underwriter_view.py` received the largest update (673 lines): risk-band mini-cards, alerts panel, chart theming, and component layout improvements. `hr_view.py` (253 lines), `app.py` (383 lines), `auth.py` (47 lines), and `upload_view.py` (46 lines) were updated for consistent styling, dark text scale enforcement, and `apply_chart_theme()` usage. Three sample CSV files were added to `data/` for dev and demo use.
+
+#### Files changed
+- `dashboard/app.py` — CSS + layout overhaul (383 lines)
+- `dashboard/underwriter_view.py` — risk-band cards, alerts, chart fixes (673 lines)
+- `dashboard/hr_view.py` — chart + component improvements (253 lines)
+- `dashboard/upload_view.py` — style alignment (46 lines)
+- `dashboard/auth.py` — style updates (47 lines)
+- `data/upload_doc_0.csv`, `data/upload_doc_1.csv`, `data/upload_doc_2.csv` — sample data
+
+---
+
+### Hugging Face Dataset Integration + Scorer Hardening (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `d0ef776`
+
+Added support for training from the Hugging Face Hub alongside the local synthetic CSV. `load_from_huggingface()` maps a tabular HF insurance dataset to the Aegis feature schema with graceful fallback when HF is unavailable. `load_training_dataframe()` merges sources with a configurable mode (`local`, `hf`, `both`). `HRSScorer._normalize()` now extracts the shared normalisation logic and guards against degenerate calibration distributions (zero-scale input returns 0.5). MLflow setup moved to a lazy `configure_mlflow()` so importing the module stays side-effect free. New `--use-local` / `--use-hf` / `--use-both` / `--no-hf` CLI flags added.
+
+#### Files changed
+- `ml_engine/training/train.py` — HF loader, arg parser, lazy MLflow init, `build_arg_parser()`, `resolve_dataset_mode()`
+- `ml_engine/scorer.py` — `_normalize()` helper + degenerate distribution guard
+- `ml_engine/artifacts/` — retrained model artifacts (xgb_model.pkl, hrs_scorer.pkl, feature_names.pkl)
+- `tests/test_ml_engine.py` — degenerate scorer test
+- `tests/test_training_pipeline.py` — 7 new pipeline unit tests (23/23 passing)
+- `requirements.txt` / `requirements.docker.txt` — `datasets>=2.15.0`
+
+---
+
+### Clinical Notes Parser — HF Source Switch (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `818f5fd`
+
+Replaced the previous tabular HF dataset with `ayush0205/clinical_data_rf` (19,756 free-text clinical discharge notes). The new `_parse_clinical_note()` function uses regex to extract: age (4 patterns, 80% coverage), gender, BMI, smoker, diabetic, hypertension, and 10 lab/condition flags (cardiac, renal, liver, respiratory/ARDS, sepsis, stroke, mental health, osteoporosis, anaemia, thyroid, vitamin deficiency), plus ICU admission, mechanical ventilation, and SpO2. Wearable telemetry (steps, HR, sleep, active mins) is synthesised from a per-note severity score so all features are coherent and correlated. Loss ratio is derived from age risk + condition count + serious-condition multipliers, randomised with log-normal noise (mean 0.58, std 0.32). 4 new parser unit tests added.
+
+#### Files changed
+- `ml_engine/training/train.py` — `_parse_clinical_note()`, rewritten `load_from_huggingface()`, updated `HF_DATASET_NAME` constant
+- `tests/test_training_pipeline.py` — 4 parser unit tests (23/23 passing)
+
+---
+
+### MLflow Run Auto-Naming (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `2caac54`
+
+All three existing MLflow runs carried the hardcoded name `final_xgb_with_optuna`, making them indistinguishable in the UI. Added `_build_run_name(dataset_mode, hf_dataset_name)` which derives a descriptive name from data sources used: `xgb_local_csv`, `xgb_hf_<dataset_slug>`, or `xgb_local+<dataset_slug>`. Retroactively renamed the three existing runs: `91d17215` → `xgb_local_synthetic_csv` (R²=0.685, the good baseline), `4dbbf51c` → `xgb_hf_omg_insurance_degenerate` (R²≈0), `f87cbca9` → `xgb_hf_gcc_insurance_degenerate` (R²≈0).
+
+#### Files changed
+- `ml_engine/training/train.py` — `_build_run_name()` helper; hardcoded run name replaced
+
+---
+
+### Insurance Charge HF Adapter + Combined Retrain (2026-04-29)
+
+**Status**: Complete  
+**MLflow Run**: `b10e7565acbd451e92556509b52dfa6d`
+
+Added a dedicated Hugging Face adapter for `bubuuunel/healthylife-insurance-charge-log` while keeping the existing GCC underwriting mapper, clinical-note parser, and local CSV pipeline intact. The loader now classifies HF datasets by schema and explicitly rejects company-profile datasets such as `devadigax/linkedin-company-profile` for underwriting training because they do not contain employee health features or a usable claim target.
+
+#### Training run
+- Local rows: 5,237
+- HF rows: 225 (`healthylife-insurance-charge-log`)
+- Combined rows: 5,462
+- Dataset mode: `both`
+
+#### Metrics
+- `train_mae`: 0.3199
+- `test_mae`: 0.3981
+- `train_rmse`: 0.4271
+- `test_rmse`: 0.5392
+- `train_r2`: 0.8000
+- `test_r2`: 0.6915
+
+#### Verification
+- `python -m pytest tests\test_training_pipeline.py -q` -> 17 passed
+- `python -m pytest tests\test_ml_engine.py -q` -> 12 passed
+- `python -m pytest tests\test_predict_api.py -q` -> 8 passed, 2 skipped
+- `python -m pytest tests -q` -> 75 passed, 5 skipped
+
+---
+
+### UI/UX Design System Improvements (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `f61f3d8`
+
+Comprehensive UI/UX pass aligned to the Aegis AI design system. Added a Workstyle Breakdown grid to the Account Review tab showing Desk/Field/Manual categories with avg loss ratio risk scores, employee counts, and mini progress bars. Added risk filter pills (All/High/Moderate/Low) to the Upload tab employee table with session state persistence. Fixed all Plotly chart text — CSS guard-rail cannot reach Plotly iframes, so the fix clears the default Plotly template and applies explicit `update_xaxes`/`update_yaxes` calls. Expanded the CSS guard-rail to cover metric labels, expander headers, subheaders, and span elements. Updated both sidebar and login logos to the Primary-on-light variant from the design system (inner shield accent layer, updated ECG pulse, corner brackets, 68×80 viewBox).
+
+#### Files changed
+- `dashboard/app.py` — CSS guard-rail expanded; sidebar + login logo updated to Primary-on-light design
+- `dashboard/currency.py` — replaced `st.caption()` with styled markdown (dark #333333)
+- `dashboard/design_helpers.py` — `apply_chart_theme()` clears Plotly template; `page_header`/`section_header` colors hardened
+- `dashboard/underwriter_view.py` — `_render_workstyle_breakdown()` added; gauge template cleared
+- `dashboard/upload_view.py` — risk filter pills + filtered table; gauge template cleared
+
+---
+
+### ML Pipeline Hardening & Artifacts Update (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `f4b7b00`
+
+Consolidated and hardened the ML training pipeline with the full clinical notes parser, HF dataset integration, and scorer hardening into a single clean commit. The `_parse_clinical_note()` regex parser extracts 15+ structured features from free-text discharge notes; `load_from_huggingface()` synthesises coherent wearable telemetry from severity scores; `HRSScorer._normalize()` guards against degenerate distributions. CLI flags (`--use-local`/`--use-hf`/`--use-both`) and `load_training_dataframe()` with graceful fallback complete the pipeline. Updated model artifacts from the latest retrain run.
+
+#### Files changed
+- `ml_engine/training/train.py` — full pipeline rewrite: note parser, HF loader, scorer hardening, CLI flags, run naming
+- `tests/test_training_pipeline.py` — parser + pipeline unit tests
+- `ml_engine/artifacts/hrs_scorer.pkl` — updated scorer artifact
+- `ml_engine/artifacts/xgb_model.pkl` — updated model artifact (retrained)
+
+---
+### HF-Only Healthylife Retrain (2026-04-29)
+
+**Status**: Complete  
+**MLflow Run**: `3084108b84d147a389cbb6f87375ae04`
+
+Trained the underwriting model on `bubuuunel/healthylife-insurance-charge-log` using the HF-only path (`--use-hf`) so the saved artifacts reflect that dataset alone rather than the combined local + HF blend.
+
+#### Training run
+- HF rows: 225
+- Dataset mode: `hf`
+
+#### Metrics
+- `train_mae`: 0.0409
+- `test_mae`: 0.0583
+- `train_rmse`: 0.0528
+- `test_rmse`: 0.0709
+- `train_r2`: 0.9764
+- `test_r2`: 0.9570
+
+#### Verification
+- `python -m pytest tests\test_ml_engine.py -q` -> 12 passed
+- `python -m pytest tests\test_predict_api.py -q` -> 8 passed, 2 skipped
+
+---
+### Dashboard Docker Fix (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `7210b0e`
+
+The `data/` directory was missing from `Dockerfile.dashboard`, causing a `ModuleNotFoundError: No module named 'data'` on container startup. Added `COPY data/ ./data/` to the dashboard image so the data module is available at runtime.
+
+#### Files changed
+- `Dockerfile.dashboard` — added `COPY data/ ./data/`
+
+---
+### Design System Lock (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `7f94da0`
+
+Created `CLAUDE.md` at the repo root to permanently encode the Aegis AI design contract. Covers the full NM color scale, banned pale greys, mandatory Plotly `apply_chart_theme()` pattern with `template={}` clear, Streamlit CSS `!important` rules, required helper functions, logo variant usage, and Docker rebuild triggers. Auto-loaded by Claude Code at every session start.
+
+#### Files changed
+- `CLAUDE.md` — 133-line design + code rules document
+
+---
+### Button Text Visibility Fix (2026-04-29)
+
+**Status**: ✅ Complete  
+**Commit**: `dc7d37a`
+
+Primary button labels were invisible in Streamlit 1.56.0 because child `<p>` and `<span>` elements had their own injected colour overriding the parent button's CSS. Added explicit child selectors (`[data-testid="stBaseButton-primary"] *`) with `color: #C4FF00 !important`. Also bumped the MODEL ACTIVE card caption from `#AAAAAA` to `#CCCCCC` for legibility on the dark card background.
+
+#### Files changed
+- `dashboard/app.py` — primary button child CSS selectors + MODEL ACTIVE caption colour
+
+---
+### Training Snapshot Schema Fix (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `cf12d8b`
+
+Added 11 missing `lab_*` columns to the `training_snapshots` table in `schema.sql` to match the clinical notes parser output. Columns include `lab_heart_flag`, `lab_inflammation_flag`, `lab_diabetes_flag`, `lab_kidney_flag`, `lab_liver_flag`, `lab_iron_flag`, `lab_thyroid_flag`, `lab_bone_flag`, `lab_vitamin_flag`, `lab_domain_count`, and `lab_risk_score`. Neon PostgreSQL table was dropped and re-seeded.
+
+#### Files changed
+- `data/schema.sql` — 11 new `lab_*` columns + `lab_risk_score DECIMAL(5,3)`
+
+---
+### Render Deployment Setup (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `ee26e94`
+
+Added `render.yaml` Blueprint config for one-click Render deployment of the FastAPI backend. Fixed `entrypoint.sh` to use `${PORT:-8000}` so Render can inject its dynamic port. The API is now live at `https://aegis-ai-wss8.onrender.com`.
+
+#### Files changed
+- `render.yaml` — Render Blueprint: Docker runtime, free plan, health check, env var stubs
+- `scripts/entrypoint.sh` — `${PORT:-8000}` replaces hardcoded `8000`
+
+---
+### Render Entrypoint Fix (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `a12c31c`
+
+`scripts/entrypoint.sh` had git mode `100644` (not executable) causing exit code 128 on Render's Linux container. Fixed with `git update-index --chmod=+x` and a belt-and-suspenders `RUN chmod +x` in `Dockerfile.api`.
+
+#### Files changed
+- `Dockerfile.api` — `RUN chmod +x /app/scripts/entrypoint.sh` + split `chown` RUN
+- `scripts/entrypoint.sh` — file mode changed to `100755`
+
+---
+### Hugging Face Spaces Deployment (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `593843b`
+
+Added root-level `Dockerfile` for HF Spaces Docker SDK deployment. Runs on port 7860, uses UID 1000 non-root user as required by HF. Copies dashboard, ml_engine, ingestion, and data modules. Dashboard is live at `https://huggingface.co/spaces/Rupa2k/aegis-ai` and connects to the Render API via `AEGIS_API_URL` secret.
+
+#### Files changed
+- `Dockerfile` — HF Spaces image: port 7860, UID 1000, Streamlit entry point
+
+---
+### Auth Cold-Start Timeout Fix (2026-04-30)
+
+**Status**: ✅ Complete  
+**Commit**: `f8b97e5`
+
+Render free tier sleeps after 15 minutes of inactivity and takes up to 45 seconds to cold-start. The original 10-second login timeout caused all first-load logins to silently fail with "Incorrect email or password". Raised timeout to 45s and added a distinct "Server is starting up" message to differentiate cold-start timeout from actual bad credentials. Also hardened `API_BASE` to strip whitespace and fall back to localhost if the env var is blank.
+
+#### Files changed
+- `dashboard/auth.py` — 45s timeout, `TimeoutException` handling, blank env var guard
+- `dashboard/api_client.py` — blank env var guard
+
+---
+### Particle Dark Design Theme (2026-05-02)
+
+**Status**: ✅ Complete  
+**Commit**: `370cc0d`
+
+Full replacement of the light NullMask palette with the **Particle Dark** design template — a deep-navy dark theme sourced from the Aegis AI Dashboard Particle Dark prototype. `design_tokens.py` was rewritten with the new dark palette (`#070b14` page, `#111c30` cards, `#84cc16` lime accent) and six CSS micro-animation keyframes. `design_helpers.py` gained `hrs_gauge_html()` (animated 270° SVG arc gauge with unique per-instance animation IDs), `hrs_badge_html()` (traffic-light pulsing badge), `metric_card_dark()`, and `shap_waterfall_html()`. All five dashboard modules were migrated to dark backgrounds and light text with the traffic-light risk system (Low `#22c55e` / Moderate `#eab308` / High `#f97316` / Critical `#ef4444`).
+
+#### Files changed
+- `dashboard/design_tokens.py` — full dark palette rewrite; `DESIGN_TOKENS_CSS` with `--nm-*` CSS vars; six keyframes
+- `dashboard/design_helpers.py` — `hrs_gauge_html()`, `hrs_badge_html()`, `metric_card_dark()`, `shap_waterfall_html()`; updated `apply_chart_theme()`, `risk_band_pill()`, `page_header()`, `card()`
+- `dashboard/app.py` — full dark CSS guard-rail; micro-animation keyframes; login + sidebar HTML migrated; Model Active card with `nm-pulseRing` dot and `#84cc16`
+- `dashboard/underwriter_view.py` — traffic-light `COLOR_MAP`; dark chart constants; workstyle breakdown, decision card, risk drivers, gauge all migrated; benchmark vlines, filter pills, row-selected card
+- `dashboard/hr_view.py` — traffic-light `COLOR_MAP`; dark chart constants; waterfall chart colors and text
+- `dashboard/upload_view.py` — traffic-light `COLOR_MAP`; dark chart constants; filter pill colors
+- `dashboard/currency.py` — sidebar caption `#333333` → `#64748b`
+
+---
+### Dashboard Healthcheck Fix (2026-05-02)
+
+**Status**: ✅ Complete  
+**Commit**: `f07a550`
+
+`Dockerfile.dashboard` used `curl` in its `HEALTHCHECK` directive, but `curl` is not installed in the `python:3.11-slim` base image. The health probe always failed, leaving the `aegis-dashboard` container permanently `unhealthy` despite the app being fully functional. Replaced with a Python stdlib `urllib.request` call which requires no extra packages. Also extended `start-period` from 10s to 30s to account for Streamlit's startup time.
+
+#### Files changed
+- `Dockerfile.dashboard` — `HEALTHCHECK` directive: `curl` → `python -c "import urllib.request; ..."`, `--timeout=5s` → `10s`, `--start-period=10s` → `30s`
+
+---
+### CI & Render Deployment Fixes (2026-05-09)
+
+**Status**: ✅ Complete  
+**Commits**: `9b88d17`, `c2832c4`, `a3cb0ba`, `9784df5`, `c24fb17`, `3449d6c`
+
+Fixed a cascade of CI and Render deployment failures caused by the security cleanup removing `config/users.json` and `.env` from the repo. Upgraded `python-multipart` to clear CVE-2026-42561 (unblocked pip-audit). Rewired GitHub Actions to use hardcoded CI-only Postgres credentials, job-level env blocks (eliminating fragile shell escaping), and `--no-hf` training flag to skip HuggingFace downloads on CI runners. Removed `COPY config/` from `Dockerfile.api` (directory no longer in repo) and added `AEGIS_USERS_JSON` + `HASH_SALT` env var declarations to `render.yaml`.
+
+#### Files changed
+- `requirements.docker.txt` — `python-multipart` 0.0.26 → 0.0.27 (CVE-2026-42561)
+- `ingestion/auth/users.py` — env var fallback: reads `AEGIS_USERS_JSON` when `config/users.json` absent
+- `Dockerfile.api` — removed `COPY config/ ./config/` (dir untracked after security cleanup)
+- `render.yaml` — added `HASH_SALT` and `AEGIS_USERS_JSON` env var declarations
+- `.github/workflows/ci.yml` — hardcoded CI postgres, job-level env block, `--no-hf` training flag
+
+---
+### Repo Security Audit & Cleanup (2026-05-09)
+
+**Status**: ✅ Complete  
+**Commits**: `b2bb8fa`, `55a33fb`, `61ab39d`
+
+Comprehensive audit of public GitHub repo to identify and remove sensitive/internal files before they could be exploited. Removed CLAUDE.md (architecture details), .env (live credentials), config/users.json (user password hashes), .claude/ dev settings, .codex-security-tools/ (1,700+ security scanner files committed by accident), security scan reports, ML model binaries, health data CSVs, and wrong-project scripts. Added 12 new .gitignore rules to prevent future exposure.
+
+#### Files changed
+- `.gitignore` — 12 new exclusion rules added (CLAUDE.md, .claude/, .codex-security-tools/, config/users.json, security reports, pip-audit, data/output/, ml_engine/artifacts/, upload CSVs, fix_graph.py, graph_check.py, design.md)
+- `CLAUDE.md`, `.env`, `config/users.json` — untracked from git, kept local only
+- `.claude/`, `.codex-security-tools/` — dev tooling removed from public repo
+- `security_report.json`, `SECURITY_REPORT.md`, `security_test_results.txt` — vulnerability details removed
+- `data/output/*.csv`, `ml_engine/artifacts/*.pkl` — generated data/models removed
+- `fix_graph.py`, `graph_check.py` — wrong-project files (Vantage Fit) removed
+
+---
+### Production Cold-Start & Rate Limiter Fixes (2026-05-09)
+
+**Status**: ✅ Complete
+**Commits**: `cd44ba7`, `1d2663d`, `70d847f`, `5aec740`
+
+#### Problem 1 — 503 on all `/predict/company/*` endpoints
+
+Every Render cold start (and every restart after the free-tier 15-min sleep) re-trained the XGBoost model from scratch at container startup. Bootstrap ran sequentially — data generation (~30s), DB seeding (~10s), model training (~3-5 min) — all blocking uvicorn. Although the entrypoint was fixed to background bootstrap (`&`), model artifacts weren't present at the start of the process, so any predict request in the first few minutes hit `ModelNotReadyError` → HTTP 503.
+
+**Root cause**: Model training happened at *runtime* (container startup), not at *build time* (Docker build). Render's ephemeral filesystem means artifacts are gone on every restart.
+
+**Fix**: Moved `python data/generate.py` + `python -m ml_engine.training.train --no-hf` into the `Dockerfile.api` `RUN` layer, executed as `appuser` after the `chown`. Now model artifacts are baked into the Docker image. Bootstrap at runtime sees all three idempotency checks pass (CSVs exist, artifacts exist) and skips straight to DB seeding (~5–10 sec). Uvicorn serves predict requests immediately from cold start.
+
+#### Problem 2 — Rate limiter bypass on Render
+
+`slowapi`'s `get_remote_address` reads `request.client.host`, which on Render is a Cloudflare edge node IP — not the actual client. All 12 rapid auth attempts returned 401 (wrong password) but never triggered 429, because every request appeared to come from the same Cloudflare IP while different real clients shared the same bucket.
+
+**Fix**: Replaced `get_remote_address` with `_get_real_ip()` in `ingestion/rate_limit.py`. The function reads `CF-Connecting-IP` first (Cloudflare's canonical real-client header, single IP, always accurate), falls back to the leftmost IP in `X-Forwarded-For`, then falls back to `request.client.host` for local dev. The `limiter` singleton now uses this function as its key.
+
+#### Problem 3 — CI: MLFLOW_TRACKING_URI pointing to non-existent server
+
+Training in CI failed because `MLFLOW_TRACKING_URI` defaulted to `http://localhost:5000` — no MLflow server runs in GitHub Actions. Fixed by setting `MLFLOW_TRACKING_URI: file:./mlruns` at the job `env:` level so MLflow writes run data to a local file store without any network call.
+
+#### Files changed
+
+| File | Change |
+|------|--------|
+| `Dockerfile.api` | Added `RUN` step to generate data + train model during image build |
+| `ingestion/rate_limit.py` | `get_remote_address` → `_get_real_ip()` reading `CF-Connecting-IP` / `X-Forwarded-For` |
+| `scripts/entrypoint.sh` | Bootstrap moved to background (`&`) so uvicorn binds port immediately |
+| `ingestion/database.py` | Lazy engine init — no `RuntimeError` at import if `DATABASE_URL` missing |
+| `.github/workflows/ci.yml` | `MLFLOW_TRACKING_URI: file:./mlruns` added to job-level env block |
+
+#### Verified
+
+- Render service live: `https://aegis-ai-wss8.onrender.com/health` → HTTP 200
+- Auth, company list, and predict endpoints all functional post-redeploy
+- Rate limiter now correctly keys on real client IP through Cloudflare
+
+---
+### Local-First ML Workflow (2026-05-10)
+
+**Status**: ✅ Complete
+**Commits**: `3f0c343`, `e539e7d`
+
+#### What Changed
+
+Moved all intensive operations (data generation + model training) out of the Render deployment path entirely. Render now receives a pre-trained model via committed artifacts and serves the demo on existing synthetic data with zero build-time computation.
+
+#### Architecture — Before vs After
+
+| Step | Before | After |
+|------|--------|-------|
+| Data generation | Docker build RUN (on Render) | Local only |
+| Model training | Docker build RUN or runtime bootstrap (on Render) | Local only, committed to repo |
+| Render build time | ~2-5 min (training) | ~30s (copy + pip install) |
+| Cold-start predict latency | 503 until bootstrap finishes | Immediate — artifacts in image |
+| Demo data | Re-generated each deploy | Fixed synthetic dataset (committed) |
+
+#### Files Committed to Repo
+
+| File | Size | Safe? |
+|------|------|-------|
+| `ml_engine/artifacts/xgb_model.pkl` | 208 KB | ✅ Model weights, no credentials |
+| `ml_engine/artifacts/hrs_scorer.pkl` | 56 B | ✅ Scoring config, no credentials |
+| `ml_engine/artifacts/feature_names.pkl` | 514 B | ✅ Column list, no credentials |
+| `data/output/companies.csv` | 1.6 KB | ✅ Faker-generated, no real PII |
+| `data/output/employees.csv` | 234 KB | ✅ Faker-generated, no real PII |
+| `data/output/telemetry.csv` | 2.8 MB | ✅ Faker-generated, no real PII |
+| `data/output/clinical_events.csv` | 1.3 MB | ✅ Faker-generated, no real PII |
+| `data/output/training_dataset.csv` | 1.1 MB | ✅ Faker-generated, no real PII |
+
+#### Files Kept Local-Only (never committed)
+
+| File | Reason |
+|------|--------|
+| `data/output/real_user_training.csv` | Contains actual uploaded user health data (`company_id=REAL_DATA`) |
+| `.env` | Live credentials |
+| `config/users.json` | Bcrypt password hashes |
+| `CLAUDE.md` | Internal architecture details |
+
+#### .gitignore Strategy
+
+Changed `data/output/` (directory exclusion, blocks `!` exceptions) to `data/output/*` (glob exclusion, allows per-file `!` exceptions). Five specific CSVs un-ignored; `real_user_training.csv` excluded by default.
+
+#### Local Retrain Workflow
+
+When the model needs updating:
+```bash
+# 1. Retrain locally (full 30 Optuna trials, any data mode)
+python -m ml_engine.training.train --no-hf
+
+# 2. Commit and push updated artifacts
+git add ml_engine/artifacts/
+git commit -m "ml: retrain model — <reason>"
+git push
+# Render redeploys in ~30s, new model live immediately
+```
+
+---
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -500,8 +1253,39 @@ tests/security_tests.py               — 25 security tests (all passing)
 | Post-capstone | ✅ Upload tab | ~1h | — | 1 |
 | Post-capstone | ✅ Security hardening | ~3h | — | 1 |
 | Post-capstone | ✅ Security testing & remediation | ~2h | 25/25 ✅ | 4 |
+| Post-capstone | ✅ NullMask UI redesign + Swagger CSP fix | ~1h | — | 1 |
+| Post-capstone | ✅ NullMask design system implementation | ~1h | — | 1 |
+| Post-capstone | ✅ HR dashboard chart fixes (waterfall + donut) | ~0.5h | — | 1 |
+| Post-capstone | ✅ NullMask isometric illustrations (4 pages) | ~0.5h | — | 2 |
+| Post-capstone | ✅ Plotly Waterfall API fix | ~0.1h | — | 1 |
+| Post-capstone | ✅ Brand fonts (NType82 + LetteraMonoLL) + compliance illustrations | ~1h | — | 1 |
+| Post-capstone | ✅ README security fix (removed demo credentials) | ~0.1h | — | 1 |
+| Post-capstone | ✅ /startserver Claude Code skill | ~0.2h | — | 1 |
+| Post-capstone | ✅ Login form input sizing fix | ~0.1h | — | 1 |
+| Post-capstone | ✅ /loadcontext skill + gitmastersync update | ~0.3h | — | 1 |
+| Post-capstone | ✅ Remove NullMask brand references from codebase | ~0.1h | — | 1 |
+| Post-capstone | ✅ Post-commit hook hardening (dedup + vault skip) | ~0.2h | — | 1 |
+| Post-capstone | ✅ Dashboard UI overhaul & design system alignment | ~2h | — | 1 |
+| Post-capstone | ✅ HF dataset integration + scorer hardening | ~1h | 23/23 ✅ | 1 |
+| Post-capstone | ✅ Clinical notes parser — HF source switch | ~1h | 23/23 ✅ | 1 |
+| Post-capstone | ✅ MLflow run auto-naming | ~0.2h | 23/23 ✅ | 1 |
+| Post-capstone | ✅ UI/UX design system improvements — workstyle grid, filter pills, chart text fix, primary logo | ~2h | — | 1 |
+| Post-capstone | ✅ ML pipeline hardening — clinical notes parser, HF integration, scorer guard, artifacts | ~1h | — | 1 |
+| Post-capstone | ✅ Dashboard Docker fix — add data/ to image, fix ModuleNotFoundError | ~0.1h | — | 1 |
+| Post-capstone | ✅ Design system lock — CLAUDE.md with full color/Plotly/CSS rules | ~0.5h | — | 1 |
+| Post-capstone | ✅ Button text visibility fix — stBaseButton-primary child CSS selectors | ~0.3h | — | 1 |
+| Post-capstone | ✅ Training snapshot schema fix — 11 lab_* columns added, Neon reseeded | ~0.3h | — | 1 |
+| Post-capstone | ✅ Render deployment — render.yaml + PORT env var fix, API live | ~1h | — | 2 |
+| Post-capstone | ✅ HF Spaces deployment — root Dockerfile, port 7860, dashboard live | ~1h | — | 1 |
+| Post-capstone | ✅ Auth cold-start fix — 45s timeout + blank env var guard | ~0.5h | — | 1 |
+| Post-capstone | ✅ Particle Dark design theme — dark-navy palette, traffic-light risk, micro-animations, animated SVG gauge, all 7 dashboard files migrated | ~3h | — | 1 |
+| Post-capstone | ✅ Dashboard healthcheck fix — replace curl with Python urllib in Dockerfile.dashboard HEALTHCHECK | ~0.1h | — | 1 |
+| Post-capstone | ✅ Repo security audit & cleanup — removed CLAUDE.md, .env, config/users.json, .codex-security-tools/, security reports, ML artifacts, health CSVs, wrong-project files | ~0.5h | — | 3 |
+| Post-capstone | ✅ CI & Render deployment fixes — CVE fix, CI postgres, env block, --no-hf training, Dockerfile COPY fix, render.yaml env vars | ~1h | — | 6 |
+| Post-capstone | ✅ Production cold-start & rate limiter fixes — bake model into Docker build image, CF-Connecting-IP rate key, lazy DB init, MLFLOW local file store | ~1h | — | 4 |
+| Post-capstone | ✅ Local-first ML workflow — commit pre-trained artifacts + synthetic CSVs, remove build-time training, Render build instant | ~0.5h | — | 2 |
 
-**Total Effort to Date**: ~30 hours  
-**Total Commits**: 24  
-**Total Tests**: 88 passing (63 functional + 25 security)
+**Total Effort to Date**: ~54 hours  
+**Total Commits**: 68  
+**Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 

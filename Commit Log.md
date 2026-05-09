@@ -8,8 +8,113 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 ---
 
 - 2026-04-21 | 2aa72ed | security: implement HIPAA/SOC2 compliance fixes — JWT auth, TLS, audit logging, RBAC
-- 2026-04-21 | 2aa72ed | security: implement HIPAA/SOC2 compliance fixes — JWT auth, TLS, audit logging, RBAC
 - 2026-04-22 | f692a1c | security: apply all remediation fixes from security test report
 - 2026-04-22 | 300c212 | fix: suppress uvicorn server header and correct security test assertions
 - 2026-04-22 | db15088 | sm update
 - 2026-04-22 | 48851e1 | vault: comprehensive wiki update — security testing & remediation (2026-04-22)
+- 2026-04-24 | ef57ed3 | sm update
+- 2026-04-24 | 20331cb | sm updaTER
+- 2026-04-24 | caa6e93 | feat: NullMask UI redesign + Swagger CSP fix
+- 2026-04-24 | ff04d4d | feat: NullMask design system — alerts, mini-cards, avatar, AI recommendations
+- 2026-04-24 | bd13c22 | fix: improve HR dashboard chart visuals — waterfall colors + donut center label
+- 2026-05-09 | 9b88d17 | fix: upgrade python-multipart to clear CVE-2026-42561, add env var fallback for user store
+- 2026-05-09 | c2832c4 | fix(ci): use hardcoded CI-only postgres credentials, remove secrets dependency for DB
+- 2026-05-09 | a3cb0ba | fix(render): remove COPY config/ from Dockerfile — users loaded via AEGIS_USERS_JSON env var
+- 2026-05-09 | 9784df5 | fix(ci): fix Set up environment step — remove !! from placeholder, use expressions not bash vars
+- 2026-05-09 | c24fb17 | fix(ci): move all env vars to job-level env block — eliminate Set up environment step
+- 2026-05-10 | e539e7d | feat: commit pre-trained artifacts + synthetic CSVs, remove build-time training
+- 2026-05-10 | 3f0c343 | fix(docker): cap build-time Optuna trials at 5 to prevent silent build hang
+- 2026-05-09 | 5aec740 | fix: bake model training into Docker build + fix rate limiter real IP
+- 2026-05-09 | 70d847f | fix(render): lazy DB init — don't raise at import if DATABASE_URL missing
+- 2026-05-09 | 1d2663d | fix(render): start uvicorn immediately, run bootstrap in background
+- 2026-05-09 | cd44ba7 | fix(ci): set MLFLOW_TRACKING_URI to local file store — no MLflow server in CI
+- 2026-05-09 | 3449d6c | fix(ci): pass --no-hf to training step — skip HuggingFace download in CI
+- 2026-05-09 | b2bb8fa | security: remove CLAUDE.md from repo, add to .gitignore
+- 2026-05-09 | 55a33fb | security: remove sensitive and internal files from public repo
+- 2026-05-09 | 61ab39d | chore: remove unnecessary and sensitive files from public repo
+- 2026-04-24 | 9b0ce1f | feat: add 4 NullMask isometric illustrations across dashboard pages
+- 2026-04-24 | 5dfbe76 | fix: render SVG illustrations via base64 data URI instead of raw inline SVG
+- 2026-04-24 | b6afd7c | fix: use correct Plotly Waterfall color API — decreasing/totals/increasing dicts
+- 2026-04-24 | 925c6ee | feat: brand fonts (NType82 + LetteraMonoLL) + compliance illustrations
+- 2026-04-24 | 0da4a1e | security: remove demo credentials from public README
+- 2026-04-24 | dbf8b2c | feat: add /startserver skill for full stack startup + health checks
+- 2026-04-24 | 85c3042 | vault: log README security fix + /startserver skill (2026-04-24)
+- 2026-04-24 | d12f7df | feat: add /gitmastersync skill for vault sync + dual repo push
+- 2026-04-24 | 50b475c | fix: SVG illustrations, legend visibility, form labels, legend conflict
+- 2026-04-24 | bdfe1c0 | design: retheme presentation to NullMask light design system (vault)
+- 2026-04-24 | dd820ca | chore: remove tracked __pycache__ and .pyc files from repo
+- 2026-04-24 | 677e3e0 | test: fix auth headers, rate-limit token cache, DB-skip markers in test suite
+- 2026-04-24 | 4551f47 | fix: compact login form input fields to normal height
+- 2026-04-24 | ba66bff | vault: log 4551f47 login form input fix (2026-04-24)
+- 2026-04-24 | 17d9b68 | feat: add /loadcontext skill — vault + memory context loader with guardrails
+- 2026-04-24 | e13136c | vault: log 17d9b68 /loadcontext skill (2026-04-24)
+- 2026-04-24 | 84597d2 | refactor: remove all NullMask brand references from codebase
+- 2026-04-24 | 09821e3 | vault: log 84597d2 NullMask brand ref removal (2026-04-24)
+- 2026-04-17 | fcf7a10 | Creating new repository for the aegis AI
+- 2026-04-17 | d85201f | Creating repo
+- 2026-04-17 | dc8d72d | update
+- 2026-04-17 | 14cbd18 | Sm update
+- 2026-04-17 | c15dd10 | Sm update
+- 2026-04-17 | efd7bdc | Sm update
+- 2026-04-17 | 3a034dc | Phase 2 API complete
+- 2026-04-17 | 3b21d74 | sm update
+- 2026-04-17 | acd785c | 3.8 done
+- 2026-04-17 | 1ec95a4 | sm update
+- 2026-04-17 | 945cb28 | Phase 3 complete
+- 2026-04-17 | b27fe8a | ml trial
+- 2026-04-17 | cf1f98c | Phase 3 test complete
+- 2026-04-17 | b1df1f3 | Update README.md
+- 2026-04-18 | c0da6cf | module 4 complete
+- 2026-04-18 | 07e71f3 | sm update
+- 2026-04-18 | 252c2f6 | Phase 4 check complete
+- 2026-04-18 | 8485c41 | Phase 5 completed
+- 2026-04-18 | a856d9b | sm update
+- 2026-04-18 | 48dfbef | sm update
+- 2026-04-18 | dc9d3aa | sm update
+- 2026-04-18 | 4f9b401 | sm update
+- 2026-04-18 | 0c4379e | Final Update
+- 2026-04-18 | e4ab265 | Sm update
+- 2026-04-18 | 0fde0fb | sm update
+- 2026-04-18 | b8007d3 | Phase 6: update README and reduce Optuna trials to 30
+- 2026-04-18 | dd57169 | Fix dashboard->API connection in Docker
+- 2026-04-18 | 01816bb | Switch dashboard to dark mode
+- 2026-04-18 | b150f3b | sm update
+- 2026-04-20 | 11bd281 | sm update
+- 2026-04-20 | c9d4350 | sm update
+- 2026-04-21 | 71ceba4 | sm update
+- 2026-04-22 | 95851e9 | tests updated
+- 2026-04-22 | b63e9b7 | feat: add comprehensive security test suite and reports
+- 2026-04-24 | 30859d3 | Merge branch 'main' of https://github.com/rupal2k/aegis-ai
+- 2026-04-24 | 3eb17a6 | sm update
+- 2026-04-24 | 45178db | sm update
+- 2026-04-24 | ad2c5f2 | sm update
+- 2026-04-24 | 1382053 | sm update
+- 2026-04-24 | 24e96dd | sm update
+- 2026-04-24 | 2cd85f0 | sm update
+- 2026-04-26 | 6730057 | fix: post-commit hook — dedup guard + vault-commit skip + explicit repo context
+- 2026-04-29 | d0ef776 | feat(ml): add Hugging Face dataset support + harden scorer
+- 2026-04-29 | b86ca05 | chore: add HF dataset docs + remove stale vfit_cx vault export
+- 2026-04-29 | 818f5fd | feat(ml): switch HF source to ayush0205/clinical_data_rf with regex parser
+- 2026-04-29 | 2caac54 | feat(ml): auto-name MLflow runs from dataset source + rename existing runs
+- 2026-04-26 | 48a0170 | sm updat
+- 2026-04-28 | 64480a3 | smupdate
+- 2026-04-28 | 8ebcd93 | UI Changes and Model upgrade
+- 2026-04-29 | 8f208ee | sm update
+- 2026-04-29 | f61f3d8 | feat(ui): workstyle breakdown, filter pills, dark text fixes, primary logo
+- 2026-04-29 | f4b7b00 | feat(ml): clinical notes parser, HF dataset integration, scorer hardening
+- 2026-04-29 | ed95948 | chore: update model artifacts — retrained scorer + xgb model
+- 2026-04-29 | 7210b0e | fix(docker): add data/ directory to dashboard image — fixes ModuleNotFoundError
+- 2026-04-29 | 7f94da0 | feat: add CLAUDE.md — lock design system rules + Plotly/CSS patterns
+- 2026-04-29 | dc7d37a | fix(ui): force #C4FF00 text on primary button children + MODEL ACTIVE card
+- 2026-04-30 | cf12d8b | fix(schema): add lab_* columns to training_snapshots — sync with clinical notes parser
+- 2026-04-30 | ee26e94 | feat(deploy): add render.yaml + fix PORT env var for Render deployment
+- 2026-04-30 | a12c31c | fix(deploy): chmod +x entrypoint.sh — fixes exit 128 on Render
+- 2026-04-30 | 593843b | feat(deploy): add Dockerfile for Hugging Face Spaces (port 7860, UID 1000)
+- 2026-04-30 | 160158f | chore: HF Spaces deploy snapshot
+- 2026-04-30 | b20b3a8 | chore: add .hfignore to exclude design-package fonts from HF Spaces
+- 2026-04-30 | f8b97e5 | fix(auth): raise timeout to 45s + distinguish cold-start vs bad password
+- 2026-05-02 | 370cc0d | feat(ui): implement Particle Dark design theme across dashboard
+- 2026-05-02 | f07a550 | fix(docker): replace curl with Python in dashboard HEALTHCHECK
+- 2026-05-02 | 7bd65ac | chore: add HF Spaces YAML front matter to README
+- 2026-05-02 | 355d887 | feat: HF Spaces deploy — Particle Dark theme
+- 2026-05-02 | 4cf4bcd | feat: HF Spaces deploy — Particle Dark theme (2026-05-02)

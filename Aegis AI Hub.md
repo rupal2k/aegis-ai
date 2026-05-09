@@ -1,8 +1,8 @@
 # Aegis AI — Project Hub
 
-**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ | **Deployed**: Docker + GitHub Actions CI  
+**Status**: All 6 Phases Complete ✅ + Security Hardening ✅ + Security Testing ✅ + UI Redesign ✅ + Design System Implementation ✅ + Chart Fixes ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅ + CI & Render Fixes ✅ | **Deployed**: Neon + Render + Hugging Face Spaces ✅  
 **Repository**: `c:\Rupalprojects\aegis-ai`  
-**Last Updated**: 2026-04-22
+**Last Updated**: 2026-05-09
 
 ---
 
@@ -24,7 +24,7 @@ Aegis AI is an **AI-powered B2B group insurance underwriting platform** that pre
 
 | Section | Purpose |
 |---------|---------|
-| [[../memory]] | **Master LLM guide** — read before any AI coding session |
+| [[Claude Memory]] | **Master LLM guide** — read before any AI coding session |
 | [[behaviour]] | Aegis AI-specific LLM rules (quick reference) |
 | [[Phase Progress]] | All 6 phases complete — checklists + dev logs |
 | [[Decisions & Rationale]] | 10 logical decisions with deep tradeoff analysis |
@@ -80,7 +80,7 @@ Aegis AI is an **AI-powered B2B group insurance underwriting platform** that pre
 
 ## 🔴 Issues & Fixes
 
-All 7 bugs resolved ✅ — full root causes, code snippets, and prevention rules in [[Bug Log]].
+All 10 bugs resolved ✅ — full root causes, code snippets, and prevention rules in [[Bug Log]].
 
 ---
 
@@ -88,7 +88,7 @@ All 7 bugs resolved ✅ — full root causes, code snippets, and prevention rule
 
 | Metric | Value |
 |--------|-------|
-| **Test Coverage** | 88/88 passing (63 functional + 25 security) |
+| **Latest test run** | 75 passed, 5 skipped (`python -m pytest tests -q`) |
 | **API Endpoints** | 13 live (incl. `/auth/token` login) |
 | **Dashboard Tabs** | 7 (4 underwriter + 3 HR manager) |
 | **Currencies** | 10 (INR, USD, EUR, GBP, AED, SGD, AUD, JPY, CAD, CHF) |
@@ -112,12 +112,45 @@ Dev journal: [[Daily Notes/Daily notes]] (Phase 5) · Phase 6 log embedded in [[
 - [x] **HIPAA / SOC 2 security hardening** — JWT auth, RBAC, TLS, audit logging, CORS, CI security scan
 - [x] **Security test suite** — 25 automated security tests (all passing after remediation)
 - [x] **Security remediation** — stale Docker image, non-root user, rate limiting, security headers, server header suppression
+- [x] **NullMask UI redesign** — replaced dark theme with NullMask light design system; Space Grotesk font, `#C4FF00` accent, ∅ logo mark, white metric cards, production-ready B2B aesthetic across all 6 dashboard files
+- [x] **Swagger UI CSP fix** — `ingestion/main.py` middleware now exempts `/docs`, `/redoc`, `/openapi.json` from strict `script-src 'self'` CSP in development mode, allowing Swagger UI to load from `cdn.jsdelivr.net`
+- [x] **NullMask design system implementation** — fetched official design bundle (claude.ai/design), audited all 14 design elements, implemented 6 missing ones: user avatar with initials, data-driven alerts panel, risk band mini-cards, numbered AI recommendations with estimated savings, glow shadow CSS variant, thin scrollbar
+- [x] **HR dashboard chart fixes** — waterfall per-bar colours (gray/green/accent-olive) + dotted connector + outside labels; donut zero-band filtering + mean HRS centre annotation (`bd13c22`)
+- [x] **NullMask isometric illustrations** — 4 SVG design elements placed across dashboard pages: Privacy Vault on login, Privacy Router on underwriter portfolio tab, Privacy Shield on HR workforce tab, Zero Node on upload empty state; stored as base64 data URIs in `dashboard/illustrations.py` (`9b0ce1f`, `5dfbe76`)
+- [x] **Plotly Waterfall API fix** — replaced invalid `marker_color` array with correct `decreasing`/`totals`/`increasing` sub-objects; HR ROI tab now renders correctly (`b6afd7c`)
+- [x] **Brand fonts** — NType82 (display headlines/tabs), LetteraMonoLL (metric values/delta/chart numbers), Inter (body/labels/captions) embedded as base64 `@font-face` in `dashboard/illustrations.py`; `BRAND_FONT_CSS` injected globally from `app.py` (`925c6ee`)
+- [x] **Compliance illustrations** — replaced 4 NullMask privacy SVGs with Aegis-specific compliance art from design bundle: SOC 2 → login, Group Insurance → underwriter portfolio, HIPAA Privacy → HR workforce tab, Employee Health → upload empty state (`925c6ee`)
+- [x] **README security fix** — removed demo credentials table (`underwriter@safenet.com`, `hr@technova.com`, `hr@bharatsteel.com`) from public README to prevent credential exposure (`0da4a1e`)
+- [x] **`/startserver` Claude Code skill** — `.claude/commands/startserver.md` automates full stack startup: stops native processes, `docker compose down/up`, health checks (API/Dashboard/MLflow/PostgreSQL/nginx), module import tests, syntax checks (`dbf8b2c`)
+- [x] **Login form input sizing fix** — reduced oversized Streamlit `st.text_input` fields from ~46px to compact 38px height via targeted CSS in `app.py` (`4551f47`)
+- [x] **Remove NullMask brand references** — stripped all 7 occurrences of "NullMask" from docstrings, comments, CSS, and skills; design tokens and visual style unchanged (`84597d2`)
+- [x] **`/loadcontext` Claude Code skill** — session-start slash command that loads all 6 memory files + 5 vault files, outputs a structured context brief, and enforces architecture/security/design/code/vault guardrails before any code work begins (`17d9b68`)
+- [x] **Post-commit hook hardening** — dedup guard + vault-commit skip + explicit repo context; prevents duplicate log entries and infinite commit loops (`6730057`)
+- [x] **Dashboard UI overhaul & design system alignment** — comprehensive update of all 5 dashboard modules to `design.md` contract; dark text scale, `apply_chart_theme()` everywhere, risk-band mini-cards and alerts panel refined (`8ebcd93`)
+- [x] **HF dataset integration + scorer hardening** — `load_from_huggingface()` with HF Hub support; `load_training_dataframe()` with `local`/`hf`/`both` modes and graceful fallback; `HRSScorer._normalize()` degenerate-distribution guard; `--use-local`/`--use-hf`/`--use-both` CLI flags; 7 new pipeline tests (`d0ef776`)
+- [x] **Clinical notes parser — HF source switch** — `_parse_clinical_note()` regex parser extracts age, gender, BMI, 13 condition flags, ICU, SpO2 from 19,756 discharge notes; synthesises wearable telemetry from severity; `ayush0205/clinical_data_rf` replaces previous tabular HF dataset (`818f5fd`)
+- [x] **MLflow run auto-naming** — `_build_run_name()` derives descriptive names from data sources; retroactively renamed 3 existing runs for clarity in MLflow UI (`2caac54`)
+
+- [x] **Health insurance HF adapter + guarded retrain** - added schema support for `bubuuunel/healthylife-insurance-charge-log`, explicitly rejects company-profile HF datasets like `devadigax/linkedin-company-profile`, retrained with local 5,237 + HF 225 = 5,462 rows, MLflow run `b10e7565acbd451e92556509b52dfa6d`, full pytest `75 passed, 5 skipped`
+- [x] **UI/UX design system improvements** — Workstyle Breakdown grid (Account Review tab), risk filter pills (Upload tab), Plotly chart text fix (template clear + explicit axis overrides), expanded CSS guard-rail (metric labels, expander, subheaders), Primary-on-light logo in sidebar + login (`f61f3d8`)
+- [x] **ML pipeline hardening & artifacts update** — `_parse_clinical_note()` regex parser, `load_from_huggingface()` rewrite, `HRSScorer._normalize()` degenerate guard, CLI flags, `load_training_dataframe()` with graceful fallback, updated model artifacts (`f4b7b00`)
+- [x] **Dashboard Docker fix** — added `COPY data/ ./data/` to `Dockerfile.dashboard`; fixes `ModuleNotFoundError: No module named 'data'` on container startup (`7210b0e`)
+- [x] **Design system lock (CLAUDE.md)** — 133-line `CLAUDE.md` at repo root permanently encodes color scale, banned pale greys, mandatory Plotly pattern, CSS `!important` rules, helper functions, logo variant, and Docker rebuild triggers (`7f94da0`)
+- [x] **Primary button text visibility fix** — added explicit child CSS selectors for `stBaseButton-primary *`; bumped MODEL ACTIVE card caption from `#AAAAAA` to `#CCCCCC` (`dc7d37a`)
+- [x] **Training snapshot schema fix** — 11 `lab_*` columns added to `training_snapshots` in `schema.sql`; Neon PostgreSQL table dropped and reseeded (`cf12d8b`)
+- [x] **Render deployment** — `render.yaml` Blueprint + `${PORT:-8000}` in `entrypoint.sh` + executable bit fix; FastAPI live at `https://aegis-ai-wss8.onrender.com` (`ee26e94`, `a12c31c`)
+- [x] **Hugging Face Spaces deployment** — root `Dockerfile` (port 7860, UID 1000); Streamlit dashboard live at `https://huggingface.co/spaces/Rupa2k/aegis-ai` (`593843b`)
+- [x] **Auth cold-start timeout fix** — raised login timeout to 45s, added distinct "Server is starting up" message, hardened blank `AEGIS_API_URL` env var fallback (`f8b97e5`)
+- [x] **Particle Dark design theme** — full dark-navy dashboard (Particle Dark edition): `design_tokens.py` rewritten (`#070b14`/`#111c30`/`#84cc16`), animated SVG arc gauge, traffic-light risk colors, six CSS micro-animation keyframes, all 7 dashboard modules migrated (`370cc0d`)
+- [x] **Dashboard healthcheck fix** — `Dockerfile.dashboard` HEALTHCHECK now uses Python urllib instead of curl (not present in slim image); all containers now show `healthy` (`f07a550`)
+- [x] **Repo security audit & cleanup** — removed CLAUDE.md, .env, config/users.json, .codex-security-tools/ (1,700+ files), security scan reports, ML model binaries, health data CSVs, and wrong-project scripts from public repo; 12 new .gitignore rules prevent future exposure (`b2bb8fa`, `55a33fb`, `61ab39d`)
+- [x] **CI & Render deployment fixes** — upgraded python-multipart (CVE-2026-42561), hardcoded CI-only Postgres, job-level env block, `--no-hf` training flag, removed `COPY config/` from Dockerfile.api, added HASH_SALT + AEGIS_USERS_JSON to render.yaml; full CI pipeline now green (`9b88d17`–`3449d6c`)
 
 ## 🔧 Next Steps (Post-Capstone)
 
 - [ ] **Fix ingest RBAC gap** — add `require_company_access` to `/ingest/wearable`, `/ingest/clinical`, `/ingest/company` (hr_admin can currently inject data for other companies)
 - [ ] OAuth 2.0 / SAML authentication (replace file-based user store)
-- [ ] Deploy to cloud — see [[Aegis AI - Free Deployment Plan]] (Neon + Render + Hugging Face Spaces)
+- [x] Deploy to cloud — Neon (DB) + Render (API) + Hugging Face Spaces (dashboard) ✅ fully live 2026-04-30
 - [ ] Live FX API integration (replace static rates)
 - [ ] Real-time pipeline (Kafka streaming HRS updates)
 - [ ] Model drift monitoring + auto-retrain triggers
