@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
 **Last Updated**: 2026-05-10
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅ + CI & Render Fixes ✅ + Production Cold-Start & Rate Limiter Fixes ✅ + Local-First ML Workflow ✅
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅ + CI & Render Fixes ✅ + Production Cold-Start & Rate Limiter Fixes ✅ + Local-First ML Workflow ✅ + Production Security Audit ✅ + Dockerignore Fix ✅
 
 ---
 
@@ -1180,6 +1180,40 @@ Training in CI failed because `MLFLOW_TRACKING_URI` defaulted to `http://localho
 - Rate limiter now correctly keys on real client IP through Cloudflare
 
 ---
+### Production Security Audit & Credential Cleanup (2026-05-10)
+
+**Status**: ✅ Complete
+**Commits**: `3532b74`, `8915c05`, `bfe31e2`, `812889b`
+
+#### Audit Scope
+
+Full sweep of all production surfaces: live Render API endpoints, public GitHub repo (all tracked files + git history), `.dockerignore`, `.gitignore`, CI workflow, and committed data/artifact files.
+
+#### Findings & Dispositions
+
+| Severity | Location | Finding | Action |
+|----------|----------|---------|--------|
+| Medium | `ci.yml:47` | Postgres password `aegis_ci_pass` hardcoded in public repo | Renamed to `aegis_ci_run_only`; comment added clarifying CI-only scope |
+| Medium | `ci.yml:48-49` | `\|\|` fallbacks on `HASH_SALT`/`SECRET_KEY` — CI ran with known weak values if secrets unset | Removed fallbacks; code-level defaults in `normalizer.py` / `jwt.py` handle empty gracefully |
+| Low | `data/load_to_db.py:12` | Fallback `aegis_user:aegis_pass` DB URL hardcoded | Removed; now raises `RuntimeError` if `DATABASE_URL` unset (matches `database.py` pattern) |
+| Info | `/docs`, `/redoc`, `/openapi.json` | All return 404 in production | ✅ Already correct |
+| Info | `/health` | Returns `{"status":"ok","service":"aegis-ingestion"}` only | ✅ No version/DB/stack leak |
+| Info | `render.yaml` | All env vars use `sync: false` | ✅ No hardcoded values |
+| Info | `config/users.json` | Not tracked, not in git history | ✅ Correct |
+| Info | `.env` | Not tracked, history clean (filter-repo) | ✅ Correct |
+| Info | `data/output/*.csv` | Faker-generated, SHA-256 hashed IDs — no real PII | ✅ Safe to commit |
+| Info | `ml_engine/artifacts/*.pkl` | XGBoost weights only, no credentials | ✅ Safe to commit |
+
+#### Dockerignore Fix
+
+`.dockerignore` had `data/output/` as a directory exclusion, which silently stripped all committed synthetic CSVs from the Docker build context. Bootstrap therefore always ran `data/generate.py` (~30s) on every cold start despite the CSVs being in the image's git layer.
+
+Fix: replaced the directory exclusion with explicit per-file exclusions for the only files that must stay out (`real_user_training.csv`, `upload_doc_*.csv`). All committed synthetic CSVs now pass through to the image. Bootstrap skips all three phases on cold start.
+
+**Before** (every cold start): generate data (~30s) → skip DB seed → skip training → uvicorn ready
+**After**: skip data gen → skip DB seed → skip training → uvicorn ready (~5s)
+
+---
 ### Local-First ML Workflow (2026-05-10)
 
 **Status**: ✅ Complete
@@ -1284,8 +1318,10 @@ git push
 | Post-capstone | ✅ CI & Render deployment fixes — CVE fix, CI postgres, env block, --no-hf training, Dockerfile COPY fix, render.yaml env vars | ~1h | — | 6 |
 | Post-capstone | ✅ Production cold-start & rate limiter fixes — bake model into Docker build image, CF-Connecting-IP rate key, lazy DB init, MLFLOW local file store | ~1h | — | 4 |
 | Post-capstone | ✅ Local-first ML workflow — commit pre-trained artifacts + synthetic CSVs, remove build-time training, Render build instant | ~0.5h | — | 2 |
+| Post-capstone | ✅ Production security audit — swept all surfaces, removed hardcoded CI password + load_to_db fallback credential, removed HASH_SALT/SECRET_KEY fallbacks | ~1h | — | 1 |
+| Post-capstone | ✅ Dockerignore fix — synthetic CSVs now reach Docker image, bootstrap skips data generation on cold start | ~0.5h | — | 3 |
 
-**Total Effort to Date**: ~54 hours  
-**Total Commits**: 68  
+**Total Effort to Date**: ~55.5 hours  
+**Total Commits**: 72  
 **Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
 

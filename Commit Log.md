@@ -22,6 +22,10 @@ See also: [[INDEX]] · [[Phase Progress]] · [[Aegis AI - Presentation]]
 - 2026-05-09 | a3cb0ba | fix(render): remove COPY config/ from Dockerfile — users loaded via AEGIS_USERS_JSON env var
 - 2026-05-09 | 9784df5 | fix(ci): fix Set up environment step — remove !! from placeholder, use expressions not bash vars
 - 2026-05-09 | c24fb17 | fix(ci): move all env vars to job-level env block — eliminate Set up environment step
+- 2026-05-10 | 812889b | fix(docker): simplify dockerignore — exclude only real user CSV, let committed synthetic CSVs through
+- 2026-05-10 | bfe31e2 | fix(docker): allow committed synthetic CSVs through .dockerignore so bootstrap skips data generation
+- 2026-05-10 | 8915c05 | fix(ci): restore hardcoded CI-only postgres password, keep JWT secrets clean
+- 2026-05-10 | 3532b74 | security: remove hardcoded credentials from public repo
 - 2026-05-10 | e539e7d | feat: commit pre-trained artifacts + synthetic CSVs, remove build-time training
 - 2026-05-10 | 3f0c343 | fix(docker): cap build-time Optuna trials at 5 to prevent silent build hang
 - 2026-05-09 | 5aec740 | fix: bake model training into Docker build + fix rate limiter real IP
