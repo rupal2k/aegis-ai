@@ -44,3 +44,15 @@ security_test_results.txt
 SECURITY_TEST_SUMMARY.txt
 SECURITY_REPORT.md
 pip-audit-report-current.json
+
+# Upload test / sample health data — never commit
+data/upload_doc_*.csv
+
+# Wrong-project scripts (Vantage Fit Obsidian tools)
+fix_graph.py
+graph_check.py
+
+# Internal dev artifacts
+.design-package/chats/
+.design-package/project/SKILL.md
+design.md
