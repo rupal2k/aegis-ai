@@ -9,8 +9,8 @@ pinned: false
 
 # Aegis AI — Dynamic Group Insurance Underwriting Platform
 
-![CI](https://github.com/rupal2k/aegis-ai/workflows/CI/badge.svg?branch=main)
-![API](https://img.shields.io/website?url=https%3A%2F%2Faegis-ai-wss8.onrender.com%2Fhealth&label=Render%20API&up_message=live&down_message=offline)
+![CI](https://github.com/rupal2k/aegis-ai/actions/workflows/ci.yml/badge.svg?branch=main)
+![API](https://img.shields.io/website?url=https%3A%2F%2Faegis-ai-wss8.onrender.com%2Fhealth&label=Render%20API&up_message=live&down_message=sleeping&cacheSeconds=60)
 
 A B2B SaaS platform that shifts group health insurance from **reactive** pricing (based on last year's claims) to **proactive** underwriting (based on real-time workforce health telemetry).
 
