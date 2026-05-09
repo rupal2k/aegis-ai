@@ -13,7 +13,7 @@ from ingestion.models.schemas import (
     PremiumRequest, PremiumResponse,
     WellnessROIRequest, WellnessROIResponse,
 )
-from ml_engine import get_model
+from ml_engine import get_model, ModelNotReadyError
 from ml_engine.explainer import AegisExplainer
 from ml_engine.premium_calculator import (
     calculate_premium_adjustment, calculate_wellness_roi,
@@ -47,7 +47,10 @@ def predict_employee(
     payload: EmployeePredictionRequest,
     user: dict = Depends(get_current_user),
 ):
-    model = get_model()
+    try:
+        model = get_model()
+    except ModelNotReadyError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     emp = payload.model_dump()
     if emp.get("chronic_count") is None:
         emp["chronic_count"] = int(emp["diabetic"]) + int(emp["hypertension"])
@@ -102,7 +105,10 @@ def predict_company(
 
     df = pd.DataFrame(rows)
     df = df.apply(lambda col: pd.to_numeric(col, errors="coerce").fillna(col) if col.dtype == object else col)
-    model  = get_model()
+    try:
+        model = get_model()
+    except ModelNotReadyError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     result = model.predict_company(df)
 
     hrs_array = np.array(result["hrs_distribution"])

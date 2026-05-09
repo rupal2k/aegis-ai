@@ -68,9 +68,18 @@ class AegisModel:
 
 _MODEL_INSTANCE = None
 
+
+class ModelNotReadyError(RuntimeError):
+    """Raised when model artifacts haven't been written by bootstrap yet."""
+
+
 def get_model() -> AegisModel:
     """Singleton loader — avoids re-reading .pkl on every request."""
     global _MODEL_INSTANCE
     if _MODEL_INSTANCE is None:
+        if not (ARTIFACTS / "xgb_model.pkl").exists():
+            raise ModelNotReadyError(
+                "Model artifacts not ready — bootstrap is still running."
+            )
         _MODEL_INSTANCE = AegisModel()
     return _MODEL_INSTANCE
