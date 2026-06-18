@@ -511,6 +511,63 @@ def load_excel_datasets() -> pd.DataFrame:
     return map_employee_excel_dataframe(joined)
 
 
+def augment_excel_dataframe(df: pd.DataFrame, n_aug: int = 4) -> pd.DataFrame:
+    """
+    Generate synthetic variants of Excel rows by adding calibrated Gaussian noise
+    to continuous features. Binary/categorical columns are preserved unchanged.
+    loss_ratio gets small multiplicative noise to stay within realistic bounds.
+
+    Returns the original rows plus n_aug synthetic copies (total = len(df) * (1 + n_aug)).
+    """
+    rng = np.random.default_rng(RANDOM_STATE + 7)
+    continuous = [
+        "age", "bmi", "avg_daily_steps", "avg_sleep_hours",
+        "avg_resting_hr", "hr_trend", "avg_active_mins", "avg_spo2",
+        "step_volatility", "visit_count", "chronic_count",
+    ]
+    noise_scale = {
+        "age": 1.5, "bmi": 0.5, "avg_daily_steps": 400.0,
+        "avg_sleep_hours": 0.3, "avg_resting_hr": 2.0, "hr_trend": 0.2,
+        "avg_active_mins": 4.0, "avg_spo2": 0.2, "step_volatility": 80.0,
+        "visit_count": 0.4, "chronic_count": 0.2,
+    }
+    clamp = {
+        "age": (18, 80), "bmi": (15, 50), "avg_daily_steps": (0, 25000),
+        "avg_sleep_hours": (3, 12), "avg_resting_hr": (40, 120),
+        "hr_trend": (-5, 5), "avg_active_mins": (0, 90),
+        "avg_spo2": (88, 100), "step_volatility": (50, 3000),
+        "visit_count": (0, 15), "chronic_count": (0, 4),
+    }
+
+    frames = [df]
+    for _ in range(n_aug):
+        aug = df.copy()
+        for col in continuous:
+            if col not in aug.columns:
+                continue
+            scale = noise_scale.get(col, 0.05 * aug[col].std() + 1e-6)
+            aug[col] = np.clip(
+                aug[col] + rng.normal(0, scale, len(aug)),
+                *clamp.get(col, (-np.inf, np.inf))
+            )
+        # Multiplicative noise on loss_ratio: ±10%
+        aug["loss_ratio"] = np.clip(
+            aug["loss_ratio"] * rng.uniform(0.90, 1.10, len(aug)),
+            0.05, 6.0,
+        )
+        frames.append(aug)
+
+    return pd.concat(frames, ignore_index=True)
+
+
+def load_excel_augmented() -> pd.DataFrame:
+    """Load Excel data and augment with synthetic variants (4× expansion)."""
+    base = load_excel_datasets()
+    augmented = augment_excel_dataframe(base, n_aug=4)
+    print(f"  Augmented Excel: {len(base):,} → {len(augmented):,} rows (4× synthetic expansion)")
+    return augmented
+
+
 def _parse_clinical_note(text: str) -> dict:
     """Extract structured fields from one clinical discharge note."""
     import re
@@ -712,7 +769,7 @@ def load_training_dataframe(
     hf_dataset_name: str = HF_DATASET_NAME,
 ) -> Tuple[pd.DataFrame, Dict[str, int]]:
     """Load one or more training sources into a single dataframe."""
-    valid_modes = {"local", "hf", "both", "excel", "excel-hf"}
+    valid_modes = {"local", "hf", "both", "excel", "excel-hf", "excel-aug"}
     if dataset_mode not in valid_modes:
         raise ValueError(f"Unsupported dataset mode: {dataset_mode}. Choose from {valid_modes}")
 
@@ -721,6 +778,8 @@ def load_training_dataframe(
         selected_sources.append(("local", load_local_dataset))
     if dataset_mode == "excel":
         selected_sources.append(("excel", load_excel_datasets))
+    if dataset_mode == "excel-aug":
+        selected_sources.append(("excel", load_excel_augmented))
     if dataset_mode == "excel-hf":
         selected_sources.append(("excel", load_excel_datasets))
         selected_sources.append(("huggingface", lambda: load_from_huggingface(hf_dataset_name)))
@@ -817,6 +876,8 @@ def _build_run_name(dataset_mode: str, hf_dataset_name: str) -> str:
         return "xgb_excel"
     if dataset_mode == "excel-hf":
         return f"xgb_excel+hf_{hf_slug}"
+    if dataset_mode == "excel-aug":
+        return "xgb_excel_aug"
     if dataset_mode == "both":
         return f"xgb_local+hf_{hf_slug}"
     return f"xgb_local+{hf_slug}"
@@ -977,6 +1038,11 @@ def build_arg_parser():
         action="store_true",
         help="Force synthetic CSV (rollback path — same as --use-local)",
     )
+    group.add_argument(
+        "--use-excel-aug",
+        action="store_true",
+        help="Load Excel data + 4x synthetic augmentation (recommended when HF mix hurts R2)",
+    )
     parser.add_argument(
         "--hf-dataset",
         default=HF_DATASET_NAME,
@@ -992,6 +1058,8 @@ def resolve_dataset_mode(args) -> str:
         return "excel"
     if getattr(args, "use_excel_hf", False):
         return "excel-hf"
+    if getattr(args, "use_excel_aug", False):
+        return "excel-aug"
     if getattr(args, "use_hf", False):
         return "hf"
     if getattr(args, "use_both", False):
