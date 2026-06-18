@@ -813,6 +813,12 @@ def _build_run_name(dataset_mode: str, hf_dataset_name: str) -> str:
         return "xgb_local_csv"
     if dataset_mode == "hf":
         return f"xgb_hf_{hf_slug}"
+    if dataset_mode == "excel":
+        return "xgb_excel"
+    if dataset_mode == "excel-hf":
+        return f"xgb_excel+hf_{hf_slug}"
+    if dataset_mode == "both":
+        return f"xgb_local+hf_{hf_slug}"
     return f"xgb_local+{hf_slug}"
 
 
