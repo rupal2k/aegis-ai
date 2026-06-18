@@ -5,7 +5,8 @@ import os
 
 API_BASE = os.environ.get("AEGIS_API_URL", "http://localhost:8000")
 
-if API_BASE == "http://localhost:8000":
+# Only warn when running inside HF Spaces where localhost:8000 will definitely fail.
+if API_BASE == "http://localhost:8000" and os.environ.get("SPACE_ID"):
     st.warning(
         "AEGIS_API_URL is not configured — API calls will fail. "
         "Set this secret in your HuggingFace Space settings to the Render API URL.",
@@ -29,10 +30,19 @@ def _get(path: str, **params):
                 st.stop()
             r.raise_for_status()
             return r.json()
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code
+        if code == 401:
+            st.error("Session expired — please log in again.")
+        elif code == 403:
+            st.error("Access denied. You do not have permission to view this data.")
+        else:
+            st.error(f"API error {code}: {e.response.text[:200]}")
+        st.stop()
     except httpx.TimeoutException:
         st.error("Request timed out. The API may be starting up — please retry in 30 seconds.")
         st.stop()
-    except httpx.RequestError as e:
+    except httpx.RequestError:
         st.error(f"Cannot reach API at {API_BASE}. Check AEGIS_API_URL secret.")
         st.stop()
 
@@ -46,6 +56,15 @@ def _post(path: str, json_body: dict):
                 st.stop()
             r.raise_for_status()
             return r.json()
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code
+        if code == 401:
+            st.error("Session expired — please log in again.")
+        elif code == 403:
+            st.error("Access denied. You do not have permission to perform this action.")
+        else:
+            st.error(f"API error {code}: {e.response.text[:200]}")
+        st.stop()
     except httpx.TimeoutException:
         st.error("Request timed out. The API may be starting up — please retry in 30 seconds.")
         st.stop()

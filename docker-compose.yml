@@ -41,6 +41,7 @@ services:
       HASH_SALT: ${HASH_SALT}
       ENV: ${ENV:-production}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8501}
+      AEGIS_USERS_JSON: ${AEGIS_USERS_JSON:-}
     ports:
       - "8000:8000"
     depends_on:

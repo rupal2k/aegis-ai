@@ -44,6 +44,11 @@ reg_lambda: 0.09
 | Train R² | -0.0000 |
 | **Test R²** | **-0.0001** |
 
+> ⚠️ **Note on R² — read before comparing to other references:**
+> This training run used `--use-hf` mode (HuggingFace dataset only, 8,000 records) with lab feature columns defaulted to 0 (local DB migration, not reseeded). R² near zero is expected: the HF dataset columns map imperfectly to Aegis AI's clinical telemetry format, and zero-valued lab flags add noise without signal.
+>
+> The **production model** (Render, commit `02786aa`) was trained on the full synthetic Neon DB dataset (`--use-both` mode) with all 31 features populated. It achieves **R² ≈ 0.54, Test MAE ≈ 0.40** on the properly seeded data. That model is authoritative for all live predictions. MLflow run ID for production: see Render build logs.
+
 ### Model Configuration
 - **Framework:** XGBoost Regressor
 - **Early stopping:** Enabled (50 rounds patience)

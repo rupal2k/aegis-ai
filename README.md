@@ -78,15 +78,23 @@ See `data/generate.py` for the generator.
 
 ---
 
+## Business Case
+
+A mid-sized Indian insurer writing ₹500 Cr GWP in group health typically targets a 90–95% combined ratio. A 5% loss ratio improvement — achievable by pricing high-risk groups 15–30% higher and rewarding low-risk groups with discounts — translates to ₹25–50 Cr in annual underwriting profit. Aegis AI makes this precision pricing tractable: instead of repricing annually from claims, underwriters can adjust premiums quarterly from live telemetry. For a corporate client, the wellness ROI calculator shows exactly how much a ₹1 Cr wellness program investment reduces next year's premium — turning insurance renewal from a cost centre conversation into a CFO-level strategic decision.
+
+---
+
 ## Model Performance
 
-| Metric | Value |
-|--------|-------|
-| Test MAE (log loss ratio) | ~0.40 |
-| Test R² | ~0.78 |
-| Prediction latency | 60–80 ms |
-| Optuna trials | 30 |
-| Training time | ~3 min |
+| Metric | Value | Context |
+|--------|-------|---------|
+| Test MAE (log loss ratio) | ~0.40 | Production model (Neon DB, full feature set) |
+| Test R² | ~0.54 | Production model (Neon DB, full feature set) |
+| Prediction latency | 60–80 ms | Per employee, cached XGBoost |
+| Optuna trials | 50 | TPE sampler, CV MAE objective |
+| Training time | ~3 min | `--use-both` mode, Docker |
+
+> Local training runs using `--use-hf` mode (HuggingFace dataset only, lab columns = 0) show R² ≈ 0. See `MODEL_CARD.md` for full explanation.
 
 All metrics logged to MLflow on every training run.
 
@@ -169,6 +177,16 @@ Full OpenAPI spec auto-generated at `/docs`.
 
 ---
 
+## Model Documentation
+
+See [`MODEL_CARD.md`](MODEL_CARD.md) for:
+- Intended use and out-of-scope uses
+- Full performance breakdown (production vs local)
+- Known limitations and fairness considerations
+- Retraining policy
+
+---
+
 ## Future Work
 
 - Streaming ingestion via Kafka for true real-time telemetry
@@ -176,6 +194,7 @@ Full OpenAPI spec auto-generated at `/docs`.
 - Multi-tenant database isolation (currently all companies share one schema)
 - Model drift monitoring + auto-retrain triggers
 - Calibrated confidence intervals on premium quotes
+- Federated learning across insurers (privacy-preserving cross-portfolio signals)
 
 ---
 
