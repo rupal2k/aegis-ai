@@ -112,3 +112,57 @@ def test_mapper_row_count_preserved():
     raw = _make_joined_df(10)
     result = map_employee_excel_dataframe(raw)
     assert len(result) == 10
+
+
+def test_load_excel_datasets_skips_when_files_missing(tmp_path, monkeypatch):
+    """When Excel files don't exist, load_excel_datasets raises FileNotFoundError."""
+    from ml_engine.training import train
+    # Point EXCEL_FILES at a temp path that doesn't have the files
+    monkeypatch.setattr(train, "EXCEL_FILES", {
+        "premium": tmp_path / "missing1.xlsx",
+        "weight":  tmp_path / "missing2.xlsx",
+    })
+    with pytest.raises(FileNotFoundError):
+        train.load_excel_datasets()
+
+
+def test_load_excel_datasets_inner_joins_on_employee_id(tmp_path, monkeypatch):
+    """load_excel_datasets inner-joins on Employee_ID, dropping unmatched rows."""
+    import openpyxl
+    from ml_engine.training import train
+
+    # File1: 3 employees
+    f1_data = pd.DataFrame({
+        "Employee_ID": ["EMP001", "EMP002", "EMP003"],
+        "Age": [30.0, 40.0, 50.0],
+        "Gender": ["Male", "Female", "Male"],
+        "BMI": [22.0, 26.0, 30.0],
+        "Systolic_BP": [115.0, 125.0, 140.0],
+        "Diastolic_BP": [75.0, 80.0, 90.0],
+        "Diabetes_Risk_Score": [20.0, 45.0, 65.0],
+        "Chronic_Conditions": [0.0, 1.0, 2.0],
+        "Historical_Claims_INR": [0.0, 30000.0, 90000.0],
+        "Avg_Daily_Steps": [8000.0, 6000.0, 3000.0],
+        "Avg_Sleep_Hours": [7.5, 6.5, 5.5],
+        "Stress_Score": [25.0, 50.0, 75.0],
+        "Activity_Level": ["High", "Moderate", "Low"],
+        "Wellness_Engagement_Score": [75.0, 55.0, 30.0],
+    })
+    # File2: 2 of 3 employees match
+    f2_data = pd.DataFrame({
+        "Employee_ID": ["EMP001", "EMP002"],
+        "Health_Risk_Score_Weighted": [35.0, 48.0],
+        "Weight_Based_Premium_INR": [200000.0, 250000.0],
+    })
+
+    p1 = tmp_path / "premium.xlsx"
+    p2 = tmp_path / "weight.xlsx"
+    f1_data.to_excel(p1, index=False)
+    f2_data.to_excel(p2, index=False)
+
+    monkeypatch.setattr(train, "EXCEL_FILES", {"premium": p1, "weight": p2})
+
+    result = train.load_excel_datasets()
+    # Only 2 matched rows
+    assert len(result) == 2
+    assert "loss_ratio" in result.columns

@@ -479,6 +479,32 @@ def map_employee_excel_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def load_excel_datasets() -> pd.DataFrame:
+    """
+    Inner-join the two employee Excel files on Employee_ID and return
+    a dataframe in the Aegis feature schema.
+
+    Raises FileNotFoundError if either file is missing.
+    """
+    for key, path in EXCEL_FILES.items():
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Training asset not found: {path}. "
+                "Copy the Excel files to 'Traning Assets/' to use --use-excel."
+            )
+
+    print(f"Loading Excel training assets...")
+    df1 = pd.read_excel(EXCEL_FILES["premium"])
+    df2 = pd.read_excel(EXCEL_FILES["weight"])[
+        ["Employee_ID", "Health_Risk_Score_Weighted", "Weight_Based_Premium_INR"]
+    ]
+
+    joined = df1.merge(df2, on="Employee_ID", how="inner")
+    print(f"  File 1: {len(df1):,} rows | File 2: {len(df2):,} rows | Joined: {len(joined):,} rows")
+
+    return map_employee_excel_dataframe(joined)
+
+
 def _parse_clinical_note(text: str) -> dict:
     """Extract structured fields from one clinical discharge note."""
     import re
