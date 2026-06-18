@@ -142,9 +142,16 @@ def test_map_insurance_charge_hf_dataframe_returns_aegis_fields():
     assert mapped["visit_count"].between(0, 10).all()
 
 
-def test_resolve_dataset_mode_defaults_to_both():
+def test_resolve_dataset_mode_defaults_to_excel_hf_when_files_present():
+    """When Excel files are present (as they are in this repo), default auto-detects to excel-hf."""
     args = train.build_arg_parser().parse_args([])
-    assert train.resolve_dataset_mode(args) == "both"
+    result = train.resolve_dataset_mode(args)
+    # If Excel files exist on disk, auto-detect returns excel-hf; otherwise falls back to DEFAULT_DATA_MODE
+    from ml_engine.training.train import EXCEL_FILES
+    if all(p.exists() for p in EXCEL_FILES.values()):
+        assert result == "excel-hf"
+    else:
+        assert result == train.DEFAULT_DATA_MODE
 
 
 def test_resolve_dataset_mode_supports_legacy_hf_flag():
@@ -192,6 +199,41 @@ def test_load_training_dataframe_falls_back_to_remaining_source(monkeypatch, cap
     assert len(combined) == 1
     assert source_counts == {"local": 1}
     assert "WARNING: Failed to load huggingface dataset: HF unavailable" in captured.out
+
+
+def test_map_clinical_lab_dataframe_returns_aegis_fields():
+    df = pd.DataFrame({
+        "patient_name": ["Alice", "Alice", "Bob"],
+        "age": [45, 45, 62],
+        "sex": ["Female", "Female", "Male"],
+        "test_name": ["TSH", "Cholesterol Total", "GLUCOSE FASTING (F), PLASMA"],
+        "abnormal": [True, False, True],
+    })
+    mapped = train.map_clinical_lab_dataframe(df)
+    assert len(mapped) == 2
+    required = {"age", "gender", "bmi", "smoker", "diabetic", "lab_thyroid_flag",
+                "lab_diabetes_flag", "lab_heart_flag", "loss_ratio", "visit_count"}
+    assert required <= set(mapped.columns)
+    alice = mapped[mapped["gender"] == "F"].iloc[0]
+    assert alice["lab_thyroid_flag"] == 1
+    assert alice["lab_heart_flag"] == 0
+    bob = mapped[mapped["gender"] == "M"].iloc[0]
+    assert bob["lab_diabetes_flag"] == 1
+    assert mapped["loss_ratio"].gt(0).all()
+
+
+def test_align_loss_ratio_matches_reference_distribution():
+    import numpy as np
+    df = pd.DataFrame({"loss_ratio": [0.5, 0.8, 1.2, 0.3, 2.0]})
+    reference = pd.Series([0.05, 0.05, 0.10, 0.15, 0.30])
+    aligned = train._align_loss_ratio(df, reference)
+    # rank ordering preserved
+    orig_order = df["loss_ratio"].rank().tolist()
+    new_order = aligned["loss_ratio"].rank().tolist()
+    assert orig_order == new_order
+    # values are now within reference bounds
+    assert aligned["loss_ratio"].min() >= reference.min() - 1e-9
+    assert aligned["loss_ratio"].max() <= reference.max() + 1e-9
 
 
 def test_load_training_dataframe_raises_for_single_source_failure(monkeypatch):

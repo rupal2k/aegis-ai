@@ -41,7 +41,7 @@ HF_DATASET_NAME = os.environ.get(
     "gcc-insurance-intelligence-lab-dev/gcc-insurance-underwriting-risk",
 )
 DEFAULT_DATA_MODE = "both"
-N_OPTUNA_TRIALS = 5 if os.environ.get("AEGIS_CI_FAST") == "1" else 30
+N_OPTUNA_TRIALS = 5 if os.environ.get("AEGIS_CI_FAST") == "1" else 50
 RANDOM_STATE = 42
 
 UNDERWRITING_HF_COLUMNS = {
@@ -386,6 +386,7 @@ EXCEL_FILES = {
     "premium": Path("Traning Assets/premium as per market practice.xlsx"),
     "weight":  Path("Traning Assets/weight based risk premium.xlsx"),
 }
+CLINICAL_LAB_PATH = Path("Traning Assets/clinical_lab_results (1).csv")
 
 
 def map_employee_excel_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -565,10 +566,100 @@ def augment_excel_dataframe(df: pd.DataFrame, n_aug: int = 4) -> pd.DataFrame:
 
 
 def load_excel_augmented() -> pd.DataFrame:
-    """Load Excel data and augment with synthetic variants (4× expansion)."""
+    """Load Excel data and augment with synthetic variants (8x expansion)."""
     base = load_excel_datasets()
+    augmented = augment_excel_dataframe(base, n_aug=8)
+    print(f"  Augmented Excel: {len(base):,} -> {len(augmented):,} rows (8x synthetic expansion)")
+    return augmented
+
+
+_LAB_DOMAIN_KEYWORDS = {
+    "lab_thyroid_flag":      ["tsh", "t3", "t4", "thyroid"],
+    "lab_diabetes_flag":     ["glucose", "hba1c", "glycosylated", "hb a1c"],
+    "lab_heart_flag":        ["cholesterol", "ldl", "vldl", "triglyceride", "hdl", "non-hdl"],
+    "lab_inflammation_flag": ["crp", "c-reactive"],
+    "lab_kidney_flag":       ["creatinine", "kidney", "renal", "bun", "potassium", "chloride", "sodium"],
+    "lab_liver_flag":        ["sgpt", "alt", "sgot", "ast", "bilirubin"],
+    "lab_iron_flag":         ["haemoglobin", "hemoglobin", "rbc", "packed cell", "pcv", "hematocrit"],
+    "lab_vitamin_flag":      ["vitamin d", "vitamin b12", "folate"],
+}
+
+
+def map_clinical_lab_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert per-test clinical lab rows (one test per row) into per-patient Aegis training rows.
+
+    Lab flags are derived from real abnormal results. All telemetry columns (steps, HR, sleep, etc.)
+    are synthesized from health burden because the source reports don't include wearable data.
+    """
+    rng = np.random.default_rng(RANDOM_STATE + 13)
+    out_rows = []
+
+    for patient, grp in df.groupby("patient_name"):
+        row: dict = {}
+        row["age"] = float(grp["age"].iloc[0])
+        row["gender"] = "F" if grp["sex"].iloc[0].strip().lower().startswith("f") else "M"
+
+        names_lower = grp["test_name"].str.lower().tolist()
+        abnormals = grp["abnormal"].tolist()
+
+        for flag, keywords in _LAB_DOMAIN_KEYWORDS.items():
+            row[flag] = int(any(
+                is_abn and any(kw in nm for kw in keywords)
+                for nm, is_abn in zip(names_lower, abnormals)
+            ))
+        row["lab_bone_flag"] = int(row["age"] >= 60)
+
+        row["diabetic"] = row["lab_diabetes_flag"]
+        row["hypertension"] = 0
+
+        n_flags = sum(v for k, v in row.items() if k.startswith("lab_"))
+        row["chronic_count"] = float(min(n_flags, 4))
+
+        health = max(0.0, 1.0 - n_flags * 0.12)
+        row["bmi"] = float(np.clip(23.5 + (1.0 - health) * 5.0 + rng.normal(0, 1.5), 17.0, 42.0))
+        row["smoker"] = int(rng.random() < 0.08 + (1.0 - health) * 0.12)
+        row["avg_daily_steps"] = float(np.clip(8000.0 * health + 1000.0 + rng.normal(0, 600), 1000, 15000))
+        row["step_volatility"] = float(np.clip((1.0 - health) * 1000.0 + 150.0 + rng.normal(0, 120), 50, 3000))
+        row["avg_resting_hr"] = float(np.clip(68.0 + (1.0 - health) * 18.0 + rng.normal(0, 3), 45, 110))
+        row["hr_trend"] = float(np.clip((1.0 - health) * 2.0 - 0.5 + rng.normal(0, 0.4), -5, 5))
+        row["avg_active_mins"] = float(np.clip(health * 55.0 + 5.0 + rng.normal(0, 7), 0, 90))
+        row["avg_sleep_hours"] = float(np.clip(6.0 + health * 1.8 + rng.normal(0, 0.4), 4.0, 9.5))
+        row["avg_spo2"] = float(np.clip(96.0 + health * 2.0 + rng.normal(0, 0.3), 90.0, 100.0))
+        row["visit_count"] = float(np.clip(1.0 + n_flags * 1.2 + rng.normal(0, 0.5), 0, 10))
+        row["hospitalized_count"] = int(n_flags >= 3 or bool(row["diabetic"]))
+
+        age_risk = max(row["age"] - 25.0, 0.0) / 60.0 * 0.25
+        flag_risk = n_flags * 0.09
+        row["loss_ratio"] = float(np.clip(
+            (0.12 + age_risk + flag_risk) * rng.lognormal(0.0, 0.18),
+            0.05, 6.0,
+        ))
+        out_rows.append(row)
+
+    return pd.DataFrame(out_rows)
+
+
+def load_clinical_lab_dataset() -> pd.DataFrame:
+    """Load clinical lab CSV and map each patient to one Aegis training row."""
+    if not CLINICAL_LAB_PATH.exists():
+        raise FileNotFoundError(
+            f"Clinical lab asset not found: {CLINICAL_LAB_PATH}. "
+            "Copy 'clinical_lab_results (1).csv' to 'Traning Assets/' to use this mode."
+        )
+    raw = pd.read_csv(CLINICAL_LAB_PATH)
+    n_patients = raw["patient_name"].nunique()
+    print(f"  Clinical lab: {len(raw)} test rows, {n_patients} patients")
+    mapped = map_clinical_lab_dataframe(raw)
+    print(f"  Mapped to {len(mapped)} training rows")
+    return mapped
+
+
+def load_clinical_lab_augmented() -> pd.DataFrame:
+    """Load clinical lab data and apply 4× synthetic augmentation."""
+    base = load_clinical_lab_dataset()
     augmented = augment_excel_dataframe(base, n_aug=4)
-    print(f"  Augmented Excel: {len(base):,} → {len(augmented):,} rows (4× synthetic expansion)")
+    print(f"  Augmented clinical lab: {len(base):,} -> {len(augmented):,} rows (4x expansion)")
     return augmented
 
 
@@ -768,14 +859,49 @@ def load_from_huggingface(dataset_name: str = HF_DATASET_NAME):
     return df
 
 
+def _align_loss_ratio(df: pd.DataFrame, reference: pd.Series) -> pd.DataFrame:
+    """
+    Quantile-map df['loss_ratio'] onto the empirical distribution of reference.
+
+    Rank ordering within df is preserved (sicker rows still score higher relative to
+    each other), but the value scale is remapped so it matches the reference distribution
+    shape exactly. This eliminates distributional mismatch when two datasets with
+    different loss_ratio scales are concatenated for joint training.
+    """
+    df = df.copy()
+    n = len(df)
+    sorted_ref = np.sort(reference.dropna().values)
+    ranks = np.argsort(np.argsort(df["loss_ratio"].values))
+    fractional = np.clip((ranks + 0.5) / n, 0.0, 1.0)
+    df["loss_ratio"] = np.interp(fractional, np.linspace(0.0, 1.0, len(sorted_ref)), sorted_ref)
+    return df
+
+
 def load_training_dataframe(
     dataset_mode: str = DEFAULT_DATA_MODE,
     hf_dataset_name: str = HF_DATASET_NAME,
 ) -> Tuple[pd.DataFrame, Dict[str, int]]:
     """Load one or more training sources into a single dataframe."""
-    valid_modes = {"local", "hf", "both", "excel", "excel-hf", "excel-aug"}
+    valid_modes = {"local", "hf", "both", "excel", "excel-hf", "excel-aug", "excel-aug-lab"}
     if dataset_mode not in valid_modes:
         raise ValueError(f"Unsupported dataset mode: {dataset_mode}. Choose from {valid_modes}")
+
+    # excel-aug-lab requires ordered loading: Excel first (reference distribution),
+    # then clinical lab quantile-aligned to it, so they share the same loss_ratio scale.
+    if dataset_mode == "excel-aug-lab":
+        print("Loading excel-aug-lab: Excel data + quantile-aligned clinical lab results")
+        excel_df = load_excel_augmented()
+        lab_df = load_clinical_lab_augmented()
+        lab_df = _align_loss_ratio(lab_df, excel_df["loss_ratio"])
+        excel_df["dataset_source"] = "excel"
+        lab_df["dataset_source"] = "clinical_lab"
+        combined = pd.concat([excel_df, lab_df], ignore_index=True, sort=False)
+        source_counts = {"excel": len(excel_df), "clinical_lab": len(lab_df)}
+        print(f"Using dataset mode: {dataset_mode}")
+        for src, cnt in source_counts.items():
+            print(f"  {src:>11s}: {cnt:,} rows")
+        print(f"  {'combined':>11s}: {len(combined):,} rows")
+        return combined, source_counts
 
     selected_sources = []
     if dataset_mode in {"local", "both"}:
@@ -844,13 +970,13 @@ def load_and_prepare(
 def objective(trial, X_train, y_train):
     """Optuna objective - minimize MAE via 3-fold CV."""
     params = {
-        "n_estimators": trial.suggest_int("n_estimators", 100, 500),
-        "max_depth": trial.suggest_int("max_depth", 3, 10),
-        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        "n_estimators": trial.suggest_int("n_estimators", 100, 600),
+        "max_depth": trial.suggest_int("max_depth", 3, 12),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.35, log=True),
         "subsample": trial.suggest_float("subsample", 0.6, 1.0),
-        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
-        "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
-        "gamma": trial.suggest_float("gamma", 0, 5),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+        "min_child_weight": trial.suggest_int("min_child_weight", 1, 15),
+        "gamma": trial.suggest_float("gamma", 0, 8),
         "reg_alpha": trial.suggest_float("reg_alpha", 0, 5),
         "reg_lambda": trial.suggest_float("reg_lambda", 0, 5),
         "random_state": RANDOM_STATE,
@@ -863,7 +989,7 @@ def objective(trial, X_train, y_train):
         model,
         X_train,
         y_train,
-        cv=3,
+        cv=5,
         scoring="neg_mean_absolute_error",
         n_jobs=-1,
     )
@@ -883,6 +1009,8 @@ def _build_run_name(dataset_mode: str, hf_dataset_name: str) -> str:
         return f"xgb_excel+hf_{hf_slug}"
     if dataset_mode == "excel-aug":
         return "xgb_excel_aug"
+    if dataset_mode == "excel-aug-lab":
+        return "xgb_excel_aug+clinical_lab"
     if dataset_mode == "both":
         return f"xgb_local+hf_{hf_slug}"
     return f"xgb_local+{hf_slug}"
@@ -899,7 +1027,11 @@ def tune_and_train(
     hf_dataset_name: str = HF_DATASET_NAME,
 ):
     print("\n[1/3] Tuning hyperparameters with Optuna...")
-    study = optuna.create_study(direction="minimize", study_name="aegis_xgb")
+    study = optuna.create_study(
+        direction="minimize",
+        study_name="aegis_xgb",
+        sampler=optuna.samplers.TPESampler(seed=RANDOM_STATE),
+    )
     study.optimize(
         lambda t: objective(t, X_train, y_train),
         n_trials=N_OPTUNA_TRIALS,
@@ -1049,6 +1181,11 @@ def build_arg_parser():
         action="store_true",
         help="Load Excel data + 4x synthetic augmentation (recommended when HF mix hurts R2)",
     )
+    group.add_argument(
+        "--use-excel-aug-lab",
+        action="store_true",
+        help="Excel aug + real Indian clinical lab results (adds 25-patient lab dataset with 4x expansion)",
+    )
     parser.add_argument(
         "--hf-dataset",
         default=HF_DATASET_NAME,
@@ -1066,6 +1203,8 @@ def resolve_dataset_mode(args) -> str:
         return "excel-hf"
     if getattr(args, "use_excel_aug", False):
         return "excel-aug"
+    if getattr(args, "use_excel_aug_lab", False):
+        return "excel-aug-lab"
     if getattr(args, "use_hf", False):
         return "hf"
     if getattr(args, "use_both", False):
