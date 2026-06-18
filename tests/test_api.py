@@ -115,6 +115,30 @@ def test_company_upload_happy_path():
     assert r.json()["records_stored"] == 1
 
 @requires_db
+def test_list_companies_underwriter_sees_all():
+    """Underwriter role must receive the full company list (≥1 row)."""
+    r = client.get("/companies", headers=_uw_headers())
+    assert r.status_code == 200
+    assert len(r.json()) >= 1
+
+
+@requires_db
+def test_list_companies_hr_admin_sees_only_own():
+    """hr_admin must see exactly their own company, not all companies."""
+    r = client.get("/companies", headers=_hr_headers("COMP_001"))
+    assert r.status_code == 200
+    companies = r.json()
+    assert len(companies) == 1
+    assert companies[0]["company_id"] == "COMP_001"
+
+
+@requires_db
+def test_list_companies_requires_auth():
+    r = client.get("/companies")
+    assert r.status_code == 401
+
+
+@requires_db
 def test_wearable_happy_path():
     client.post("/ingest/company", json={
         "company_id": "COMP_001",

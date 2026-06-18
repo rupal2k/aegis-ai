@@ -22,12 +22,21 @@ def list_companies(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    rows = db.execute(text("""
-        SELECT company_id, company_name, industry, city,
-               employee_count, base_premium
-        FROM companies
-        ORDER BY company_name
-    """)).mappings().all()
+    if user.get("role") == "hr_admin":
+        rows = db.execute(text("""
+            SELECT company_id, company_name, industry, city,
+                   employee_count, base_premium
+            FROM companies
+            WHERE company_id = :cid
+            ORDER BY company_name
+        """), {"cid": user["company_id"]}).mappings().all()
+    else:
+        rows = db.execute(text("""
+            SELECT company_id, company_name, industry, city,
+                   employee_count, base_premium
+            FROM companies
+            ORDER BY company_name
+        """)).mappings().all()
     _audit.info("LIST_COMPANIES user=%s role=%s count=%d", user["sub"], user.get("role"), len(rows))
     return [dict(r) for r in rows]
 
