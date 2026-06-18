@@ -105,3 +105,46 @@ def test_model_artifact_exists():
     assert Path("ml_engine/artifacts/xgb_model.pkl").exists(), \
         "Run training first: python -m ml_engine.training.train"
     assert Path("ml_engine/artifacts/hrs_scorer.pkl").exists()
+
+
+def test_premium_adjustment_industry_multiplier():
+    from ml_engine.premium_calculator import calculate_premium_adjustment, INDUSTRY_RISK_MULTIPLIERS
+    # At least one industry multiplier must differ from 1.0
+    assert any(v != 1.0 for v in INDUSTRY_RISK_MULTIPLIERS.values())
+    # Passing a known industry should change adjusted premium vs no industry
+    base = 100000.0
+    industry = next(iter(INDUSTRY_RISK_MULTIPLIERS))
+    with_industry    = calculate_premium_adjustment(base, 50.0, industry=industry)
+    without_industry = calculate_premium_adjustment(base, 50.0)
+    if INDUSTRY_RISK_MULTIPLIERS[industry] != 1.0:
+        assert with_industry["adjusted_premium"] != without_industry["adjusted_premium"]
+
+
+def test_premium_adjustment_region_multiplier():
+    from ml_engine.premium_calculator import calculate_premium_adjustment, REGION_MULTIPLIERS
+    # Real data has 6 regions (Central, East, North, Northeast, South, West)
+    assert len(REGION_MULTIPLIERS) >= 4
+    assert {"North", "South", "East", "West"}.issubset(set(REGION_MULTIPLIERS.keys()))
+
+
+def test_premium_adjustment_sum_assured_bands():
+    from ml_engine.premium_calculator import calculate_premium_adjustment, SUM_ASSURED_BAND_MULTIPLIERS
+    assert set(SUM_ASSURED_BAND_MULTIPLIERS.keys()) == {"1-3L", "4-7L", "8-15L", "15L+"}
+    assert SUM_ASSURED_BAND_MULTIPLIERS["4-7L"] == pytest.approx(1.0)
+
+
+def test_premium_adjustment_backward_compatible():
+    """Calling with no new params must return same result as before."""
+    from ml_engine.premium_calculator import calculate_premium_adjustment
+    result = calculate_premium_adjustment(100000.0, 50.0)
+    assert result["adjusted_premium"] == 100000.0
+    assert result["adjustment_pct"] == 0.0
+
+
+def test_premium_adjustment_all_params():
+    from ml_engine.premium_calculator import calculate_premium_adjustment
+    result = calculate_premium_adjustment(
+        100000.0, 50.0, industry="IT Services", region="North", sum_assured_lakhs=5.0
+    )
+    assert "adjusted_premium" in result
+    assert result["adjusted_premium"] > 0
