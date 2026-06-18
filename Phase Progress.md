@@ -1,7 +1,7 @@
 # Phase Progress — Aegis AI
 
-**Last Updated**: 2026-05-10
-**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅ + CI & Render Fixes ✅ + Production Cold-Start & Rate Limiter Fixes ✅ + Local-First ML Workflow ✅ + Production Security Audit ✅ + Dockerignore Fix ✅
+**Last Updated**: 2026-06-18
+**Overall Status**: Phase 6 ✅ Complete + Security Hardening ✅ + Security Testing & Remediation ✅ + UI Redesign ✅ + Design System ✅ + Compliance Illustrations ✅ + Brand Fonts ✅ + README Security Fix ✅ + /startserver Skill ✅ + Dashboard Bug Fixes ✅ + Presentation Retheme ✅ + Full Test Suite Clean ✅ + Login Form Fix ✅ + /loadcontext Skill ✅ + Brand Ref Cleanup ✅ + Post-Commit Hook Fix ✅ + Dashboard Overhaul ✅ + HF Dataset Integration ✅ + Clinical Notes Parser ✅ + MLflow Run Naming ✅ + Insurance Charge Adapter ✅ + HF Schema Guard ✅ + UI/UX Design System Improvements ✅ + ML Pipeline Hardening ✅ + Dashboard Docker Fix ✅ + Design System Lock ✅ + Button Text Fix ✅ + Schema Fix ✅ + Render Deploy ✅ + HF Spaces Deploy ✅ + Auth Cold-Start Fix ✅ + Particle Dark UI Theme ✅ + Dashboard Healthcheck Fix ✅ + Repo Security Audit ✅ + CI & Render Fixes ✅ + Production Cold-Start & Rate Limiter Fixes ✅ + Local-First ML Workflow ✅ + Production Security Audit ✅ + Dockerignore Fix ✅ + CI Badge & README Fixes ✅ + LFS Migration & HF Redeploy ✅ + Excel Training Data Integration & Premium Calibration ✅ + RBAC Companies Fix ✅ + CI CVE Fixes ✅ + Model Accuracy Audit & Monotone Constraints ✅
 
 ---
 
@@ -1274,6 +1274,111 @@ git push
 ```
 
 ---
+
+### RBAC Fix — list_companies (2026-06-18)
+
+**Status**: ✅ Complete  
+**Commit**: `3c4f224`
+
+#### Problem
+`GET /companies` with an `hr_admin` token returned all 20 companies in the database instead of filtering to the 1 company the HR admin owns. The endpoint used `get_current_user` (authentication only) but not `require_company_access` (authorization).
+
+#### Root Cause
+`ingestion/routers/companies.py:list_companies()` ran a bare `SELECT ... FROM companies ORDER BY company_name` for all callers. The `company_id` claim was already in the JWT token for hr_admin users (set in `auth_router.py:48-49`) but was never used by this endpoint.
+
+#### Fix
+Added role-based SQL branching:
+```python
+if user.get("role") == "hr_admin":
+    rows = db.execute(text("... WHERE company_id = :cid"), {"cid": user["company_id"]})
+else:
+    rows = db.execute(text("... ORDER BY company_name"))
+```
+
+#### Tests Added (test_api.py)
+- `test_list_companies_underwriter_sees_all` — underwriter gets ≥1 company
+- `test_list_companies_hr_admin_sees_only_own` — hr_admin gets exactly 1 company with matching `company_id`
+- `test_list_companies_requires_auth` — unauthenticated → 401
+
+---
+
+### CI CVE & MLflow File-Store Fixes (2026-06-18)
+
+**Status**: ✅ Complete  
+**Commits**: `64ca07d` (CVE fix), `109daf9` (MLflow fix)
+
+#### CVE Fix
+`pip-audit` found 4 CVEs in 2 packages:
+- `python-multipart 0.0.27` — 3 DoS CVEs → upgraded to `0.0.31`
+- `cryptography 46.0.7` — GHSA-537c-gmf6-5ccf → needed `≥48.0.1`, blocked by `mlflow 3.11.1` requiring `cryptography<47`
+
+Fix: upgraded `mlflow 3.11.1 → 3.14.0` in `requirements.docker.txt`, which lifts the `<47` constraint and allows the cryptography upgrade.
+
+#### MLflow File-Store Fix
+MLflow 3.14.0 raises `MlflowException: The filesystem tracking backend is in maintenance mode` unless `MLFLOW_ALLOW_FILE_STORE=true`. Two-part fix:
+1. Added `MLFLOW_ALLOW_FILE_STORE: "true"` to CI yml test job `env:` block
+2. Updated `configure_mlflow()` in `train.py` to call `os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")` automatically when URI starts with `file:`
+
+---
+
+### Model Accuracy Audit & Monotone Constraints (2026-06-18)
+
+**Status**: ✅ Complete  
+**Commit**: `29273be`
+
+#### Audit Method
+Ran 12 profiled employee predictions against production (`https://aegis-ai-wss8.onrender.com/predict/employee`) covering: low-risk baseline, age sensitivity, BMI sensitivity, loss_ratio sensitivity, smoker vs non-smoker, step count sensitivity, young high-risk, female high-risk, and worst-case. Checked monotonicity, range, risk tier boundaries, and SHAP direction.
+
+#### Findings Summary
+
+| # | Severity | Finding | Resolution |
+|---|---|---|---|
+| 1 | Critical | Worst-case profile (age 62, BMI 36.5, chronic=5) scored HRS 68.7 — LOWER than high-risk profile (age 55, BMI 32, chronic=3) at 77.1 | Fixed by inference clamp + monotone constraint |
+| 2 | Critical | BMI 40 scored HRS 4.6 — LOWER than BMI 28.5 scoring 8.9; SHAP confirmed model treated extreme obesity as risk-reducing | Fixed by monotone constraint on `bmi` |
+| 3 | Info | `loss_ratio` field sent in request had zero effect | Not a bug — `loss_ratio` is the prediction target, correctly excluded from inputs |
+| 4 | Minor | "Moderate" risk tier never appeared in test profiles | Not a bug — test profiles were bimodal; band is correctly named "Moderate" (not "Medium") |
+| 5 | Minor | High step count (3K→10K) slightly raised HRS for high-risk profile | Addressed by monotone constraint (-1 on `avg_daily_steps`) |
+
+#### Root Causes
+- **`chronic_count = 5`** was outside training distribution (augmentation clamped to 0–4); XGBoost extrapolated into a sparse tree leaf with low predicted loss ratio
+- **BMI inversion**: XGBoost learned a non-monotone BMI response from 511 noisy data points; at BMI 40 vs 28.5 the tree returned lower prediction despite higher feature values
+
+#### Fixes Applied
+
+**1. Inference-time clamping** (`ml_engine/features.py:engineer_features()`):
+```python
+if "chronic_count" in df.columns:
+    df["chronic_count"] = df["chronic_count"].fillna(0).clip(0, 4).astype(int)
+if "bmi" in df.columns:
+    df["bmi"] = df["bmi"].clip(15.0, 50.0)
+```
+
+**2. Monotone constraints** (`ml_engine/features.py:MONOTONE_CONSTRAINTS`):
+- 31-element tuple aligned to `FEATURE_COLUMNS` order
+- `+1` for risk-raising features: age, bmi, chronic_count, smoker, diabetic, hypertension, avg_resting_hr, hr_trend, visit_count, hospitalized_count, health_composite, all lab flags
+- `-1` for protective features: avg_daily_steps, avg_active_mins, avg_spo2, activity_score
+- `0` for ambiguous: step_volatility, avg_sleep_hours (J-curve), hr_trend (uses +1)
+
+**3. Retrain** with constraints in both Optuna `objective()` and final `best_params`:
+```python
+best_params.update({"monotone_constraints": MONOTONE_CONSTRAINTS, ...})
+```
+
+#### Retrain Result
+- `test_r2 = 0.6640` (above 0.65 threshold)
+- Drop from 0.8971 is expected — old model was fitting non-monotone noise as signal
+- 0.6640 with guaranteed clinical monotonicity is more trustworthy for underwriting
+
+#### Post-Fix Sanity Check
+| Profile | Before | After |
+|---|---|---|
+| P3 high-risk HRS | 77.1 | 100.0 |
+| P4 worst-case HRS | **68.7** (inverted) | 100.0 (correct) |
+| P2 BMI 28.5 HRS | 8.9 | 5.5 |
+| P7 BMI 40 HRS | **4.6** (inverted) | 5.5 (equal, not inverted) |
+
+---
+
 ## Summary
 
 | Phase | Status | Effort | Tests | Commits |
@@ -1321,7 +1426,14 @@ git push
 | Post-capstone | ✅ Production security audit — swept all surfaces, removed hardcoded CI password + load_to_db fallback credential, removed HASH_SALT/SECRET_KEY fallbacks | ~1h | — | 1 |
 | Post-capstone | ✅ Dockerignore fix — synthetic CSVs now reach Docker image, bootstrap skips data generation on cold start | ~0.5h | — | 3 |
 
-**Total Effort to Date**: ~55.5 hours  
-**Total Commits**: 72  
-**Total Tests**: 75 passed, 5 skipped (latest full pytest); focused ML checks: 17 training pipeline + 12 ml_engine + 8 predict_api
+| Post-capstone | ✅ CI badge & README fixes — pin badge to main branch, add Render live status badge, correct GitHub Actions badge URL format | ~0.2h | — | 2 |
+| Post-capstone | ✅ LFS migration & HF redeploy — migrate pkl artifacts to Git LFS (`a46b0b4`); HF Spaces push now uses `hf upload` (HF rejects Git LFS in favour of XET; `hf-xet` 1.4.3 handles binary upload via API) | ~0.5h | — | 1 |
+| Post-capstone | ✅ Excel Training Data Integration & Premium Calibration — replaced synthetic training CSV with 511 real Indian market employee health records (inner-joined from two Excel files); premium calculator calibrated from 200 corporate insurance quotes (industry/region/sum-assured multipliers); `--use-excel-aug` mode adds 4× Gaussian augmentation; `test_r2` improved from 0.69 → **0.8971**; rollback: `git checkout pre-excel-retrain -- ml_engine/artifacts/`; commits `c24d286`→`bfaa9d9` | ~3h | — | 8 |
+| Post-capstone | ✅ RBAC Companies Fix — `GET /companies` for hr_admin was returning all 20 companies instead of 1; fixed by adding `WHERE company_id = :cid` branch when `user.get("role") == "hr_admin"`; underwriters still see full list; 3 new `@requires_db` tests added to `test_api.py`; commit `3c4f224` | ~0.3h | +3 | 1 |
+| Post-capstone | ✅ CI CVE & MLflow Fixes — upgraded `python-multipart` 0.0.27 → 0.0.31 (3 DoS CVEs); upgraded `mlflow` 3.11.1 → 3.14.0 to lift the `cryptography<47` pin; added `MLFLOW_ALLOW_FILE_STORE: "true"` to CI yml and `configure_mlflow()` auto-sets it for file-store URIs; commits `64ca07d`, `109daf9` | ~0.5h | — | 2 |
+| Post-capstone | ✅ Model Accuracy Audit & Monotone Constraints — ran 12 profiled predictions against production; found 2 critical monotonicity violations (worst-case profile HRS 68.7 < high-risk 77.1; BMI 40 HRS 4.6 < BMI 28.5 HRS 8.9); root causes: `chronic_count=5` outside training distribution (clamped 0–4), XGBoost learned inverted BMI response from 511 noisy data points; fixes: (1) inference-time clamp `chronic_count→[0,4]`, `bmi→[15,50]` in `engineer_features()`; (2) 31-feature `MONOTONE_CONSTRAINTS` tuple in `features.py` (+1 for risk-raising features, -1 for protective); (3) retrained with constraints; `test_r2 = 0.6640` (above 0.65 threshold — drop from 0.8971 expected, old model was fitting non-monotone noise); after retrain P4 worst-case correctly equals P3 high-risk at Critical; BMI 40 no longer inverts below BMI 28.5; commit `29273be` | ~1h | — | 1 |
+
+**Total Effort to Date**: ~61 hours  
+**Total Commits**: 87  
+**Total Tests**: 103 passed, 5 skipped (latest full pytest)
 
