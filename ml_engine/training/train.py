@@ -378,6 +378,107 @@ def map_insurance_charge_hf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return df_mapped
 
 
+EXCEL_FILES = {
+    "premium": Path("Traning Assets/premium as per market practice.xlsx"),
+    "weight":  Path("Traning Assets/weight based risk premium.xlsx"),
+}
+
+
+def map_employee_excel_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Map joined File1+File2 employee rows into the Aegis feature schema.
+
+    Expects columns from both files inner-joined on Employee_ID:
+    Age, Gender, BMI, Systolic_BP, Diastolic_BP, Diabetes_Risk_Score,
+    Chronic_Conditions, Historical_Claims_INR, Avg_Daily_Steps, Avg_Sleep_Hours,
+    Stress_Score, Activity_Level, Wellness_Engagement_Score, Weight_Based_Premium_INR
+    """
+    rng = np.random.default_rng(RANDOM_STATE)
+    out = pd.DataFrame()
+
+    # --- Direct mappings ---
+    out["age"]          = df["Age"].astype(float)
+    out["gender"]       = df["Gender"].str.strip().map(
+        {"Male": "M", "Female": "F", "male": "M", "female": "F"}
+    ).fillna("M")
+    out["bmi"]          = df["BMI"].astype(float)
+    out["avg_daily_steps"] = df["Avg_Daily_Steps"].astype(float)
+    out["avg_sleep_hours"] = df["Avg_Sleep_Hours"].astype(float)
+    out["chronic_count"]   = df["Chronic_Conditions"].fillna(0).clip(0, 4).astype(float)
+
+    # --- Derived ---
+    out["hypertension"] = (
+        (df["Systolic_BP"].astype(float) >= 130) |
+        (df["Diastolic_BP"].astype(float) >= 80)
+    ).astype(int)
+    out["diabetic"] = (df["Diabetes_Risk_Score"].astype(float) > 50).astype(int)
+
+    # --- Synthesized: smoker (no direct column — heuristic from stress + BMI) ---
+    stress   = df["Stress_Score"].astype(float) / 100.0
+    bmi_risk = np.clip((df["BMI"].astype(float) - 22) / 18, 0, 1)
+    p_smoker = np.clip(0.06 + stress * 0.14 + bmi_risk * 0.06, 0, 0.28)
+    out["smoker"] = (rng.random(len(df)) < p_smoker).astype(int)
+
+    # --- Synthesized: telemetry ---
+    wellness = df["Wellness_Engagement_Score"].astype(float) / 100.0
+    activity_map = {"High": 0.85, "Moderate": 0.50, "Low": 0.20}
+    activity = df["Activity_Level"].map(activity_map).fillna(0.50).astype(float)
+
+    out["avg_resting_hr"] = np.clip(
+        72 - wellness * 18 + rng.normal(0, 3, len(df)), 45, 110
+    )
+    out["hr_trend"]       = np.clip(
+        (1 - wellness) * 2.2 - 0.8 + rng.normal(0, 0.5, len(df)), -5, 5
+    )
+    out["avg_active_mins"] = np.clip(
+        activity * 70 + rng.normal(0, 8, len(df)), 0, 90
+    )
+    out["avg_spo2"]       = np.clip(
+        96.0 + wellness * 2.5 + rng.normal(0, 0.3, len(df)), 90, 100
+    )
+    out["step_volatility"] = np.clip(
+        (1 - wellness) * 1200 + 100 + rng.normal(0, 150, len(df)), 50, 3000
+    )
+
+    # --- Clinical counts ---
+    claims = df["Historical_Claims_INR"].fillna(0).astype(float)
+    out["visit_count"]        = np.clip(
+        1 + out["chronic_count"] * 1.5 + (claims > 0).astype(float) * 1.5,
+        0, 10
+    ).round()
+    out["hospitalized_count"] = (claims > 50000).astype(int)
+
+    # --- Lab flags ---
+    age  = out["age"]
+    sbp  = df["Systolic_BP"].astype(float)
+    dbp  = df["Diastolic_BP"].astype(float)
+    bmi  = out["bmi"]
+    out["lab_heart_flag"]       = ((age >= 55) | (sbp >= 140) |
+                                   (out["diabetic"] & (age >= 45))).astype(int)
+    out["lab_diabetes_flag"]    = out["diabetic"]
+    out["lab_kidney_flag"]      = ((bmi >= 33) | (out["chronic_count"] >= 2) |
+                                   (dbp >= 90)).astype(int)
+    out["lab_liver_flag"]       = ((bmi >= 32) | out["smoker"].astype(bool)).astype(int)
+    out["lab_inflammation_flag"]= ((sbp >= 140) | (out["chronic_count"] >= 2)).astype(int)
+    out["lab_iron_flag"]        = (
+        (out["gender"] == "F") & (age >= 30) &
+        (df["Wellness_Engagement_Score"].astype(float) < 50)
+    ).astype(int)
+    out["lab_thyroid_flag"]     = ((out["gender"] == "F") & (age >= 45)).astype(int)
+    out["lab_bone_flag"]        = (age >= 60).astype(int)
+    out["lab_vitamin_flag"]     = (
+        (out["avg_daily_steps"] < 4000) |
+        (df["Wellness_Engagement_Score"].astype(float) < 40)
+    ).astype(int)
+
+    # --- Target: real loss ratio ---
+    premium = df["Weight_Based_Premium_INR"].astype(float).replace(0, np.nan)
+    raw_lr  = claims / premium
+    out["loss_ratio"] = np.clip(raw_lr.fillna(0.05), 0.05, 6.0)
+
+    return out
+
+
 def _parse_clinical_note(text: str) -> dict:
     """Extract structured fields from one clinical discharge note."""
     import re
