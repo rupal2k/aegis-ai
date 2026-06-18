@@ -42,7 +42,12 @@ def compute_sum_assured_multipliers(df: pd.DataFrame) -> dict:
     df["_band"] = pd.cut(df["sum_assured_lakhs"], bins=bins, labels=labels)
     by_band  = df.groupby("_band", observed=True)[PREMIUM_COL].median()
     base     = float(by_band.get("4-7L", by_band.median()))
-    return {k: round(float(v / base), 3) for k, v in by_band.items()}
+    result   = {k: round(float(v / base), 3) for k, v in by_band.items()}
+    # Fill any missing bands with 1.0 (neutral — no data to calibrate from)
+    for label in labels:
+        if label not in result:
+            result[label] = 1.0
+    return result
 
 
 def main():
