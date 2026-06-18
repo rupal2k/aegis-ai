@@ -166,3 +166,49 @@ def test_load_excel_datasets_inner_joins_on_employee_id(tmp_path, monkeypatch):
     # Only 2 matched rows
     assert len(result) == 2
     assert "loss_ratio" in result.columns
+
+
+def test_resolve_dataset_mode_use_excel():
+    from ml_engine.training.train import resolve_dataset_mode, build_arg_parser
+    parser = build_arg_parser()
+    args = parser.parse_args(["--use-excel"])
+    assert resolve_dataset_mode(args) == "excel"
+
+
+def test_resolve_dataset_mode_use_excel_hf():
+    from ml_engine.training.train import resolve_dataset_mode, build_arg_parser
+    parser = build_arg_parser()
+    args = parser.parse_args(["--use-excel-hf"])
+    assert resolve_dataset_mode(args) == "excel-hf"
+
+
+def test_resolve_dataset_mode_use_legacy():
+    from ml_engine.training.train import resolve_dataset_mode, build_arg_parser
+    parser = build_arg_parser()
+    args = parser.parse_args(["--use-legacy"])
+    assert resolve_dataset_mode(args) == "local"
+
+
+def test_load_training_dataframe_excel_mode(tmp_path, monkeypatch):
+    """In 'excel' mode, load_training_dataframe calls load_excel_datasets."""
+    from ml_engine.training import train
+
+    sentinel = pd.DataFrame({
+        "age": [30.0], "gender": ["M"], "bmi": [22.0],
+        "smoker": [0], "diabetic": [0], "hypertension": [0],
+        "chronic_count": [0.0], "avg_daily_steps": [8000.0],
+        "avg_sleep_hours": [7.5], "avg_resting_hr": [68.0],
+        "hr_trend": [0.0], "avg_active_mins": [45.0], "avg_spo2": [98.0],
+        "step_volatility": [500.0], "visit_count": [1.0],
+        "hospitalized_count": [0], "lab_heart_flag": [0],
+        "lab_diabetes_flag": [0], "lab_kidney_flag": [0],
+        "lab_liver_flag": [0], "lab_inflammation_flag": [0],
+        "lab_iron_flag": [0], "lab_thyroid_flag": [0],
+        "lab_bone_flag": [0], "lab_vitamin_flag": [0],
+        "loss_ratio": [0.3], "dataset_source": ["excel"],
+    })
+    monkeypatch.setattr(train, "load_excel_datasets", lambda: sentinel)
+
+    df, counts = train.load_training_dataframe(dataset_mode="excel")
+    assert counts["excel"] == 1
+    assert "loss_ratio" in df.columns

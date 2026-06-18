@@ -711,13 +711,19 @@ def load_training_dataframe(
     dataset_mode: str = DEFAULT_DATA_MODE,
     hf_dataset_name: str = HF_DATASET_NAME,
 ) -> Tuple[pd.DataFrame, Dict[str, int]]:
-    """Load one or both training sources into a single dataframe."""
-    if dataset_mode not in {"local", "hf", "both"}:
-        raise ValueError(f"Unsupported dataset mode: {dataset_mode}")
+    """Load one or more training sources into a single dataframe."""
+    valid_modes = {"local", "hf", "both", "excel", "excel-hf"}
+    if dataset_mode not in valid_modes:
+        raise ValueError(f"Unsupported dataset mode: {dataset_mode}. Choose from {valid_modes}")
 
     selected_sources = []
     if dataset_mode in {"local", "both"}:
         selected_sources.append(("local", load_local_dataset))
+    if dataset_mode == "excel":
+        selected_sources.append(("excel", load_excel_datasets))
+    if dataset_mode == "excel-hf":
+        selected_sources.append(("excel", load_excel_datasets))
+        selected_sources.append(("huggingface", lambda: load_from_huggingface(hf_dataset_name)))
     if dataset_mode in {"hf", "both"}:
         selected_sources.append(("huggingface", lambda: load_from_huggingface(hf_dataset_name)))
 
@@ -729,7 +735,7 @@ def load_training_dataframe(
         try:
             df = loader().copy()
         except Exception as exc:
-            if dataset_mode != "both":
+            if dataset_mode not in {"both", "excel-hf"}:
                 raise
             errors.append((source_name, exc))
             print(f"WARNING: Failed to load {source_name} dataset: {exc}")
@@ -950,6 +956,21 @@ def build_arg_parser():
         action="store_true",
         help="Alias for --use-local",
     )
+    group.add_argument(
+        "--use-excel",
+        action="store_true",
+        help="Load data from Excel training assets only",
+    )
+    group.add_argument(
+        "--use-excel-hf",
+        action="store_true",
+        help="Load data from Excel training assets + Hugging Face (recommended)",
+    )
+    group.add_argument(
+        "--use-legacy",
+        action="store_true",
+        help="Force synthetic CSV (rollback path — same as --use-local)",
+    )
     parser.add_argument(
         "--hf-dataset",
         default=HF_DATASET_NAME,
@@ -959,12 +980,19 @@ def build_arg_parser():
 
 
 def resolve_dataset_mode(args) -> str:
-    if getattr(args, "use_local", False) or getattr(args, "no_hf", False):
+    if getattr(args, "use_local", False) or getattr(args, "no_hf", False) or getattr(args, "use_legacy", False):
         return "local"
+    if getattr(args, "use_excel", False):
+        return "excel"
+    if getattr(args, "use_excel_hf", False):
+        return "excel-hf"
     if getattr(args, "use_hf", False):
         return "hf"
     if getattr(args, "use_both", False):
         return "both"
+    # Auto-detect: use excel-hf if files are present, otherwise fall back to both
+    if all(p.exists() for p in EXCEL_FILES.values()):
+        return "excel-hf"
     return DEFAULT_DATA_MODE
 
 
