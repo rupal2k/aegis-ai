@@ -496,8 +496,14 @@ def load_excel_datasets() -> pd.DataFrame:
     print(f"Loading Excel training assets...")
     df1 = pd.read_excel(EXCEL_FILES["premium"])
     df2 = pd.read_excel(EXCEL_FILES["weight"])[
-        ["Employee_ID", "Health_Risk_Score_Weighted", "Weight_Based_Premium_INR"]
+        ["Employee_ID", "Weight_Based_Premium_INR"]
     ]
+
+    if "Weight_Based_Premium_INR" not in df2.columns:
+        raise KeyError(
+            f"Expected 'Weight_Based_Premium_INR' in {EXCEL_FILES['weight']} "
+            "but column was not found. Check Excel file schema."
+        )
 
     joined = df1.merge(df2, on="Employee_ID", how="inner")
     print(f"  File 1: {len(df1):,} rows | File 2: {len(df2):,} rows | Joined: {len(joined):,} rows")
