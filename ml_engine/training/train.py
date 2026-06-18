@@ -87,6 +87,10 @@ def configure_stdout():
 
 def configure_mlflow():
     """Configure MLflow lazily so imports stay side-effect free."""
+    # mlflow 3.14+ requires opt-in for file-based tracking stores
+    if MLFLOW_URI.startswith("file:") or not MLFLOW_URI.startswith(("http", "sqlite", "postgresql", "mysql")):
+        import os
+        os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
     mlflow.set_tracking_uri(MLFLOW_URI)
     mlflow.set_experiment("aegis-underwriting")
 

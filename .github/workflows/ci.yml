@@ -50,6 +50,7 @@ jobs:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       AEGIS_USERS_JSON: ${{ secrets.AEGIS_USERS_JSON }}
       MLFLOW_TRACKING_URI: file:./mlruns
+      MLFLOW_ALLOW_FILE_STORE: "true"
 
     services:
       postgres:
