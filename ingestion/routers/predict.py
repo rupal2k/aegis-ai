@@ -92,7 +92,10 @@ def predict_company(
         SELECT age, gender, bmi, smoker, diabetic, hypertension, chronic_count,
                avg_daily_steps, step_volatility, avg_resting_hr, hr_trend,
                avg_active_mins, avg_sleep_hours, avg_spo2,
-               visit_count, hospitalized_count
+               visit_count, hospitalized_count,
+               lab_heart_flag, lab_inflammation_flag, lab_diabetes_flag,
+               lab_kidney_flag, lab_liver_flag, lab_iron_flag,
+               lab_thyroid_flag, lab_bone_flag, lab_vitamin_flag
         FROM training_snapshots
         WHERE company_id = :cid
     """), {"cid": company_id}).mappings().all()

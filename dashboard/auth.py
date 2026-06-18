@@ -99,6 +99,8 @@ def _fetch_token(email: str, password: str) -> tuple[dict | None, bool]:
         )
         if r.status_code == 200:
             return r.json(), False
+        if r.status_code == 503:
+            return None, True   # cold-starting — treat same as timeout
     except httpx.TimeoutException:
         return None, True
     except httpx.RequestError:

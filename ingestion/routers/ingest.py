@@ -165,7 +165,8 @@ def ingest_company_roster(
                     bmi          = EXCLUDED.bmi,
                     smoker       = EXCLUDED.smoker,
                     diabetic     = EXCLUDED.diabetic,
-                    hypertension = EXCLUDED.hypertension
+                    hypertension = EXCLUDED.hypertension,
+                    job_category = EXCLUDED.job_category
             """), record)
             stored += 1
         except Exception as e:

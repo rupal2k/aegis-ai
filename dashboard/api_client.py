@@ -5,6 +5,13 @@ import os
 
 API_BASE = os.environ.get("AEGIS_API_URL", "http://localhost:8000")
 
+if API_BASE == "http://localhost:8000":
+    st.warning(
+        "AEGIS_API_URL is not configured — API calls will fail. "
+        "Set this secret in your HuggingFace Space settings to the Render API URL.",
+        icon="⚠️",
+    )
+
 
 def _headers() -> dict:
     token = st.session_state.get("token")
@@ -14,17 +21,37 @@ def _headers() -> dict:
 
 
 def _get(path: str, **params):
-    with httpx.Client(timeout=15.0) as client:
-        r = client.get(f"{API_BASE}{path}", params=params, headers=_headers())
-        r.raise_for_status()
-        return r.json()
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.get(f"{API_BASE}{path}", params=params, headers=_headers())
+            if r.status_code == 503:
+                st.warning("API is starting up — please wait a moment and retry.")
+                st.stop()
+            r.raise_for_status()
+            return r.json()
+    except httpx.TimeoutException:
+        st.error("Request timed out. The API may be starting up — please retry in 30 seconds.")
+        st.stop()
+    except httpx.RequestError as e:
+        st.error(f"Cannot reach API at {API_BASE}. Check AEGIS_API_URL secret.")
+        st.stop()
 
 
 def _post(path: str, json_body: dict):
-    with httpx.Client(timeout=15.0) as client:
-        r = client.post(f"{API_BASE}{path}", json=json_body, headers=_headers())
-        r.raise_for_status()
-        return r.json()
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.post(f"{API_BASE}{path}", json=json_body, headers=_headers())
+            if r.status_code == 503:
+                st.warning("API is starting up — please wait a moment and retry.")
+                st.stop()
+            r.raise_for_status()
+            return r.json()
+    except httpx.TimeoutException:
+        st.error("Request timed out. The API may be starting up — please retry in 30 seconds.")
+        st.stop()
+    except httpx.RequestError:
+        st.error(f"Cannot reach API at {API_BASE}. Check AEGIS_API_URL secret.")
+        st.stop()
 
 
 @st.cache_data(ttl=60)

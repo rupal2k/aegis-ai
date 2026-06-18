@@ -161,7 +161,9 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def get_feature_matrix(df: pd.DataFrame):
     """Return X (features) and y (target) as numpy arrays."""
-    available = [c for c in FEATURE_COLUMNS if c in df.columns]
-    X = df[available].values
+    missing = [c for c in FEATURE_COLUMNS if c not in df.columns]
+    if missing:
+        raise ValueError(f"Training data is missing declared features: {missing}")
+    X = df[FEATURE_COLUMNS].values
     y = df[TARGET_LOG].values if TARGET_LOG in df.columns else None
-    return X, y, available
+    return X, y, FEATURE_COLUMNS

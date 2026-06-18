@@ -11,11 +11,15 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "")
 ALGORITHM = "HS256"  # Note: Consider using RS256 (asymmetric) for production
 ACCESS_TOKEN_EXPIRE_HOURS = 8
 
-# Validate SECRET_KEY strength
-if len(SECRET_KEY) < 32:
-    _logger.warning("SECRET_KEY is less than 32 characters. Consider using a stronger key.")
-if SECRET_KEY in ["", "aegis-super-secret-jwt-key"]:
-    _logger.warning("SECRET_KEY is using default value. Change this in production!")
+# Refuse to start with a missing or weak SECRET_KEY — an empty key lets anyone forge tokens.
+_ENV = os.environ.get("ENV", "production")
+if not SECRET_KEY or len(SECRET_KEY) < 32:
+    if _ENV == "production":
+        raise RuntimeError(
+            "SECRET_KEY must be set to a random string of at least 32 characters. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    _logger.warning("SECRET_KEY missing or weak — acceptable in development only.")
 
 
 def create_access_token(data: dict) -> str:

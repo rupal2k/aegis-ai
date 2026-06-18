@@ -23,13 +23,17 @@ def list_companies(
     user: dict = Depends(get_current_user),
 ):
     if user.get("role") == "hr_admin":
+        cid = user.get("company_id")
+        if not cid:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=403, detail="hr_admin account has no company_id configured")
         rows = db.execute(text("""
             SELECT company_id, company_name, industry, city,
                    employee_count, base_premium
             FROM companies
             WHERE company_id = :cid
             ORDER BY company_name
-        """), {"cid": user["company_id"]}).mappings().all()
+        """), {"cid": cid}).mappings().all()
     else:
         rows = db.execute(text("""
             SELECT company_id, company_name, industry, city,

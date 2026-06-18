@@ -209,8 +209,10 @@ def map_underwriting_hf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     ).astype(int)
 
     coverage_rate = df["premium_calculated"].astype(float) / df["coverage_amount"].replace(0, np.nan).astype(float)
-    coverage_rate = coverage_rate.fillna(coverage_rate.median())
-    premium_signal = (coverage_rate / coverage_rate.median()).clip(0.5, 3.0)
+    median_cov = coverage_rate.median()
+    coverage_rate = coverage_rate.fillna(median_cov if np.isfinite(median_cov) else 0.02)
+    denom = coverage_rate.median()
+    premium_signal = (coverage_rate / (denom if np.isfinite(denom) and denom > 0 else 1.0)).clip(0.5, 3.0)
 
     proxy_loss_ratio = (
         0.18
@@ -375,7 +377,7 @@ def map_insurance_charge_hf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         + children * 0.02
     )
     df_mapped["loss_ratio"] = np.clip(
-        proxy_loss_ratio * rng.lognormal(mean=0.0, sigma=0.10, size=len(df)),
+        proxy_loss_ratio * rng.lognormal(mean=0.0, sigma=0.20, size=len(df)),
         0.10,
         6.0,
     )
@@ -479,7 +481,15 @@ def map_employee_excel_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     # --- Target: real loss ratio ---
     premium = df["Weight_Based_Premium_INR"].astype(float).replace(0, np.nan)
     raw_lr  = claims / premium
-    out["loss_ratio"] = np.clip(raw_lr.fillna(0.05), 0.05, 6.0)
+    # Employees with zero/missing claims get a lognormal draw instead of a hard floor
+    # so they naturally spread across [0.05, 0.35] rather than all clustering at 0.05.
+    _lr_rng   = np.random.default_rng(RANDOM_STATE + 13)
+    zero_mask = raw_lr.isna() | (raw_lr < 0.05)
+    filled    = raw_lr.copy()
+    filled[zero_mask] = np.clip(
+        _lr_rng.lognormal(np.log(0.09), 0.60, int(zero_mask.sum())), 0.05, 0.35
+    )
+    out["loss_ratio"] = np.clip(filled, 0.05, 6.0)
 
     return out
 
@@ -555,9 +565,10 @@ def augment_excel_dataframe(df: pd.DataFrame, n_aug: int = 4) -> pd.DataFrame:
                 aug[col] + rng.normal(0, scale, len(aug)),
                 *clamp.get(col, (-np.inf, np.inf))
             )
-        # Multiplicative noise on loss_ratio: ±10%
+        # Wider lognormal noise on loss_ratio (sigma=0.35 ≈ ±42% at 1 std)
+        # replaces the old ±10% uniform that kept floor employees pinned at 0.05.
         aug["loss_ratio"] = np.clip(
-            aug["loss_ratio"] * rng.uniform(0.90, 1.10, len(aug)),
+            aug["loss_ratio"] * rng.lognormal(mean=0.0, sigma=0.35, size=len(aug)),
             0.05, 6.0,
         )
         frames.append(aug)
@@ -611,7 +622,10 @@ def map_clinical_lab_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         row["lab_bone_flag"] = int(row["age"] >= 60)
 
         row["diabetic"] = row["lab_diabetes_flag"]
-        row["hypertension"] = 0
+        row["hypertension"] = int(
+            (row.get("lab_kidney_flag", 0) or row.get("lab_heart_flag", 0))
+            and row["age"] > 50
+        )
 
         n_flags = sum(v for k, v in row.items() if k.startswith("lab_"))
         row["chronic_count"] = float(min(n_flags, 4))
@@ -813,7 +827,7 @@ def map_clinical_notes_hf_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     mapped["hr_trend"] = (rng.random(len(mapped)) - 0.5) * 6
     mapped["avg_active_mins"] = np.clip(health * 55 + 5 + noise(8), 0, 90)
     mapped["avg_sleep_hours"] = np.clip(6.0 + health * 2.0 + noise(0.5), 3, 10)
-    mapped["avg_spo2"] = np.clip(mapped["avg_spo2"] + noise(0.3), 80, 100)
+    mapped["avg_spo2"] = np.clip(mapped["avg_spo2"] + noise(0.3), 90, 100)
     mapped.drop(columns=["_severity"], inplace=True)
 
     lr_noise = rng.lognormal(0, 0.25, len(mapped))
