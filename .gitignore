@@ -62,3 +62,6 @@ graph_check.py
 .design-package/chats/
 .design-package/project/SKILL.md
 design.md
+
+# Local training assets (real market data — never commit)
+Traning Assets/
