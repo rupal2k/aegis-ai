@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import cross_val_score, train_test_split
 
-from ml_engine.features import engineer_features, get_feature_matrix
+from ml_engine.features import engineer_features, get_feature_matrix, MONOTONE_CONSTRAINTS
 from ml_engine.scorer import HRSScorer
 
 load_dotenv()
@@ -856,6 +856,7 @@ def objective(trial, X_train, y_train):
         "random_state": RANDOM_STATE,
         "verbosity": 0,
         "tree_method": "hist",
+        "monotone_constraints": MONOTONE_CONSTRAINTS,
     }
     model = xgb.XGBRegressor(**params)
     scores = cross_val_score(
@@ -916,6 +917,7 @@ def tune_and_train(
             "verbosity": 0,
             "tree_method": "hist",
             "early_stopping_rounds": 50,
+            "monotone_constraints": MONOTONE_CONSTRAINTS,
         }
     )
 

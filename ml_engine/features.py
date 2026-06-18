@@ -25,6 +25,44 @@ FEATURE_COLUMNS = [
     "lab_domain_count", "lab_risk_score",
 ]
 
+# Monotone constraints in FEATURE_COLUMNS order.
+# +1 = feature must increase predicted loss_ratio (more = higher risk)
+# -1 = feature must decrease predicted loss_ratio (more = lower risk)
+#  0 = no constraint
+MONOTONE_CONSTRAINTS = (
+    1,   # age
+    1,   # bmi
+    1,   # chronic_count
+    1,   # smoker
+    1,   # diabetic
+    1,   # hypertension
+    -1,  # avg_daily_steps
+    0,   # step_volatility (ambiguous)
+    1,   # avg_resting_hr
+    1,   # hr_trend (rising resting HR = more risk)
+    -1,  # avg_active_mins
+    0,   # avg_sleep_hours (J-curve: too little and too much both bad)
+    -1,  # avg_spo2
+    1,   # visit_count
+    1,   # hospitalized_count
+    -1,  # activity_score
+    1,   # health_composite
+    1,   # smoker_diabetic
+    1,   # bmi_age_risk
+    1,   # clinical_burden
+    1,   # lab_heart_flag
+    1,   # lab_inflammation_flag
+    1,   # lab_diabetes_flag
+    1,   # lab_kidney_flag
+    1,   # lab_liver_flag
+    1,   # lab_iron_flag
+    1,   # lab_thyroid_flag
+    1,   # lab_bone_flag
+    1,   # lab_vitamin_flag
+    1,   # lab_domain_count
+    1,   # lab_risk_score
+)
+
 TARGET_COLUMN = "loss_ratio"
 TARGET_LOG    = "loss_ratio_log"
 
@@ -53,6 +91,13 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     with employees who have no lab records on file.
     """
     df = df.copy()
+
+    # Clamp inputs to training distribution — prevents XGBoost extrapolation
+    # into sparse tree leaves for values beyond the augmentation bounds.
+    if "chronic_count" in df.columns:
+        df["chronic_count"] = df["chronic_count"].fillna(0).clip(0, 4).astype(int)
+    if "bmi" in df.columns:
+        df["bmi"] = df["bmi"].clip(15.0, 50.0)
 
     # Handle categorical gender
     df["gender_male"] = (df["gender"] == "M").astype(int) if "gender" in df.columns else 0
