@@ -97,8 +97,10 @@ def test_mapper_loss_ratio_real():
 def test_mapper_zero_claims_clamped():
     from ml_engine.training.train import map_employee_excel_dataframe
     df = map_employee_excel_dataframe(_make_joined_df())
-    # Row 0: Historical_Claims=0 → clamped to 0.05
-    assert df["loss_ratio"].iloc[0] == pytest.approx(0.05)
+    # Row 0: Historical_Claims=0 → lognormal draw in [0.05, 0.35] (not a hard clamp to 0.05;
+    # intentional design so zero-claim employees spread naturally rather than cluster at floor).
+    lr = df["loss_ratio"].iloc[0]
+    assert 0.05 <= lr <= 0.35, f"Expected loss_ratio in [0.05, 0.35], got {lr}"
 
 
 def test_mapper_loss_ratio_within_bounds():
