@@ -17,6 +17,9 @@ COPY ml_engine/ ./ml_engine/
 COPY data/ ./data/
 COPY scripts/ ./scripts/
 
+# Empty .env so starlette's Config doesn't warn about a missing file in prod
+RUN touch /app/.env
+
 # Ensure entrypoint is executable and set ownership
 RUN chmod +x /app/scripts/entrypoint.sh
 RUN chown -R appuser:appuser /app
