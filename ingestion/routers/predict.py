@@ -145,7 +145,7 @@ def predict_company(
         "and zone classification."
     ),
 )
-def predict_premium(
+async def predict_premium(
     payload: PremiumRequest,
     user: dict = Depends(get_current_user),
 ):
@@ -163,7 +163,7 @@ def predict_premium(
         "program lift, and expected ROI."
     ),
 )
-def predict_wellness_roi(
+async def predict_wellness_roi(
     payload: WellnessROIRequest,
     user: dict = Depends(get_current_user),
 ):

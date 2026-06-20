@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from ingestion.routers import health, ingest, predict, companies, auth_router
+from ingestion.database import engine
 from ingestion.rate_limit import (
     limiter,
     RateLimitExceeded,
@@ -64,6 +65,22 @@ Predictions are produced by the active XGBoost model. Driver explanations shown 
 These docs are exposed only when `ENV=development`.
 """
 
+_log = logging.getLogger(__name__)
+
+
+async def _warmup_db():
+    """Pre-open one DB connection so the first user request doesn't pay cold-connect cost."""
+    if engine is None:
+        return
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        _log.info("DB connection pool warmed up.")
+    except Exception as exc:
+        _log.warning("DB warmup failed (non-fatal): %s", exc)
+
+
 app = FastAPI(
     title="Aegis AI — Underwriting Platform API",
     description=_API_DESCRIPTION,
@@ -118,6 +135,11 @@ app.add_middleware(
 )
 
 # Register routers with rate limiting applied
+@app.on_event("startup")
+async def startup():
+    await _warmup_db()
+
+
 app.include_router(auth_router.router)
 app.include_router(health.router)
 app.include_router(ingest.router)
