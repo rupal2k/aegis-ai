@@ -43,9 +43,8 @@ pinned: false
 
 </div>
 
-<br />
-
-> ℹ️ *The live demo is hosted on free-tier infrastructure. If waking from idle, please allow ~45–60 seconds for the container stack to spin up.*
+> [!NOTE]
+> The live interactive demo is hosted on free-tier cloud containers. If waking from idle, please allow ~45–60 seconds for the container stack to spin up.
 
 ---
 
@@ -562,4 +561,5 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 ## Disclaimer
 
-> ⚠️ **Research & Demonstration Notice**: Aegis AI is developed as an educational, architectural demonstration of explainable machine learning in insurance underwriting. It is trained on synthetic biometric data and has not been approved by regulatory bodies (e.g. IRDAI) for real-world underwriting of human lives. Loss ratio predictions are relative research signals, not actuarially certified insurance policies.
+> [!CAUTION]
+> **Research & Demonstration Notice**: Aegis AI is developed as an educational, architectural demonstration of explainable machine learning in insurance underwriting. It is trained on synthetic biometric data and has not been approved by regulatory bodies (e.g. IRDAI) for real-world underwriting of human lives. Loss ratio predictions are relative research signals, not actuarially certified insurance policies.
