@@ -74,7 +74,7 @@ Every prediction is paired with localized **game-theoretic TreeSHAP attribution*
 
 | Capability | Technical Implementation | Underwriting Value |
 |---|---|---|
-| **Health Risk Score (HRS)** | XGBoost regressor predicting $\log(\text{loss\_ratio})$, calibrated to 0–100 | Replaces stale trailing claims with real-time biometric risk triage across individual and corporate cohorts. |
+| **Health Risk Score (HRS)** | XGBoost regressor predicting `log(loss_ratio)`, calibrated to 0–100 | Replaces stale trailing claims with real-time biometric risk triage across individual and corporate cohorts. |
 | **TreeSHAP Explainability** | Exact game-theoretic Shapley value decomposition | Generates top-5 plain-language positive and negative risk contributors for transparent underwriting decisions. |
 | **Dynamic Premium Engine** | Multi-band actuarial mapping (Discount 0–40, Standard 41–60, Loading 61–100) | Rewards healthy corporate cohorts with up to 15% discounts while protecting loss margins with up to +30% loading. |
 | **Market Multipliers** | Calibrated against 20 Indian industries, 6 geographic zones & 4 sum assured bands | Adjusts baseline rates for regional cost-of-care factors and industry-specific sedentary or stress risks. |
@@ -263,16 +263,16 @@ The machine learning engine transforms 31 normalized features across 5 distinct 
 | | `chronic_count` | `int` | 0–6 | Total diagnosed chronic comorbidities across ICD-10 registries. |
 | **9 Lab Domains** | `lab_heart_flag` | `binary` | 0 or 1 | Elevated cardiac markers (Troponin, CK-MB, lipid anomalies). |
 | | `lab_inflammation_flag` | `binary` | 0 or 1 | Elevated hs-CRP or ESR markers indicating active systemic inflammation. |
-| | `lab_diabetes_flag`| `binary` | 0 or 1 | Uncontrolled HbA1c ($\ge 6.5\%$) or elevated fasting plasma glucose. |
-| | `lab_kidney_flag` | `binary` | 0 or 1 | Sub-optimal eGFR ($< 60\,\text{mL/min}$) or elevated serum creatinine. |
-| | `lab_liver_flag` | `binary` | 0 or 1 | Elevated liver enzymes (ALT / AST $> 3\times$ upper reference limit). |
+| | `lab_diabetes_flag`| `binary` | 0 or 1 | Uncontrolled HbA1c (≥ 6.5%) or elevated fasting plasma glucose. |
+| | `lab_kidney_flag` | `binary` | 0 or 1 | Sub-optimal eGFR (< 60 mL/min) or elevated serum creatinine. |
+| | `lab_liver_flag` | `binary` | 0 or 1 | Elevated liver enzymes (ALT / AST > 3× upper reference limit). |
 | | `lab_iron_flag` | `binary` | 0 or 1 | Serum ferritin depletion or severe microcytic anemia. |
 | | `lab_thyroid_flag` | `binary` | 0 or 1 | TSH dysregulation (hypothyroidism or hyperthyroidism). |
 | | `lab_bone_flag` | `binary` | 0 or 1 | Severe calcium / alkaline phosphatase or bone density deficit. |
-| | `lab_vitamin_flag` | `binary` | 0 or 1 | Severe Vitamin D3 ($< 10\,\text{ng/mL}$) or Vitamin B12 deficiency. |
-| **Derived Indices**| `activity_score` | `float` | 0–100 | Composite index: $\frac{\text{steps}}{20000}\times 40 + \frac{\text{active\_mins}}{120}\times 30 + \dots$ |
+| | `lab_vitamin_flag` | `binary` | 0 or 1 | Severe Vitamin D3 (< 10 ng/mL) or Vitamin B12 deficiency. |
+| **Derived Indices**| `activity_score` | `float` | 0–100 | Composite index: `(steps / 20000 × 40) + (active_mins / 120 × 30) + ...` |
 | | `cardio_resp_score`| `float` | 0–100 | Synergistic score combining normalized resting HR and SpO2 levels. |
-| | `metabolic_index` | `float` | 0–100 | Compound metabolic risk index (BMI $\times$ glucose $\times$ BP indicators). |
+| | `metabolic_index` | `float` | 0–100 | Compound metabolic risk index (BMI × glucose × blood pressure indicators). |
 | | `sleep_quality` | `float` | 0–100 | Sleep duration normalized against optimal 7.0–8.5 hour restorative band. |
 | | `clinical_risk_score`| `float`| 0–100 | Weighted summation of hospital stays, clinic visits, and active lab flags. |
 | | `composite_risk` | `float` | 0–100 | Multi-domain interaction term combining biometric and clinical risk. |
@@ -291,7 +291,7 @@ The machine learning engine transforms 31 normalized features across 5 distinct 
 The ingestion engine is powered by FastAPI and SQLAlchemy, engineered to receive batch timeseries data from wearable device aggregators, HR rosters, and hospital billing systems:
 
 - **Salted SHA-256 Pseudonymization**: Incoming records containing employee identifiers (e.g. `EMP-40912`) are concatenated with a server-side secret cryptographic salt (`HASH_SALT`) and hashed before database storage. Reverse lookups are cryptographically infeasible.
-- **Pydantic Validation**: Every payload undergoes schema enforcement with biometric range sanity checks (e.g. rejecting heart rates $>220$ bpm or sleep durations $>24$ hrs).
+- **Pydantic Validation**: Every payload undergoes schema enforcement with biometric range sanity checks (e.g. rejecting heart rates > 220 bpm or sleep durations > 24 hrs).
 - **Least-Privilege API Scoping**: Inbound JWT tokens contain claim roles (`underwriter` or `hr_admin`). Endpoints enforcing `@require_role("underwriter")` reject HR administrators, preventing cross-tenant corporate leakage.
 
 </details>
@@ -302,11 +302,11 @@ The ingestion engine is powered by FastAPI and SQLAlchemy, engineered to receive
 <summary><b>Click to expand architecture & operational details</b></summary>
 <br />
 
-The core prediction engine is an XGBoost regressor trained against $\log(\text{loss\_ratio})$ to accommodate right-skewed claims distributions:
+The core prediction engine is an XGBoost regressor trained against `log(loss_ratio)` to accommodate right-skewed claims distributions:
 
 - **Monotone Risk Enforcement**: Traditional unconstrained tree models can make counter-intuitive predictions in sparse feature regions (e.g. predicting lower risk for a 62-year-old smoker than a 60-year-old non-smoker). Aegis AI passes explicit `monotone_constraints` vectors into XGBoost, guaranteeing non-decreasing risk for age, BMI, and smoker flags, and non-increasing risk for daily steps, active minutes, and SpO2.
 - **Optuna Hyperparameter Optimization**: Tree depth, learning rate, minimum child weight, subsample ratios, and L1/L2 regularization terms are tuned using Tree-structured Parzen Estimator (TPE) across 50 trials optimizing 5-fold cross-validated Mean Absolute Error (MAE).
-- **Percentile Calibration**: Continuous predictions are mapped through empirical percentile ranks ($p_{05} = 0$, $p_{95} = 100$) to yield intuitive, consistent 0–100 Health Risk Scores.
+- **Percentile Calibration**: Continuous predictions are mapped through empirical percentile ranks (p05 = 0, p95 = 100) to yield intuitive, consistent 0–100 Health Risk Scores.
 
 </details>
 
@@ -318,7 +318,7 @@ The core prediction engine is an XGBoost regressor trained against $\log(\text{l
 
 Aegis AI incorporates `shap.TreeExplainer` directly into the prediction lifecycle to eliminate black-box decision making:
 
-- **Exact Shapley Values**: Calculates the game-theoretic marginal contribution of each of the 31 features relative to the base expected value $E[f(x)]$.
+- **Exact Shapley Values**: Calculates the game-theoretic marginal contribution of each of the 31 features relative to the base expected value E[f(x)].
 - **Top-5 Risk Attribution**: For every single-employee and corporate prediction, the engine sorts and returns the top 5 localized risk drivers formatted into plain English (e.g., *Daily Steps < 4,200 (+14.8 pts)* or *Resting HR 62 bpm (–5.1 pts)*).
 - **Audit Trails**: Explanations are cached in PostgreSQL alongside the score, ensuring regulatory compliance and auditability during dispute resolutions.
 
@@ -332,16 +332,26 @@ Aegis AI incorporates `shap.TreeExplainer` directly into the prediction lifecycl
 
 The premium calculator translates Health Risk Scores into dynamic rate adjustments:
 
-$$\text{Effective Base} = \text{Base Premium} \times \text{Industry Multiplier} \times \text{Region Multiplier} \times \text{Sum Assured Band}$$
+```
+Effective Base = Base Premium × Industry Multiplier × Region Multiplier × Sum Assured Band
+```
 
-- **Discount Zone ($\text{HRS} \le 40$)**:
-  $$\text{Discount \%} = \frac{40 - \text{HRS}}{40} \times 15\% \implies \text{Adjusted Premium} = \text{Effective Base} \times (1 - \text{Discount})$$
-- **Standard Zone ($40 < \text{HRS} \le 60$)**:
-  $$\text{Adjusted Premium} = \text{Effective Base}$$
-- **Loading Zone ($\text{HRS} > 60$)**:
-  $$\text{Loading \%} = \frac{\text{HRS} - 60}{40} \times 30\% \implies \text{Adjusted Premium} = \text{Effective Base} \times (1 + \text{Loading})$$
+- **Discount Zone (HRS ≤ 40)**:
+  ```
+  Discount % = ((40 - HRS) / 40) × 15%
+  Adjusted Premium = Effective Base × (1 - Discount %)
+  ```
+- **Standard Zone (40 < HRS ≤ 60)**:
+  ```
+  Adjusted Premium = Effective Base
+  ```
+- **Loading Zone (HRS > 60)**:
+  ```
+  Loading % = ((HRS - 60) / 40) × 30%
+  Adjusted Premium = Effective Base × (1 + Loading %)
+  ```
 
-The **Wellness ROI Simulator** projects the financial impact of employee habit improvements: simulating an employer-wide step increase of $+2,000$ steps/day recalculates the 31-feature vector, updates the expected loss ratio, and presents the resulting annual premium reduction directly to the HR benefits team.
+The **Wellness ROI Simulator** projects the financial impact of employee habit improvements: simulating an employer-wide step increase of +2,000 steps/day recalculates the 31-feature vector, updates the expected loss ratio, and presents the resulting annual premium reduction directly to the HR benefits team.
 
 </details>
 
