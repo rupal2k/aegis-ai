@@ -270,18 +270,69 @@ def render():
             "Model the financial impact of reducing your workforce HRS before renewal.",
         )
 
-        col1, col2 = st.columns(2)
-        with col1:
-            current = st.number_input(
-                "Current HRS", value=float(pred["mean_hrs"]),
-                min_value=0.0, max_value=100.0, step=0.5,
-                help="Your current average Health Risk Score.",
+        sim_mode = st.radio(
+            "Simulation Mode",
+            ["Actionable Wellness Initiatives (Recommended)", "Manual HRS Target Slider"],
+            horizontal=True,
+            help="Choose how you want to model your workforce health improvement.",
+        )
+
+        current = float(pred["mean_hrs"])
+
+        if sim_mode == "Actionable Wellness Initiatives (Recommended)":
+            st.markdown(
+                "Configure planned corporate wellness initiatives to calculate the compound estimated HRS reduction:"
             )
-        with col2:
-            improvement = st.slider(
-                "HRS improvement target", 0, 40, 15,
-                help="Points you expect a wellness program to reduce HRS by.",
+            sc1, sc2 = st.columns(2)
+            with sc1:
+                step_boost = st.slider(
+                    "🚶 Daily Step Goal Increase", 0, 5000, 2000, step=500,
+                    help="Target average step increase across participating employees.",
+                )
+                smoke_reduc = st.slider(
+                    "🚭 Smoking Cessation Target", 0, 40, 15, step=5,
+                    format="%d%%",
+                    help="Target percentage of active smokers achieving verified cessation.",
+                )
+            with sc2:
+                cardio_mins = st.slider(
+                    "🏃 Aerobic Activity Boost", 0, 60, 25, step=5,
+                    format="+%d min/wk",
+                    help="Weekly increase in moderate-to-vigorous physical activity.",
+                )
+                sleep_workshop = st.checkbox(
+                    "😴 Corporate Sleep & Rest Hygiene Program", value=True,
+                    help="Structured workshops targeting restorative sleep duration (+45 mins).",
+                )
+
+            # Model compound HRS delta
+            delta_steps = (step_boost / 1000.0) * 1.8
+            delta_smoke = (smoke_reduc / 10.0) * 2.2
+            delta_cardio = (cardio_mins / 15.0) * 0.9
+            delta_sleep = 1.8 if sleep_workshop else 0.0
+
+            raw_improvement = delta_steps + delta_smoke + delta_cardio + delta_sleep
+            improvement = round(min(raw_improvement, 35.0), 1)
+
+            st.caption(
+                f"Modeled Impact: **–{improvement:.1f} HRS points** "
+                f"(Steps: –{delta_steps:.1f} · Smoking: –{delta_smoke:.1f} · Cardio: –{delta_cardio:.1f}"
+                + (f" · Sleep: –{delta_sleep:.1f})" if sleep_workshop else ")")
             )
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                current = st.number_input(
+                    "Current HRS", value=float(pred["mean_hrs"]),
+                    min_value=0.0, max_value=100.0, step=0.5,
+                    help="Your current average Health Risk Score.",
+                )
+            with col2:
+                improvement = st.slider(
+                    "HRS improvement target", 0, 40, 15,
+                    help="Points you expect a wellness program to reduce HRS by.",
+                )
+
         projected = max(0.0, current - improvement)
 
         roi = calculate_wellness_roi(float(company["base_premium"]), current, projected)

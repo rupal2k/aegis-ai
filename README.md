@@ -9,7 +9,7 @@ pinned: false
 ---
 -->
 
-<div align="center">
+<div id="top" align="center">
 
 # 🛡️ Aegis AI
 
@@ -30,14 +30,14 @@ pinned: false
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab.svg?style=flat-square)](https://www.python.org/)
 [![Model](https://img.shields.io/badge/Model-XGBoost%20Regressor-22c55e.svg?style=flat-square)](MODEL_CARD.md)
 [![Explainability](https://img.shields.io/badge/XAI-TreeSHAP%20Attribution-f43f5e.svg?style=flat-square)](#treeshap-explainability-and-risk-attribution)
-[![Framework](https://img.shields.io/badge/Stack-FastAPI%20%7C%20Streamlit-0ea5e9.svg?style=flat-square)](#architecture)
+[![Framework](https://img.shields.io/badge/Stack-FastAPI%20%7C%20Streamlit-0ea5e9.svg?style=flat-square)](#system-architecture)
 [![Infrastructure](https://img.shields.io/badge/Infra-Docker%20%7C%20PostgreSQL%20%7C%20MLflow-6366f1.svg?style=flat-square)](#getting-started)
 [![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Spaces%20Demo-fcd34d.svg?style=flat-square)](https://huggingface.co/spaces/Rupa2k/aegis-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 <br />
 
-[Overview](#overview) • [Core Capabilities](#core-capabilities) • [Architecture](#system-architecture) • [Visual Showcase](#dual-persona-visual-showcase) • [31-Feature Matrix](#31-feature-biometric--clinical-matrix) • [Subsystems](#subsystems) • [API Matrix](#api-endpoint-reference) • [Getting Started](#getting-started)
+[Overview](#overview) • [Core Capabilities](#core-capabilities) • [Architecture](#system-architecture) • [Visual Showcase](#dual-persona-visual-showcase) • [31-Feature Matrix](#feature-matrix) • [Subsystems](#subsystems) • [API Matrix](#api-endpoint-reference) • [Getting Started](#getting-started)
 
 <br />
 
@@ -74,6 +74,8 @@ Every prediction is paired with localized **game-theoretic TreeSHAP attribution*
 - **Strict Role-Scoped Authorization**: Underwriters inspect the complete portfolio book; corporate HR administrators are strictly scoped to their own workforce tenant at the API layer.
 - **Reproducible ML Lifecycle**: Automated Optuna hyperparameter search with 5-fold cross-validation, tracked end-to-end in MLflow.
 
+<p align="right"><a href="#top">↑ Back to Top</a></p>
+
 ---
 
 ## Core Capabilities
@@ -87,6 +89,8 @@ Every prediction is paired with localized **game-theoretic TreeSHAP attribution*
 | **Wellness ROI Simulator** | Actuarial sensitivity projection model | Demonstrates tangible premium savings resulting from targeted workforce health interventions (e.g. +2,000 steps/day). |
 | **Role-Scoped Dashboards** | Dual Streamlit interfaces with JWT token role enforcement | Underwriter Workbench for book management; Corporate HR Portal for department wellness tracking and PDF exports. |
 | **Subgroup Parity & Fairness** | Automated gender-stratified audit script (`fairness_check.py`) | Prevents algorithmic bias across protected attributes and ensures equitable premium band distribution. |
+
+<p align="right"><a href="#top">↑ Back to Top</a></p>
 
 ---
 
@@ -187,6 +191,8 @@ flowchart TD
 | **UI & Visualizations** | Streamlit, Plotly Express, ReportLab | Interactive Underwriter Workbench, Corporate HR Portal, and automated PDF export memos. |
 | **Deployment & Ops** | Docker Compose, Nginx (TLS proxy), GitHub Actions, Render, Hugging Face | Multi-container stack with automated CI security scanning (`bandit`, `pip-audit`). |
 
+<p align="right"><a href="#top">↑ Back to Top</a></p>
+
 ---
 
 ## Dual-Persona Visual Showcase
@@ -244,7 +250,11 @@ The platform dynamically maps continuous Health Risk Scores (0–100) into three
 
 Market multipliers further calibrate quotes against **20 Indian industries** (e.g., Telecom `1.135×`, Construction `0.876×`), **6 geographic regions** (Central, East, North, Northeast, South, West), and **4 Sum Assured bands** (1–3L, 4–7L, 8–15L, 15L+).
 
+<p align="right"><a href="#top">↑ Back to Top</a></p>
+
 ---
+
+<div id="feature-matrix"></div>
 
 ## 31-Feature Biometric & Clinical Matrix
 
@@ -283,6 +293,8 @@ The machine learning engine transforms 31 normalized features across 5 distinct 
 | | `clinical_risk_score`| `float`| 0–100 | Weighted summation of hospital stays, clinic visits, and active lab flags. |
 | | `composite_risk` | `float` | 0–100 | Multi-domain interaction term combining biometric and clinical risk. |
 | | `volatility_penalty`| `float`| 0–25 | Variance surcharge penalizing erratic, unpredictable physical activity. |
+
+<p align="right"><a href="#top">↑ Back to Top</a></p>
 
 ---
 
@@ -374,6 +386,8 @@ Algorithmic underwriting systems must never penalize protected demographic attri
 
 </details>
 
+<p align="right"><a href="#top">↑ Back to Top</a></p>
+
 ---
 
 ## API Endpoint Reference
@@ -394,6 +408,139 @@ All endpoints except `/health` require a Bearer JWT token issued by `POST /auth/
 | `POST` | `/predict/wellness-roi` | `underwriter`, `hr_admin` | Simulates premium savings resulting from targeted workforce health interventions. |
 | `GET` | `/companies` | `underwriter`, `hr_admin` | Lists employer groups accessible to the caller (scoped by role and tenant). |
 | `GET` | `/companies/{id}/employees`| `underwriter`, `hr_admin` | Returns employee cohort for an authorized company (PII pseudonymized). |
+
+### Quick cURL Integration Examples
+
+Test the live REST API directly from your terminal or API client:
+
+<details open>
+<summary><b>1. Authenticate &amp; Obtain JWT Token (POST /auth/token)</b></summary>
+<br />
+
+```bash
+curl -s -X POST "https://aegis-ai-wss8.onrender.com/auth/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=underwriter@safenet.com&password=demo123"
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "role": "underwriter"
+}
+```
+</details>
+
+<details>
+<summary><b>2. Score Single Employee &amp; Extract SHAP Drivers (POST /predict/employee)</b></summary>
+<br />
+
+```bash
+curl -s -X POST "https://aegis-ai-wss8.onrender.com/predict/employee" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 42,
+    "gender": "M",
+    "bmi": 28.4,
+    "smoker": false,
+    "diabetic": false,
+    "hypertension": false,
+    "avg_daily_steps": 8500,
+    "step_volatility": 0.22,
+    "avg_resting_hr": 68.0,
+    "hr_trend": -0.8,
+    "avg_active_mins": 35.0,
+    "avg_sleep_hours": 7.2,
+    "avg_spo2": 97.5,
+    "visit_count": 1,
+    "hospitalized_count": 0
+  }'
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "predicted_loss_ratio": 0.642,
+  "health_risk_score": 38.4,
+  "risk_band": "Low",
+  "top_drivers": [
+    {
+      "feature": "avg_daily_steps",
+      "value": 8500.0,
+      "shap_value": -0.048,
+      "direction": "decreases_risk",
+      "explanation": "High daily step count lowers risk"
+    },
+    {
+      "feature": "bmi",
+      "value": 28.4,
+      "shap_value": 0.031,
+      "direction": "increases_risk",
+      "explanation": "Elevated BMI increases metabolic risk"
+    }
+  ]
+}
+```
+</details>
+
+<details>
+<summary><b>3. Calculate Actuarial Dynamic Premium Quote (POST /predict/premium)</b></summary>
+<br />
+
+```bash
+curl -s -X POST "https://aegis-ai-wss8.onrender.com/predict/premium" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "base_premium": 920000.0,
+    "hrs": 38.4
+  }'
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "base_premium": 920000.0,
+  "adjusted_premium": 864800.0,
+  "adjustment_pct": -6.0,
+  "zone": "discount",
+  "recommendation": "Apply 6.0% discount based on favorable biometric risk profile."
+}
+```
+</details>
+
+<details>
+<summary><b>4. Simulate Workforce Wellness ROI (POST /predict/wellness-roi)</b></summary>
+<br />
+
+```bash
+curl -s -X POST "https://aegis-ai-wss8.onrender.com/predict/wellness-roi" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "base_premium": 920000.0,
+    "current_hrs": 54.2,
+    "projected_hrs_after_program": 46.8
+  }'
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "current_premium": 920000.0,
+  "projected_premium": 881360.0,
+  "annual_savings": 38640.0,
+  "hrs_improvement": 7.4,
+  "current_zone": "standard",
+  "projected_zone": "standard"
+}
+```
+</details>
+
+<p align="right"><a href="#top">↑ Back to Top</a></p>
 
 ---
 
@@ -487,6 +634,8 @@ On first boot, the stack automatically:
    streamlit run dashboard/app.py --server.port 8501
    ```
 
+<p align="right"><a href="#top">↑ Back to Top</a></p>
+
 ---
 
 ## Testing & Quality Assurance
@@ -504,6 +653,8 @@ Every push to `main` triggers the [GitHub Actions CI Pipeline](.github/workflows
 1. **Static Analysis & Security Audit**: Runs `bandit` across all Python source trees and executes `pip-audit` to detect CVE vulnerabilities.
 2. **Integration Testing**: Spawns an ephemeral PostgreSQL service, generates test fixtures, fits a fast test model, and executes the complete test suite.
 3. **Container Build Verification**: Builds multi-stage Docker images for the API, dashboard, and Nginx proxy to prevent deployment regressions.
+
+<p align="right"><a href="#top">↑ Back to Top</a></p>
 
 ---
 
@@ -548,6 +699,8 @@ aegis-ai/
 └── render.yaml             # Render infrastructure blueprint specification
 ```
 
+<p align="right"><a href="#top">↑ Back to Top</a></p>
+
 ---
 
 ## Roadmap
@@ -557,6 +710,8 @@ aegis-ai/
 - [ ] **Automated Re-training & Drift Guard**: Integration with Evidently AI to monitor data drift and trigger re-training when population vitals shift.
 - [ ] **Enterprise SSO Integration**: Support SAML 2.0 and OpenID Connect (OIDC) for Okta, Azure AD, and Google Workspace authentication.
 - [ ] **Confidence Intervals on Quotes**: Conformal prediction bounds providing actuaries with 90% and 95% confidence intervals on expected loss ratios.
+
+<p align="right"><a href="#top">↑ Back to Top</a></p>
 
 ---
 
