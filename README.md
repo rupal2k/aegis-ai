@@ -1,3 +1,4 @@
+<!--
 ---
 title: Aegis AI
 emoji: 🛡️
@@ -6,12 +7,19 @@ colorTo: blue
 sdk: docker
 pinned: false
 ---
+-->
 
 <div align="center">
 
 # 🛡️ Aegis AI
 
 ### Enterprise Health-Risk Underwriting & Dynamic Pricing Platform
+
+| **Title** | **Emoji** | **Color Theme** | **SDK** | **Pinned** |
+|:---:|:---:|:---:|:---:|:---:|
+| **Aegis AI** | 🛡️ | `green` → `blue` | `docker` | `false` |
+
+<br />
 
 **Transforming group health insurance from reactive trailing-claims pricing to proactive, continuous biometric risk scoring with game-theoretic TreeSHAP explainability and actuarial premium adjustments.**
 
@@ -33,9 +41,8 @@ pinned: false
 
 <br />
 
-| 🌐 **Live Interactive Space** | ⚡ **Live Interactive API** | 📋 **Model Card** | 📊 **Training Telemetry** |
+| [🌐 **Live Space Demo**](https://huggingface.co/spaces/Rupa2k/aegis-ai) | [⚡ **Swagger API Docs**](https://aegis-ai-wss8.onrender.com/docs) | [📋 **Model Card**](MODEL_CARD.md) | [📊 **Training Telemetry**](TRAINING_RESULTS.md) |
 |:---:|:---:|:---:|:---:|
-| [huggingface.co/spaces/Rupa2k/aegis-ai](https://huggingface.co/spaces/Rupa2k/aegis-ai) | [aegis-ai-wss8.onrender.com/docs](https://aegis-ai-wss8.onrender.com/docs) | [MODEL_CARD.md](MODEL_CARD.md) | [TRAINING_RESULTS.md](TRAINING_RESULTS.md) |
 
 <br />
 
