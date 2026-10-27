@@ -25,7 +25,7 @@ pinned: false
 
 <br />
 
-[![CI](https://github.com/rupal2k/aegis-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rupal2k/aegis-ai/actions/workflows/ci.yml)
+[![CI/CD Pipeline](https://github.com/rupal2k/aegis-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rupal2k/aegis-ai/actions/workflows/ci.yml)
 [![API Status](https://img.shields.io/website?url=https%3A%2F%2Faegis-ai-wss8.onrender.com%2Fhealth&label=API%20Health&up_message=online&down_message=offline&cacheSeconds=300)](https://aegis-ai-wss8.onrender.com/docs)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab.svg?style=flat-square)](https://www.python.org/)
 [![Model](https://img.shields.io/badge/Model-XGBoost%20Regressor-22c55e.svg?style=flat-square)](MODEL_CARD.md)
@@ -647,12 +647,14 @@ Aegis AI includes an automated test suite covering API contracts, data normaliza
 python -m pytest tests/ -v
 ```
 
-### Automated CI Workflow
+### Automated CI/CD Pipeline
 
-Every push to `main` triggers the [GitHub Actions CI Pipeline](.github/workflows/ci.yml):
-1. **Static Analysis & Security Audit**: Runs `bandit` across all Python source trees and executes `pip-audit` to detect CVE vulnerabilities.
-2. **Integration Testing**: Spawns an ephemeral PostgreSQL service, generates test fixtures, fits a fast test model, and executes the complete test suite.
-3. **Container Build Verification**: Builds multi-stage Docker images for the API, dashboard, and Nginx proxy to prevent deployment regressions.
+Every push to `main` and pull request triggers the [GitHub Actions CI/CD Pipeline](.github/workflows/ci.yml) (full architectural reference in [CI/CD Guide](docs/CI_CD_GUIDE.md)):
+1. **Static Analysis & Security Audit**: Runs `bandit` SAST across all Python modules and executes `pip-audit` for dependency CVE scans, publishing structured reports to runner step summaries.
+2. **Integration & Contract Testing**: Spawns an ephemeral PostgreSQL 15 service, generates synthetic test cohorts, fits a lightweight model artifact, and executes unit, normalizer, and API contract tests.
+3. **Container Build Verification**: Builds multi-stage Docker images for the API (`Dockerfile.api`), dashboard (`Dockerfile.dashboard`), and Nginx reverse proxy with layer caching.
+4. **Continuous Deployment (Render)**: Automatically triggers the Render Web Service deploy hook for `aegis-api` upon merging to `main`.
+5. **Continuous Deployment (Hugging Face Spaces)**: Automatically syncs the repository and Streamlit dashboard (`Dockerfile`) to [Hugging Face Spaces](https://huggingface.co/spaces/Rupa2k/aegis-ai) with Git LFS support.
 
 <p align="right"><a href="#top">↑ Back to Top</a></p>
 
